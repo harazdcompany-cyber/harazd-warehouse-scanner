@@ -1,17 +1,29 @@
-# HARAZD WAREHOUSE
+# HARAZD WAREHOUSE — UPDATE
 
-Готовий комплект для GitHub Pages.
+Оновлення додає:
 
-## Що зробити
-1. Розпакуйте ZIP.
-2. Завантажте всі файли в корінь репозиторію GitHub.
-3. Старі `index.html`, `app.js`, `style.css` можна замінити цими файлами.
-4. `manifest.json` також можна замінити.
-5. В `app.js` знайдіть:
-   `ВСТАВ_СЮДИ_URL_APPS_SCRIPT_EXEC`
-6. Замість цього тексту вставте актуальний URL Google Apps Script Web App, що закінчується `/exec`.
-7. Commit changes.
-8. Зачекайте 1–2 хвилини, поки GitHub Pages оновиться.
+- ручний пошук обладнання;
+- пошук за EQ-ID;
+- пошук за Серійним ID;
+- пошук за Barcode;
+- пошук за QR/Штрихкодом;
+- QR-сканування камерою;
+- автоматичний пошук після сканування;
+- картку знайденого обладнання.
 
-Кнопка **СКАНЕР** відкриває вбудований QR-сканер на цій самій GitHub Pages сторінці.
-Кнопка **ДОДАТИ** відкриває вашу форму Apps Script через `?page=add`.
+## API
+
+У цьому комплекті вже прописаний поточний HARAZD Apps Script URL:
+
+`https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec`
+
+Пошук виконується через JSONP:
+
+`?action=find&code=EQ-000001&callback=...`
+
+## Встановлення
+
+Завантажте файли з ZIP у корінь GitHub-репозиторію
+`harazd-warehouse-scanner` та підтвердьте заміну файлів.
+
+Файл `sw.js`, який уже є в GitHub, видаляти не потрібно.

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7">
   <title>HARAZD WAREHOUSE</title>
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -18,31 +19,106 @@
 
   <section id="home" class="page active">
     <div class="grid">
-      <button class="card" onclick="showPage('scanner')"><span>📷</span><b>СКАНЕР</b><small>Пошук обладнання</small></button>
-      <button class="card" onclick="openAddEquipment()"><span>＋</span><b>ДОДАТИ</b><small>Нове обладнання</small></button>
-      <button class="card disabled"><span>🚚</span><b>ВИДАЧА</b><small>Обладнання зі складу</small></button>
-      <button class="card disabled"><span>↩️</span><b>ПОВЕРНЕННЯ</b><small>Повернення на склад</small></button>
-      <button class="card disabled"><span>📦</span><b>ОБЛАДНАННЯ</b><small>Каталог і залишки</small></button>
-      <button class="card disabled"><span>🔧</span><b>РЕМОНТ</b><small>Облік ремонту</small></button>
-      <button class="card disabled"><span>📋</span><b>ЗАВАНТАЖЕННЯ</b><small>Комплектація</small></button>
-      <button class="card disabled"><span>⚙️</span><b>КЕРУВАННЯ</b><small>Налаштування</small></button>
+      <button class="card" onclick="showPage('scanner')">
+        <span>📷</span><b>СКАНЕР</b><small>Пошук обладнання</small>
+      </button>
+
+      <button class="card" onclick="openAddEquipment()">
+        <span>＋</span><b>ДОДАТИ</b><small>Нове обладнання</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Видача')">
+        <span>🚚</span><b>ВИДАЧА</b><small>Обладнання зі складу</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Повернення')">
+        <span>↩️</span><b>ПОВЕРНЕННЯ</b><small>Повернення на склад</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Обладнання')">
+        <span>📦</span><b>ОБЛАДНАННЯ</b><small>Каталог і залишки</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Ремонт')">
+        <span>🔧</span><b>РЕМОНТ</b><small>Облік ремонту</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Завантаження')">
+        <span>📋</span><b>ЗАВАНТАЖЕННЯ</b><small>Комплектація</small>
+      </button>
+
+      <button class="card disabled" onclick="notReady('Керування')">
+        <span>⚙️</span><b>КЕРУВАННЯ</b><small>Налаштування</small>
+      </button>
     </div>
   </section>
 
   <section id="scanner" class="page">
     <button class="back" onclick="stopScanner();showPage('home')">← Назад</button>
-    <h2>QR СКАНЕР</h2>
-    <p>Наведіть камеру на QR-код обладнання.</p>
-    <div id="reader"></div>
-    <div class="actions">
-      <button class="primary" onclick="startScanner()">Увімкнути камеру</button>
-      <button onclick="stopScanner()">Зупинити</button>
+
+    <h2>СКАНЕР ОБЛАДНАННЯ</h2>
+    <p class="section-note">Скануйте QR/штрихкод або знайдіть обладнання вручну.</p>
+
+    <div class="search-box">
+      <input
+        id="manualCode"
+        type="text"
+        placeholder="EQ-ID / Серійний ID / Barcode / QR"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') findEquipmentManual()"
+      >
+      <button class="primary search-button" onclick="findEquipmentManual()">🔍 ЗНАЙТИ</button>
     </div>
-    <div id="scanResult" class="result"></div>
+
+    <div class="camera-card">
+      <div id="reader"></div>
+      <div class="actions">
+        <button class="primary" onclick="startScanner()">📷 Увімкнути камеру</button>
+        <button onclick="stopScanner()">Зупинити</button>
+      </div>
+    </div>
+
+    <div id="loading" class="loading hidden">Пошук обладнання...</div>
+
+    <div id="equipmentCard" class="equipment-card hidden">
+      <div class="equipment-top">
+        <div>
+          <div id="equipmentId" class="equipment-id"></div>
+          <h3 id="equipmentName"></h3>
+          <div id="equipmentModel" class="muted"></div>
+        </div>
+        <div id="equipmentStatus" class="status-pill"></div>
+      </div>
+
+      <div id="photoWrap" class="photo-wrap hidden">
+        <img id="equipmentPhoto" alt="Фото обладнання">
+      </div>
+
+      <div class="details-grid">
+        <div><small>Серійний ID</small><strong id="equipmentSerial">—</strong></div>
+        <div><small>Barcode</small><strong id="equipmentBarcode">—</strong></div>
+        <div><small>QR / Штрихкод</small><strong id="equipmentQr">—</strong></div>
+        <div><small>Категорія</small><strong id="equipmentCategory">—</strong></div>
+        <div><small>Виробник</small><strong id="equipmentManufacturer">—</strong></div>
+        <div><small>Тип обліку</small><strong id="equipmentAccounting">—</strong></div>
+        <div><small>Кількість</small><strong id="equipmentQty">—</strong></div>
+        <div><small>Доступно</small><strong id="equipmentAvailable">—</strong></div>
+        <div><small>Склад</small><strong id="equipmentWarehouse">—</strong></div>
+        <div><small>Місце</small><strong id="equipmentLocation">—</strong></div>
+      </div>
+
+      <div id="equipmentDescription" class="description hidden"></div>
+    </div>
+
+    <div id="notFound" class="not-found hidden"></div>
   </section>
 
   <div id="message" class="message"></div>
 </main>
+
+<script>
+  window.HARAZD_API_URL = "https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec";
+</script>
 <script src="app.js"></script>
 </body>
 </html>
