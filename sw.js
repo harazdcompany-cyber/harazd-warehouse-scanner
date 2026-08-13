@@ -1,61 +1,53 @@
-const CACHE_NAME = 'harazd-warehouse-v2';
+const CACHE_NAME = 'harazd-warehouse-v11';
 
-const STATIC_FILES = [
+const APP_SHELL = [
   './',
   './index.html',
+  './style.css',
+  './app.js',
   './manifest.json'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_FILES))
-  );
-
   self.skipWaiting();
+
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(APP_SHELL))
+  );
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+        )
       )
-    )
+      .then(() => self.clients.claim())
   );
-
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') {
+  const request = event.request;
+
+  if (request.method !== 'GET') {
     return;
   }
 
-  const url = new URL(event.request.url);
-
-  // Apps Script API, зовнішні бібліотеки та інші домени
-  // НІКОЛИ не кешуємо.
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  // Для самої програми використовуємо network-first,
-  // щоб iPhone не залишався на старому index.html.
   event.respondWith(
-    fetch(event.request)
+    fetch(request)
       .then(response => {
         const copy = response.clone();
 
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, copy);
-        });
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(request, copy));
 
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(request))
   );
 });

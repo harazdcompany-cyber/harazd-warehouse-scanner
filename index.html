@@ -1,124 +1,449 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f5f7">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
   <title>HARAZD WAREHOUSE</title>
+
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
+
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
+
 <body>
-<main class="app">
-  <header>
-    <div class="brand">HARAZD</div>
-    <h1>WAREHOUSE</h1>
-    <p>Warehouse Management System</p>
-  </header>
 
-  <section id="home" class="page active">
-    <div class="grid">
-      <button class="card" onclick="showPage('scanner')">
-        <span>📷</span><b>СКАНЕР</b><small>Пошук обладнання</small>
-      </button>
+<div class="layout">
 
-      <button class="card" onclick="openAddEquipment()">
-        <span>＋</span><b>ДОДАТИ</b><small>Нове обладнання</small>
-      </button>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
 
-      <button class="card disabled" onclick="notReady('Видача')">
-        <span>🚚</span><b>ВИДАЧА</b><small>Обладнання зі складу</small>
-      </button>
+    <div class="sidebar-top">
 
-      <button class="card disabled" onclick="notReady('Повернення')">
-        <span>↩️</span><b>ПОВЕРНЕННЯ</b><small>Повернення на склад</small>
-      </button>
+      <div class="logo-wrap">
+        <div class="logo-icon">◇</div>
 
-      <button class="card disabled" onclick="notReady('Обладнання')">
-        <span>📦</span><b>ОБЛАДНАННЯ</b><small>Каталог і залишки</small>
-      </button>
-
-      <button class="card disabled" onclick="notReady('Ремонт')">
-        <span>🔧</span><b>РЕМОНТ</b><small>Облік ремонту</small>
-      </button>
-
-      <button class="card disabled" onclick="notReady('Завантаження')">
-        <span>📋</span><b>ЗАВАНТАЖЕННЯ</b><small>Комплектація</small>
-      </button>
-
-      <button class="card disabled" onclick="notReady('Керування')">
-        <span>⚙️</span><b>КЕРУВАННЯ</b><small>Налаштування</small>
-      </button>
-    </div>
-  </section>
-
-  <section id="scanner" class="page">
-    <button class="back" onclick="stopScanner();showPage('home')">← Назад</button>
-
-    <h2>СКАНЕР ОБЛАДНАННЯ</h2>
-    <p class="section-note">Скануйте QR/штрихкод або знайдіть обладнання вручну.</p>
-
-    <div class="search-box">
-      <input
-        id="manualCode"
-        type="text"
-        placeholder="EQ-ID / Серійний ID / Barcode / QR"
-        autocomplete="off"
-        onkeydown="if(event.key==='Enter') findEquipmentManual()"
-      >
-      <button class="primary search-button" onclick="findEquipmentManual()">🔍 ЗНАЙТИ</button>
-    </div>
-
-    <div class="camera-card">
-      <div id="reader"></div>
-      <div class="actions">
-        <button class="primary" onclick="startScanner()">📷 Увімкнути камеру</button>
-        <button onclick="stopScanner()">Зупинити</button>
-      </div>
-    </div>
-
-    <div id="loading" class="loading hidden">Пошук обладнання...</div>
-
-    <div id="equipmentCard" class="equipment-card hidden">
-      <div class="equipment-top">
         <div>
-          <div id="equipmentId" class="equipment-id"></div>
-          <h3 id="equipmentName"></h3>
-          <div id="equipmentModel" class="muted"></div>
+          <div class="logo-small">HARAZD</div>
+          <div class="logo-main">WAREHOUSE</div>
         </div>
-        <div id="equipmentStatus" class="status-pill"></div>
       </div>
 
-      <div id="photoWrap" class="photo-wrap hidden">
-        <img id="equipmentPhoto" alt="Фото обладнання">
-      </div>
+      <nav class="nav">
 
-      <div class="details-grid">
-        <div><small>Серійний ID</small><strong id="equipmentSerial">—</strong></div>
-        <div><small>Barcode</small><strong id="equipmentBarcode">—</strong></div>
-        <div><small>QR / Штрихкод</small><strong id="equipmentQr">—</strong></div>
-        <div><small>Категорія</small><strong id="equipmentCategory">—</strong></div>
-        <div><small>Виробник</small><strong id="equipmentManufacturer">—</strong></div>
-        <div><small>Тип обліку</small><strong id="equipmentAccounting">—</strong></div>
-        <div><small>Кількість</small><strong id="equipmentQty">—</strong></div>
-        <div><small>Доступно</small><strong id="equipmentAvailable">—</strong></div>
-        <div><small>Склад</small><strong id="equipmentWarehouse">—</strong></div>
-        <div><small>Місце</small><strong id="equipmentLocation">—</strong></div>
-      </div>
+        <button class="nav-item active" data-page="scanner" onclick="showPage('scanner')">
+          <span class="nav-icon">▣</span>
+          <span>
+            <strong>СКАНЕР</strong>
+            <small>Сканування обладнання</small>
+          </span>
+        </button>
 
-      <div id="equipmentDescription" class="description hidden"></div>
+        <button class="nav-item" data-page="stock" onclick="notReady('Склад')">
+          <span class="nav-icon">⌂</span>
+          <span>
+            <strong>СКЛАД</strong>
+            <small>Усі одиниці обладнання</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="loading" onclick="notReady('Завантаження')">
+          <span class="nav-icon">⇧</span>
+          <span>
+            <strong>ЗАВАНТАЖЕННЯ</strong>
+            <small>Погрузка на події</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="return" onclick="notReady('Повернення')">
+          <span class="nav-icon">↶</span>
+          <span>
+            <strong>ПОВЕРНЕННЯ</strong>
+            <small>Вигрузка на склад</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="add" onclick="openAddEquipment()">
+          <span class="nav-icon">＋</span>
+          <span>
+            <strong>ДОДАТИ</strong>
+            <small>Нове обладнання</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="reports" onclick="notReady('Звіти')">
+          <span class="nav-icon">▤</span>
+          <span>
+            <strong>ЗВІТИ</strong>
+            <small>Статистика та звіти</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="settings" onclick="notReady('Налаштування')">
+          <span class="nav-icon">⚙</span>
+          <span>
+            <strong>НАЛАШТУВАННЯ</strong>
+            <small>Параметри системи</small>
+          </span>
+        </button>
+
+      </nav>
+
     </div>
 
-    <div id="notFound" class="not-found hidden"></div>
-  </section>
+    <div class="version-card">
+      <strong>HARAZD WAREHOUSE</strong>
+      <span>v1.1.0</span>
+      <small>© 2026 Harazd Company</small>
+    </div>
 
-  <div id="message" class="message"></div>
-</main>
+  </aside>
+
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <header class="topbar">
+
+      <div class="topbar-title">
+        Warehouse Management System
+      </div>
+
+      <button class="home-btn" onclick="showPage('scanner')">
+        ⌂ &nbsp; На головну
+      </button>
+
+    </header>
+
+
+    <!-- SCANNER PAGE -->
+    <section id="scanner" class="page active">
+
+      <div class="page-head">
+
+        <button class="back-btn" onclick="showPage('scanner')">
+          ← &nbsp; Назад
+        </button>
+
+        <div>
+          <h1>СКАНЕР ОБЛАДНАННЯ</h1>
+          <p>Скануйте QR/штрихкод або знайдіть обладнання вручну.</p>
+        </div>
+
+      </div>
+
+
+      <!-- SCANNER PANEL -->
+      <section class="panel scanner-panel">
+
+        <div class="search-row">
+
+          <div class="search-input-wrap">
+            <span class="search-icon">⌕</span>
+
+            <input
+              id="manualCode"
+              type="text"
+              placeholder="Введіть EQ-ID / Серійний ID / Barcode / QR"
+              autocomplete="off"
+              onkeydown="if(event.key==='Enter') findEquipmentManual()"
+            >
+          </div>
+
+          <button class="btn btn-dark" onclick="findEquipmentManual()">
+            ⌕ &nbsp; ЗНАЙТИ
+          </button>
+
+          <div class="enter-hint">
+            ⌨ &nbsp; Enter
+          </div>
+
+        </div>
+
+
+        <div class="scanner-grid">
+
+          <div class="camera-column">
+
+            <div class="camera-box">
+              <div id="reader"></div>
+
+              <div id="cameraOverlay" class="camera-overlay">
+                <div class="scan-frame">
+                  <span class="c tl"></span>
+                  <span class="c tr"></span>
+                  <span class="c bl"></span>
+                  <span class="c br"></span>
+                  <div class="scan-line"></div>
+                </div>
+
+                <div class="camera-caption">
+                  Наведіть камеру на QR/штрихкод
+                </div>
+              </div>
+            </div>
+
+            <div class="camera-actions">
+
+              <button id="cameraToggle" class="btn btn-dark" onclick="toggleScanner()">
+                ▣ &nbsp; Увімкнути камеру
+              </button>
+
+              <button class="btn btn-light" onclick="restartScanner()">
+                ↻ &nbsp; Оновити камеру
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <aside class="scan-help">
+
+            <div class="help-title">
+              ♧ &nbsp; Як сканувати?
+            </div>
+
+            <div class="help-step">
+              <span>▣</span>
+              <div>
+                <b>1.</b> Наведіть камеру на QR або штрихкод
+              </div>
+            </div>
+
+            <div class="help-step">
+              <span>⌗</span>
+              <div>
+                <b>2.</b> Тримайте код у межах рамки
+              </div>
+            </div>
+
+            <div class="help-step">
+              <span>✓</span>
+              <div>
+                <b>3.</b> Результат з’явиться автоматично
+              </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="flash-row">
+              <div>
+                <div class="flash-title">⚑ &nbsp; Ліхтарик</div>
+                <small>Увімкніть при слабкому освітленні</small>
+              </div>
+
+              <button id="torchSwitch" class="switch" onclick="toggleTorch()" aria-label="Ліхтарик">
+                <span></span>
+              </button>
+            </div>
+
+          </aside>
+
+        </div>
+
+      </section>
+
+
+      <!-- SEARCH STATE -->
+      <div id="loading" class="search-state hidden">
+        <div class="spinner"></div>
+        Пошук обладнання...
+      </div>
+
+      <div id="notFound" class="not-found hidden"></div>
+
+
+      <!-- RESULT -->
+      <section id="resultSection" class="result-section hidden">
+
+        <div class="result-label">
+          РЕЗУЛЬТАТ ПОШУКУ
+        </div>
+
+        <article class="equipment-result">
+
+          <div class="equipment-photo-card">
+
+            <div class="photo-stage">
+              <img id="equipmentPhoto" class="equipment-photo hidden" alt="Фото обладнання">
+
+              <div id="photoPlaceholder" class="photo-placeholder">
+                <div class="photo-placeholder-icon">◇</div>
+                <div>Фото обладнання</div>
+              </div>
+            </div>
+
+            <div id="photoCounter" class="photo-counter">
+              ▧ &nbsp; 1 / 1
+            </div>
+
+          </div>
+
+
+          <div class="equipment-content">
+
+            <div class="result-top">
+
+              <div>
+                <div id="equipmentStatus" class="status-badge">
+                  ● ДОСТУПНО
+                </div>
+
+                <h2 id="equipmentName">
+                  Обладнання
+                </h2>
+
+                <div id="equipmentSubtitle" class="equipment-subtitle">
+                  —
+                </div>
+              </div>
+
+            </div>
+
+
+            <div class="id-grid">
+
+              <div class="id-item">
+                <small>EQ-ID</small>
+                <strong id="equipmentId" class="id-chip">—</strong>
+              </div>
+
+              <div class="id-item">
+                <small>Серійний ID</small>
+                <strong id="equipmentSerial">—</strong>
+              </div>
+
+              <div class="id-item">
+                <small>Barcode</small>
+                <strong id="equipmentBarcode">—</strong>
+              </div>
+
+              <div class="id-item">
+                <small>QR / Штрихкод</small>
+                <strong id="equipmentQr" class="qr-chip">—</strong>
+              </div>
+
+            </div>
+
+
+            <div class="result-divider"></div>
+
+
+            <div class="info-columns">
+
+              <div class="info-list">
+
+                <div class="info-row">
+                  <span>⌁</span>
+                  <small>Виробник</small>
+                  <strong id="equipmentManufacturer">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>◇</span>
+                  <small>Модель</small>
+                  <strong id="equipmentModel">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>▱</span>
+                  <small>Тип обліку</small>
+                  <strong id="equipmentAccounting">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>◇</span>
+                  <small>Кількість</small>
+                  <strong id="equipmentQty">—</strong>
+                </div>
+
+              </div>
+
+
+              <div class="info-list">
+
+                <div class="info-row">
+                  <span>⌂</span>
+                  <small>Склад</small>
+                  <strong id="equipmentWarehouse">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>⌾</span>
+                  <small>Місце</small>
+                  <strong id="equipmentLocation">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>▦</span>
+                  <small>Категорія</small>
+                  <strong id="equipmentCategory">—</strong>
+                </div>
+
+                <div class="info-row">
+                  <span>◷</span>
+                  <small>Доступно</small>
+                  <strong id="equipmentAvailable">—</strong>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div id="equipmentDescription" class="description hidden"></div>
+
+
+            <div class="action-row">
+
+              <button class="action-btn issue" onclick="notReady('Видача')">
+                ▣ &nbsp; Видати
+              </button>
+
+              <button class="action-btn return" onclick="notReady('Повернення')">
+                ↻ &nbsp; Повернути
+              </button>
+
+              <button class="action-btn repair" onclick="notReady('Ремонт')">
+                ⚒ &nbsp; В ремонт
+              </button>
+
+              <button class="action-btn more" onclick="notReady('Більше')">
+                ••• &nbsp; Більше
+              </button>
+
+            </div>
+
+          </div>
+
+        </article>
+
+
+        <div class="tip-bar">
+          ⓘ &nbsp;
+          <strong>Порада:</strong>
+          Ви також можете сканувати QR-код для швидкого пошуку обладнання.
+        </div>
+
+      </section>
+
+    </section>
+
+
+    <div id="toast" class="toast"></div>
+
+  </main>
+
+</div>
+
 
 <script>
   window.HARAZD_API_URL = "https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec";
 </script>
+
 <script src="app.js"></script>
+
 </body>
 </html>

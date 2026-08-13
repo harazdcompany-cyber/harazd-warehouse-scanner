@@ -1,29 +1,43 @@
-# HARAZD WAREHOUSE — UPDATE
+# HARAZD WAREHOUSE — Premium UI
 
-Оновлення додає:
+Готовий комплект для GitHub Pages у дизайні HARAZD WAREHOUSE.
 
-- ручний пошук обладнання;
-- пошук за EQ-ID;
-- пошук за Серійним ID;
-- пошук за Barcode;
-- пошук за QR/Штрихкодом;
-- QR-сканування камерою;
+## Що входить
+
+- сучасний desktop/mobile інтерфейс;
+- бокове меню;
+- ручний пошук за EQ-ID / Серійним ID / Barcode / QR;
+- QR-сканер камерою;
 - автоматичний пошук після сканування;
-- картку знайденого обладнання.
+- картка обладнання;
+- фото з Google Sheets;
+- статус доступності;
+- склад / зона / стелаж / полиця;
+- кнопки під майбутні модулі;
+- оновлений Service Worker.
 
-## API
+## Apps Script API
 
-У цьому комплекті вже прописаний поточний HARAZD Apps Script URL:
+У комплекті вже вказаний поточний Web App:
 
-`https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec`
-
-Пошук виконується через JSONP:
-
-`?action=find&code=EQ-000001&callback=...`
+https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec
 
 ## Встановлення
 
-Завантажте файли з ZIP у корінь GitHub-репозиторію
-`harazd-warehouse-scanner` та підтвердьте заміну файлів.
+1. Розпакуйте ZIP.
+2. У GitHub відкрийте `harazd-warehouse-scanner`.
+3. `Add file` → `Upload files`.
+4. Завантажте ВСІ файли з архіву.
+5. Підтвердіть заміну існуючих файлів.
+6. `Commit directly to main`.
+7. Натисніть `Commit changes`.
+8. Зачекайте 1–2 хвилини.
+9. Відкрийте GitHub Pages і зробіть Ctrl+F5.
 
-Файл `sw.js`, який уже є в GitHub, видаляти не потрібно.
+Файли:
+- index.html
+- style.css
+- app.js
+- manifest.json
+- sw.js
+- README.md
