@@ -434,61 +434,59 @@
 
 
     
+    
     <!-- ADD EQUIPMENT PAGE -->
     <section id="add" class="page">
 
       <div class="page-head add-page-head">
-
         <button class="back-btn" onclick="showPage('scanner')">
           ← &nbsp; Назад
         </button>
 
-        <div class="add-title-wrap">
+        <div class="add-title">
           <h1>ДОДАТИ ОБЛАДНАННЯ</h1>
           <p>Нове обладнання на склад.</p>
         </div>
 
-        <button class="home-btn add-external-top" onclick="openAddEquipmentExternal()">
+        <button class="home-btn add-open-external" onclick="openAddEquipmentExternal()">
           ↗ &nbsp; Відкрити окремо
         </button>
-
       </div>
 
-      <section class="panel add-right-panel">
+      <section class="panel add-module">
 
-        <div class="add-toolbar">
-
+        <div class="module-bar">
           <div>
-            <div class="add-eyebrow">HARAZD WAREHOUSE</div>
-            <div class="add-toolbar-title">Форма додавання обладнання</div>
+            <div class="module-kicker">HARAZD WAREHOUSE</div>
+            <div class="module-title">Форма додавання обладнання</div>
           </div>
 
-          <div class="add-toolbar-status">
-            <span class="status-dot"></span>
-            Google Apps Script
+          <div class="module-status">
+            <span></span>
+            Підключено до Google Sheets
           </div>
-
         </div>
 
-        <div class="add-frame-shell">
+        <div class="add-iframe-wrap">
 
           <iframe
             id="addEquipmentFrame"
-            class="add-frame"
-            src="https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add"
-            title="HARAZD WAREHOUSE — Додати обладнання"
+            class="add-iframe"
+            src="https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add&embed=1"
+            title="Додати обладнання"
             loading="eager"
             allow="camera; clipboard-read; clipboard-write"
+            referrerpolicy="strict-origin-when-cross-origin"
           ></iframe>
 
-          <div id="addFrameFallback" class="add-frame-fallback">
-            <div class="fallback-icon">↗</div>
-            <div>
-              <strong>Форма не відобразилась?</strong>
-              <p>Відкрийте її окремо у новій вкладці.</p>
-            </div>
+          <div class="iframe-help">
+            <span>
+              Якщо Google не дозволяє показати форму всередині HARAZD WAREHOUSE,
+              натисніть кнопку праворуч.
+            </span>
+
             <button class="btn btn-dark" onclick="openAddEquipmentExternal()">
-              Відкрити форму
+              Відкрити форму окремо
             </button>
           </div>
 

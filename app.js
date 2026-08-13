@@ -60,8 +60,11 @@ function openAddEquipment() {
 }
 
 function openAddEquipmentExternal() {
-  const base = API_URL.split('?')[0];
-  window.open(base + '?page=add', '_blank', 'noopener,noreferrer');
+  window.open(
+    'https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add',
+    '_blank',
+    'noopener,noreferrer'
+  );
 }
 
 
