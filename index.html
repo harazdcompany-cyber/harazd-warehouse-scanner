@@ -64,7 +64,7 @@
           </span>
         </button>
 
-        <button class="nav-item" data-page="add" onclick="openAddEquipment()">
+        <button class="nav-item" data-page="add" onclick="showPage('add')">
           <span class="nav-icon">＋</span>
           <span>
             <strong>ДОДАТИ</strong>
@@ -431,6 +431,64 @@
 
     </section>
 
+
+
+    <!-- ADD EQUIPMENT PAGE -->
+    <section id="add" class="page">
+
+      <div class="page-head">
+        <button class="back-btn" onclick="showPage('scanner')">
+          ← &nbsp; Назад
+        </button>
+
+        <div>
+          <h1>ДОДАТИ ОБЛАДНАННЯ</h1>
+          <p>Додавання нового обладнання до HARAZD WAREHOUSE.</p>
+        </div>
+      </div>
+
+      <section class="panel add-panel">
+
+        <div class="add-panel-head">
+          <div>
+            <div class="add-eyebrow">HARAZD WAREHOUSE</div>
+            <h2>Нове обладнання</h2>
+            <p>
+              Робоча форма відкривається з поточного Google Apps Script Web App.
+            </p>
+          </div>
+
+          <button class="btn btn-dark add-open-btn" onclick="openAddEquipmentExternal()">
+            ↗ &nbsp; ВІДКРИТИ ОКРЕМО
+          </button>
+        </div>
+
+        <div class="form-embed-wrap">
+
+          <iframe
+            id="addEquipmentFrame"
+            class="form-embed"
+            title="Додати обладнання"
+            loading="lazy"
+            src="https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add"
+            allow="camera; clipboard-read; clipboard-write"
+          ></iframe>
+
+          <div class="embed-fallback">
+            <strong>Якщо форма не відобразилась</strong>
+            <span>
+              Google може блокувати відкриття Apps Script усередині iframe.
+            </span>
+            <button class="btn btn-dark" onclick="openAddEquipmentExternal()">
+              Відкрити форму додавання
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+    </section>
 
     <div id="toast" class="toast"></div>
 

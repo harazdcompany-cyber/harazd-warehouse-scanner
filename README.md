@@ -1,48 +1,23 @@
-# HARAZD WAREHOUSE — Premium UI
+# HARAZD WAREHOUSE — Add Equipment Page
 
-Готовий комплект для GitHub Pages у дизайні HARAZD WAREHOUSE.
+Оновлення додає функціональну сторінку **ДОДАТИ** в інтерфейс GitHub Pages.
 
-## Що входить
+## Що змінилось
 
-- сучасний desktop/mobile інтерфейс;
-- бокове меню;
-- ручний пошук за EQ-ID / Серійним ID / Barcode / QR;
-- QR-сканер камерою;
-- автоматичний пошук після сканування;
-- картка обладнання;
-- фото з Google Sheets;
-- статус доступності;
-- склад / зона / стелаж / полиця;
-- кнопки під майбутні модулі;
-- оновлений Service Worker.
+- пункт **ДОДАТИ** у лівому меню тепер відкриває окрему сторінку HARAZD WAREHOUSE;
+- усередині сторінки завантажується чинна робоча Apps Script форма:
+  `https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add`
+- є кнопка **ВІДКРИТИ ОКРЕМО**, якщо Google блокує iframe;
+- дизайн не змінює поточний сканер та інші модулі;
+- Service Worker оновлено до нового кешу.
 
-## Apps Script API
-
-У комплекті вже вказаний поточний Web App:
-
-https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec
-
-## Встановлення
+## Завантаження
 
 1. Розпакуйте ZIP.
-2. У GitHub відкрийте `harazd-warehouse-scanner`.
+2. GitHub → `harazd-warehouse-scanner`.
 3. `Add file` → `Upload files`.
-4. Завантажте ВСІ файли з архіву.
-5. Підтвердіть заміну існуючих файлів.
-6. `Commit directly to main`.
-7. Натисніть `Commit changes`.
-8. Зачекайте 1–2 хвилини.
-9. Відкрийте GitHub Pages і зробіть Ctrl+F5.
-
-Файли:
-- index.html
-- style.css
-- app.js
-- manifest.json
-- sw.js
-- README.md
-
-
-## Актуальний API URL
-
-https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec
+4. Завантажте всі файли поверх існуючих.
+5. `Commit directly to main`.
+6. `Commit changes`.
+7. Зачекайте 1–2 хвилини.
+8. На GitHub Pages натисніть `Ctrl + F5`.

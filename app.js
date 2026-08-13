@@ -56,17 +56,12 @@ function notReady(moduleName) {
 // ============================================================
 
 function openAddEquipment() {
+  showPage('add');
+}
 
-  if (!API_URL) {
-    showToast('Не задано URL Apps Script.');
-    return;
-  }
-
-  const base =
-    API_URL.split('?')[0];
-
-  window.location.href =
-    base + '?page=add';
+function openAddEquipmentExternal() {
+  const base = API_URL.split('?')[0];
+  window.open(base + '?page=add', '_blank', 'noopener,noreferrer');
 }
 
 
