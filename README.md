@@ -20,7 +20,7 @@
 
 У комплекті вже вказаний поточний Web App:
 
-https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3lwxHjHM8/exec
+https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec
 
 ## Встановлення
 
@@ -41,3 +41,8 @@ https://script.google.com/macros/s/AKfycybtXZesXbry1qynsnGGcBPj2vaomE5CPYG65h1A2
 - manifest.json
 - sw.js
 - README.md
+
+
+## Актуальний API URL
+
+https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec
