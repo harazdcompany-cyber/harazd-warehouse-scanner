@@ -974,3 +974,291 @@ if (
     }
   );
 }
+
+
+// ============================================================
+// NATIVE ADD EQUIPMENT FORM
+// ============================================================
+
+let addDirectoryData = {
+  categories: [],
+  subcategories: {},
+  manufacturers: [],
+  accountingTypes: [],
+  units: [],
+  warehouses: [],
+  locations: {},
+  packaging: []
+};
+
+function loadAddFormLists() {
+  // If already loaded, don't hit API again.
+  if (addDirectoryData.categories.length) return;
+
+  callHarazdJsonp(
+    {
+      action: 'formData'
+    },
+    function(result) {
+      if (!result || !result.success) {
+        setAddApiState(false, 'Не вдалося завантажити довідники');
+        return;
+      }
+
+      addDirectoryData = Object.assign(addDirectoryData, result.data || result);
+
+      fillSelect('addCategory', addDirectoryData.categories, 'Оберіть категорію');
+      fillSelect('addManufacturer', addDirectoryData.manufacturers, 'Оберіть виробника');
+      fillSelect('addAccountingType', addDirectoryData.accountingTypes, 'Оберіть тип обліку');
+      fillSelect('addUnit', addDirectoryData.units, 'Оберіть одиницю');
+      fillSelect('addWarehouse', addDirectoryData.warehouses, 'Оберіть склад');
+      fillSelect('addPackaging', addDirectoryData.packaging, 'Оберіть пакування');
+
+      setAddApiState(true, 'Підключено до Google Sheets');
+    },
+    function() {
+      setAddApiState(false, 'Помилка підключення до Google Sheets');
+    }
+  );
+}
+
+function setAddApiState(ok, text) {
+  const el = document.getElementById('addApiState');
+  if (!el) return;
+
+  el.lastChild.textContent = ' ' + text;
+  const dot = el.querySelector('span');
+
+  if (dot) {
+    dot.style.background = ok ? '#12ae59' : '#d92d20';
+    dot.style.boxShadow = ok
+      ? '0 0 0 4px rgba(18,174,89,.10)'
+      : '0 0 0 4px rgba(217,45,32,.10)';
+  }
+}
+
+function fillSelect(id, values, placeholder) {
+  const select = document.getElementById(id);
+  if (!select) return;
+
+  const current = select.value;
+
+  select.innerHTML = '';
+
+  const empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = placeholder || 'Оберіть значення';
+  select.appendChild(empty);
+
+  (values || []).forEach(function(value) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+
+  if ([...select.options].some(o => o.value === current)) {
+    select.value = current;
+  }
+}
+
+function updateAddSubcategories() {
+  const category = document.getElementById('addCategory').value;
+  const values =
+    (addDirectoryData.subcategories && addDirectoryData.subcategories[category]) || [];
+
+  fillSelect(
+    'addSubcategory',
+    values,
+    category ? 'Оберіть підкатегорію' : 'Спочатку оберіть категорію'
+  );
+}
+
+function updateAddZones() {
+  const warehouse = document.getElementById('addWarehouse').value;
+  const location = getAddLocationNode(warehouse);
+
+  fillSelect(
+    'addZone',
+    location ? Object.keys(location) : [],
+    warehouse ? 'Оберіть зону' : 'Спочатку оберіть склад'
+  );
+
+  fillSelect('addRack', [], 'Оберіть стелаж');
+  fillSelect('addShelf', [], 'Оберіть полицю');
+}
+
+function updateAddRacks() {
+  const warehouse = document.getElementById('addWarehouse').value;
+  const zone = document.getElementById('addZone').value;
+
+  const location = getAddLocationNode(warehouse);
+  const racks = location && location[zone]
+    ? Object.keys(location[zone])
+    : [];
+
+  fillSelect('addRack', racks, zone ? 'Оберіть стелаж' : 'Спочатку оберіть зону');
+  fillSelect('addShelf', [], 'Оберіть полицю');
+}
+
+function updateAddShelves() {
+  const warehouse = document.getElementById('addWarehouse').value;
+  const zone = document.getElementById('addZone').value;
+  const rack = document.getElementById('addRack').value;
+
+  const location = getAddLocationNode(warehouse);
+  const shelves =
+    location &&
+    location[zone] &&
+    location[zone][rack]
+      ? location[zone][rack]
+      : [];
+
+  fillSelect('addShelf', shelves, rack ? 'Оберіть полицю' : 'Спочатку оберіть стелаж');
+}
+
+function getAddLocationNode(warehouse) {
+  return addDirectoryData.locations && addDirectoryData.locations[warehouse]
+    ? addDirectoryData.locations[warehouse]
+    : null;
+}
+
+function submitNativeAddForm(event) {
+  event.preventDefault();
+
+  const form = document.getElementById('addEquipmentForm');
+  if (!form || !form.reportValidity()) return;
+
+  const button = document.getElementById('addSubmitButton');
+  const resultBox = document.getElementById('addResult');
+
+  const payload = {};
+  new FormData(form).forEach((value, key) => {
+    payload[key] = value;
+  });
+
+  button.disabled = true;
+  button.textContent = 'ДОДАВАННЯ...';
+
+  if (resultBox) {
+    resultBox.classList.add('hidden');
+    resultBox.classList.remove('error');
+  }
+
+  callHarazdJsonp(
+    {
+      action: 'addEquipment',
+      payload: JSON.stringify(payload)
+    },
+    function(result) {
+      button.disabled = false;
+      button.innerHTML = '＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ';
+
+      if (!result || !result.success) {
+        showAddResult(
+          (result && result.message) || 'Не вдалося додати обладнання.',
+          false
+        );
+        return;
+      }
+
+      showAddResult(
+        result.message || 'Обладнання успішно додано.',
+        true
+      );
+
+      clearNativeAddForm();
+    },
+    function() {
+      button.disabled = false;
+      button.innerHTML = '＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ';
+
+      showAddResult(
+        'Помилка підключення до HARAZD API.',
+        false
+      );
+    }
+  );
+}
+
+function showAddResult(text, ok) {
+  const box = document.getElementById('addResult');
+  if (!box) return;
+
+  box.textContent = text;
+  box.classList.remove('hidden');
+  box.classList.toggle('error', !ok);
+}
+
+function clearNativeAddForm() {
+  const form = document.getElementById('addEquipmentForm');
+  if (!form) return;
+
+  form.reset();
+
+  document.getElementById('addQuantity').value = '1';
+
+  fillSelect('addSubcategory', [], 'Спочатку оберіть категорію');
+  fillSelect('addZone', [], 'Оберіть зону');
+  fillSelect('addRack', [], 'Оберіть стелаж');
+  fillSelect('addShelf', [], 'Оберіть полицю');
+}
+
+function callHarazdJsonp(params, onSuccess, onError) {
+  const callbackName =
+    '__harazd_' +
+    Date.now() +
+    '_' +
+    Math.floor(Math.random() * 100000);
+
+  let finished = false;
+  let script = document.createElement('script');
+
+  function cleanup() {
+    if (script && script.parentNode) {
+      script.parentNode.removeChild(script);
+    }
+
+    try {
+      delete window[callbackName];
+    } catch (e) {
+      window[callbackName] = undefined;
+    }
+  }
+
+  const timer = setTimeout(function() {
+    if (finished) return;
+    finished = true;
+    cleanup();
+    if (onError) onError(new Error('timeout'));
+  }, 15000);
+
+  window[callbackName] = function(data) {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    cleanup();
+    if (onSuccess) onSuccess(data);
+  };
+
+  const query = Object.assign({}, params, {
+    callback: callbackName,
+    _: Date.now()
+  });
+
+  const qs = Object.keys(query)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(query[key]))
+    .join('&');
+
+  script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + qs;
+
+  script.onerror = function() {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    cleanup();
+    if (onError) onError(new Error('network'));
+  };
+
+  document.body.appendChild(script);
+}

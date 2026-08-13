@@ -64,7 +64,7 @@
           </span>
         </button>
 
-        <button class="nav-item" data-page="add" onclick="showPage('add')">
+        <button class="nav-item" data-page="add" onclick="showPage('add');loadAddFormLists()">
           <span class="nav-icon">＋</span>
           <span>
             <strong>ДОДАТИ</strong>
@@ -435,6 +435,7 @@
 
     
     
+    
     <!-- ADD EQUIPMENT PAGE -->
     <section id="add" class="page">
 
@@ -443,54 +444,166 @@
           ← &nbsp; Назад
         </button>
 
-        <div class="add-title">
+        <div>
           <h1>ДОДАТИ ОБЛАДНАННЯ</h1>
           <p>Нове обладнання на склад.</p>
         </div>
-
-        <button class="home-btn add-open-external" onclick="openAddEquipmentExternal()">
-          ↗ &nbsp; Відкрити окремо
-        </button>
       </div>
 
-      <section class="panel add-module">
+      <section class="panel add-native-panel">
 
-        <div class="module-bar">
+        <div class="add-section-head">
           <div>
             <div class="module-kicker">HARAZD WAREHOUSE</div>
-            <div class="module-title">Форма додавання обладнання</div>
+            <h2>Обладнання</h2>
           </div>
 
-          <div class="module-status">
+          <div class="add-api-state" id="addApiState">
             <span></span>
             Підключено до Google Sheets
           </div>
         </div>
 
-        <div class="add-iframe-wrap">
+        <form id="addEquipmentForm" class="add-form" onsubmit="submitNativeAddForm(event)">
 
-          <iframe
-            id="addEquipmentFrame"
-            class="add-iframe"
-            src="https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec?page=add&embed=1"
-            title="Додати обладнання"
-            loading="eager"
-            allow="camera; clipboard-read; clipboard-write"
-            referrerpolicy="strict-origin-when-cross-origin"
-          ></iframe>
+          <div class="field span-2">
+            <label for="addName">Найменування <b>*</b></label>
+            <input id="addName" name="name" type="text" required>
+          </div>
 
-          <div class="iframe-help">
-            <span>
-              Якщо Google не дозволяє показати форму всередині HARAZD WAREHOUSE,
-              натисніть кнопку праворуч.
-            </span>
+          <div class="field span-2">
+            <label for="addDescription">Опис</label>
+            <textarea id="addDescription" name="description" rows="3"></textarea>
+          </div>
 
-            <button class="btn btn-dark" onclick="openAddEquipmentExternal()">
-              Відкрити форму окремо
+          <div class="field">
+            <label for="addCategory">Категорія <b>*</b></label>
+            <select id="addCategory" name="category" required onchange="updateAddSubcategories()">
+              <option value="">Оберіть категорію</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addSubcategory">Підкатегорія</label>
+            <select id="addSubcategory" name="subcategory">
+              <option value="">Спочатку оберіть категорію</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addModel">Модель</label>
+            <input id="addModel" name="model" type="text">
+          </div>
+
+          <div class="field">
+            <label for="addManufacturer">Виробник</label>
+            <select id="addManufacturer" name="manufacturer">
+              <option value="">Оберіть виробника</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addAccountingType">Тип обліку <b>*</b></label>
+            <select id="addAccountingType" name="accountingType" required>
+              <option value="">Оберіть тип обліку</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addQuantity">Кількість <b>*</b></label>
+            <input id="addQuantity" name="quantity" type="number" min="1" step="1" value="1" required>
+          </div>
+
+          <div class="field">
+            <label for="addWeight">Вага / кг</label>
+            <input id="addWeight" name="weight" type="number" min="0" step="0.01">
+          </div>
+
+          <div class="field">
+            <label for="addUnit">Одиниця виміру <b>*</b></label>
+            <select id="addUnit" name="unit" required>
+              <option value="">Оберіть одиницю</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addWarehouse">Склад <b>*</b></label>
+            <select id="addWarehouse" name="warehouse" required onchange="updateAddZones()">
+              <option value="">Оберіть склад</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addZone">Зона</label>
+            <select id="addZone" name="zone" onchange="updateAddRacks()">
+              <option value="">Оберіть зону</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addRack">Стелаж</label>
+            <select id="addRack" name="rack" onchange="updateAddShelves()">
+              <option value="">Оберіть стелаж</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addShelf">Полиця</label>
+            <select id="addShelf" name="shelf">
+              <option value="">Оберіть полицю</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addPackaging">Пакування</label>
+            <select id="addPackaging" name="packaging">
+              <option value="">Оберіть пакування</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="addPrice">Ціна за одиницю</label>
+            <input id="addPrice" name="price" type="number" min="0" step="0.01">
+          </div>
+
+          <div class="field">
+            <label for="addRentalPrice">Вартість оренди / доба</label>
+            <input id="addRentalPrice" name="rentalPrice" type="number" min="0" step="0.01">
+          </div>
+
+          <div class="field">
+            <label for="addSerial">Серійний ID</label>
+            <input id="addSerial" name="serial" type="text">
+          </div>
+
+          <div class="field">
+            <label for="addBarcode">Barcode</label>
+            <input id="addBarcode" name="barcode" type="text">
+          </div>
+
+          <div class="field">
+            <label for="addQr">QR / Штрихкод</label>
+            <input id="addQr" name="qr" type="text">
+          </div>
+
+          <div class="field span-2">
+            <label for="addPhoto">Фото</label>
+            <input id="addPhoto" name="photo" type="url" placeholder="https://...">
+          </div>
+
+          <div class="add-form-actions span-2">
+            <button type="button" class="btn btn-light" onclick="clearNativeAddForm()">
+              Очистити
+            </button>
+
+            <button id="addSubmitButton" type="submit" class="btn btn-dark">
+              ＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ
             </button>
           </div>
 
-        </div>
+        </form>
+
+        <div id="addResult" class="add-result hidden"></div>
 
       </section>
 
