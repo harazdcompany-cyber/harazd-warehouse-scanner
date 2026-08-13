@@ -1,0 +1,11 @@
+{
+  "name": "HARAZD WAREHOUSE Scanner",
+  "short_name": "HARAZD",
+  "description": "HARAZD WAREHOUSE inventory scanner",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#111111",
+  "orientation": "portrait-primary",
+  "lang": "uk"
+}
