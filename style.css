@@ -1225,3 +1225,210 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+
+/* ============================================================
+   HARAZD WAREHOUSE
+   ADD EQUIPMENT — CUSTOM ORDER V20
+   ============================================================ */
+
+.add-page{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:20px 28px 34px;
+}
+
+.add-page-head{
+  width:min(100%,1280px);
+  margin:0 auto 18px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:start;
+  gap:28px;
+}
+
+.add-native-panel{
+  width:min(100%,1280px);
+  margin:0 auto;
+  padding:20px 18px 22px;
+  border-radius:18px;
+}
+
+.add-api-state-inline{
+  margin:0 0 12px;
+}
+
+.add-form-custom{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  gap:13px 14px;
+  width:100%;
+}
+
+.add-form-custom .col-12{
+  grid-column:span 12;
+}
+
+.add-form-custom .col-6{
+  grid-column:span 6;
+}
+
+.add-form-custom .col-4{
+  grid-column:span 4;
+}
+
+/* 5 equal location columns across the full row */
+.add-form-custom .col-location{
+  grid-column:span 12;
+}
+
+@media(min-width:1150px){
+  .add-form-custom .col-location{
+    grid-column:auto;
+  }
+
+  .add-form-custom{
+    grid-template-columns:repeat(60,minmax(0,1fr));
+  }
+
+  .add-form-custom .col-12{
+    grid-column:span 60;
+  }
+
+  .add-form-custom .col-6{
+    grid-column:span 30;
+  }
+
+  .add-form-custom .col-4{
+    grid-column:span 20;
+  }
+
+  .add-form-custom .col-location{
+    grid-column:span 12;
+  }
+}
+
+.add-form-custom .field{
+  min-width:0;
+}
+
+.add-form-custom .field label{
+  display:block;
+  margin:0 0 6px;
+  color:#171a20;
+  font-size:11px;
+  line-height:1.2;
+  font-weight:800;
+}
+
+.add-form-custom .field label b{
+  color:#e11d2e;
+}
+
+.add-form-custom .field input,
+.add-form-custom .field select,
+.add-form-custom .field textarea{
+  width:100%;
+  border:1px solid #dfe3e8;
+  border-radius:9px;
+  background:#fff;
+  color:#15181d;
+  outline:none;
+  padding:10px 12px;
+  font-size:13px;
+}
+
+.add-form-custom .field input,
+.add-form-custom .field select{
+  height:40px;
+}
+
+.add-form-custom .field textarea{
+  min-height:96px;
+  resize:vertical;
+}
+
+.add-form-custom .field input:focus,
+.add-form-custom .field select:focus,
+.add-form-custom .field textarea:focus{
+  border-color:#aab4c3;
+  box-shadow:0 0 0 3px rgba(23,105,255,.05);
+}
+
+.add-form-actions{
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  gap:10px;
+  margin-top:0;
+}
+
+.add-primary-action{
+  width:230px;
+  height:42px;
+  white-space:nowrap;
+}
+
+.add-clear-action{
+  width:125px;
+  height:42px;
+}
+
+@media(max-width:1149px){
+  .add-form-custom{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .add-form-custom .col-12,
+  .add-form-custom .col-6{
+    grid-column:span 2;
+  }
+
+  .add-form-custom .col-4,
+  .add-form-custom .col-location{
+    grid-column:span 1;
+  }
+}
+
+@media(max-width:760px){
+  .add-page{
+    padding:18px 14px 30px;
+  }
+
+  .add-page-head{
+    gap:12px;
+  }
+
+  .add-native-panel{
+    padding:16px 14px 18px;
+  }
+
+  .add-form-custom{
+    grid-template-columns:1fr;
+  }
+
+  .add-form-custom .col-12,
+  .add-form-custom .col-6,
+  .add-form-custom .col-4,
+  .add-form-custom .col-location{
+    grid-column:span 1;
+  }
+
+  .add-form-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .add-primary-action,
+  .add-clear-action{
+    width:100%;
+  }
+}
+
+@media(max-width:460px){
+  .add-form-actions{
+    grid-template-columns:1fr;
+  }
+}

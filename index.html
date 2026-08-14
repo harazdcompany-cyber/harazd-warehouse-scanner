@@ -434,6 +434,7 @@
     
     
     
+    
     <!-- ADD EQUIPMENT PAGE -->
     <section id="add" class="page add-page">
 
@@ -457,125 +458,72 @@
 
         <form
           id="addEquipmentForm"
-          class="add-form add-form-latest"
+          class="add-form add-form-custom"
           onsubmit="submitNativeAddForm(event)"
         >
 
           <!-- 1. Найменування -->
           <div class="field col-12">
-            <label for="addName">
-              Найменування <b>*</b>
-            </label>
-
-            <input
-              id="addName"
-              name="name"
-              type="text"
-              required
-            >
+            <label for="addName">Найменування <b>*</b></label>
+            <input id="addName" name="name" type="text" required>
           </div>
-
 
           <!-- 2. Опис -->
           <div class="field col-12">
-            <label for="addDescription">
-              Опис
-            </label>
-
-            <textarea
-              id="addDescription"
-              name="description"
-              rows="4"
-            ></textarea>
+            <label for="addDescription">Опис</label>
+            <textarea id="addDescription" name="description" rows="4"></textarea>
           </div>
-
 
           <!-- 3. Категорія / Підкатегорія / Тип обліку -->
           <div class="field col-4">
-            <label for="addCategory">
-              Категорія <b>*</b>
-            </label>
-
+            <label for="addCategory">Категорія <b>*</b></label>
             <select
               id="addCategory"
               name="category"
               required
               onchange="updateAddSubcategories()"
             >
-              <option value="">
-                Оберіть категорію
-              </option>
+              <option value="">Оберіть категорію</option>
             </select>
           </div>
 
           <div class="field col-4">
-            <label for="addSubcategory">
-              Підкатегорія
-            </label>
-
-            <select
-              id="addSubcategory"
-              name="subcategory"
-            >
-              <option value="">
-                Спочатку оберіть категорію
-              </option>
+            <label for="addSubcategory">Підкатегорія</label>
+            <select id="addSubcategory" name="subcategory">
+              <option value="">Спочатку оберіть категорію</option>
             </select>
           </div>
 
           <div class="field col-4">
-            <label for="addAccountingType">
-              Тип обліку <b>*</b>
-            </label>
-
-            <select
-              id="addAccountingType"
-              name="accountingType"
-              required
-            >
-              <option value="">
-                Оберіть тип обліку
-              </option>
+            <label for="addAccountingType">Тип обліку <b>*</b></label>
+            <select id="addAccountingType" name="accountingType" required>
+              <option value="">Оберіть тип обліку</option>
             </select>
           </div>
 
-
-          <!-- 4. Модель / Одиниця виміру -->
+          <!-- 4. Виробник / Модель -->
           <div class="field col-6">
-            <label for="addModel">
-              Модель
-            </label>
-
-            <input
-              id="addModel"
-              name="model"
-              type="text"
-            >
-          </div>
-
-          <div class="field col-6">
-            <label for="addUnit">
-              Одиниця виміру <b>*</b>
-            </label>
-
-            <select
-              id="addUnit"
-              name="unit"
-              required
-            >
-              <option value="">
-                Оберіть одиницю
-              </option>
+            <label for="addManufacturer">Виробник</label>
+            <select id="addManufacturer" name="manufacturer">
+              <option value="">Оберіть виробника</option>
             </select>
           </div>
 
-
-          <!-- 5. Кількість / Склад / Зона -->
           <div class="field col-6">
-            <label for="addQuantity">
-              Кількість <b>*</b>
-            </label>
+            <label for="addModel">Модель</label>
+            <input id="addModel" name="model" type="text">
+          </div>
 
+          <!-- 5. Одиниця виміру / Кількість / Вага -->
+          <div class="field col-4">
+            <label for="addUnit">Одиниця виміру <b>*</b></label>
+            <select id="addUnit" name="unit" required>
+              <option value="">Оберіть одиницю</option>
+            </select>
+          </div>
+
+          <div class="field col-4">
+            <label for="addQuantity">Кількість <b>*</b></label>
             <input
               id="addQuantity"
               name="quantity"
@@ -587,137 +535,68 @@
             >
           </div>
 
-          <div class="field col-3">
-            <label for="addWarehouse">
-              Склад <b>*</b>
-            </label>
+          <div class="field col-4">
+            <label for="addWeight">Вага / кг</label>
+            <input id="addWeight" name="weight" type="number" min="0" step="0.01">
+          </div>
 
+          <!-- 6. Склад / Зона / Стелаж / Полиця / Пакування -->
+          <div class="field col-location">
+            <label for="addWarehouse">Склад <b>*</b></label>
             <select
               id="addWarehouse"
               name="warehouse"
               required
               onchange="updateAddZones()"
             >
-              <option value="">
-                Оберіть склад
-              </option>
+              <option value="">Оберіть склад</option>
             </select>
           </div>
 
-          <div class="field col-3">
-            <label for="addZone">
-              Зона
-            </label>
-
+          <div class="field col-location">
+            <label for="addZone">Зона</label>
             <select
               id="addZone"
               name="zone"
               onchange="updateAddRacks()"
             >
-              <option value="">
-                Оберіть зону
-              </option>
+              <option value="">Оберіть зону</option>
             </select>
           </div>
 
-
-          <!-- 6. Стелаж / Полиця / Виробник / Пакування -->
-          <div class="field col-3">
-            <label for="addRack">
-              Стелаж
-            </label>
-
+          <div class="field col-location">
+            <label for="addRack">Стелаж</label>
             <select
               id="addRack"
               name="rack"
               onchange="updateAddShelves()"
             >
-              <option value="">
-                Оберіть стелаж
-              </option>
+              <option value="">Оберіть стелаж</option>
             </select>
           </div>
 
-          <div class="field col-3">
-            <label for="addShelf">
-              Полиця
-            </label>
-
-            <select
-              id="addShelf"
-              name="shelf"
-            >
-              <option value="">
-                Оберіть полицю
-              </option>
+          <div class="field col-location">
+            <label for="addShelf">Полиця</label>
+            <select id="addShelf" name="shelf">
+              <option value="">Оберіть полицю</option>
             </select>
           </div>
 
-          <div class="field col-3">
-            <label for="addManufacturer">
-              Виробник
-            </label>
-
-            <select
-              id="addManufacturer"
-              name="manufacturer"
-            >
-              <option value="">
-                Оберіть виробника
-              </option>
+          <div class="field col-location">
+            <label for="addPackaging">Пакування</label>
+            <select id="addPackaging" name="packaging">
+              <option value="">Оберіть пакування</option>
             </select>
           </div>
 
-          <div class="field col-3">
-            <label for="addPackaging">
-              Пакування
-            </label>
-
-            <select
-              id="addPackaging"
-              name="packaging"
-            >
-              <option value="">
-                Оберіть пакування
-              </option>
-            </select>
+          <!-- 7. Ціна / Оренда -->
+          <div class="field col-6">
+            <label for="addPrice">Ціна за одиницю</label>
+            <input id="addPrice" name="price" type="number" min="0" step="0.01">
           </div>
 
-
-          <!-- 7. Вага / Ціна / Оренда / Серійний ID -->
-          <div class="field col-3">
-            <label for="addWeight">
-              Вага / кг
-            </label>
-
-            <input
-              id="addWeight"
-              name="weight"
-              type="number"
-              min="0"
-              step="0.01"
-            >
-          </div>
-
-          <div class="field col-3">
-            <label for="addPrice">
-              Ціна за одиницю
-            </label>
-
-            <input
-              id="addPrice"
-              name="price"
-              type="number"
-              min="0"
-              step="0.01"
-            >
-          </div>
-
-          <div class="field col-3">
-            <label for="addRentalPrice">
-              Вартість оренди / доба
-            </label>
-
+          <div class="field col-6">
+            <label for="addRentalPrice">Вартість оренди / доба</label>
             <input
               id="addRentalPrice"
               name="rentalPrice"
@@ -727,51 +606,14 @@
             >
           </div>
 
-          <div class="field col-3">
-            <label for="addSerial">
-              Серійний ID
-            </label>
-
-            <input
-              id="addSerial"
-              name="serial"
-              type="text"
-            >
-          </div>
-
-
-          <!-- 8. Barcode / QR -->
+          <!-- 8. Серійний ID / Фото -->
           <div class="field col-6">
-            <label for="addBarcode">
-              Barcode
-            </label>
-
-            <input
-              id="addBarcode"
-              name="barcode"
-              type="text"
-            >
+            <label for="addSerial">Серійний ID</label>
+            <input id="addSerial" name="serial" type="text">
           </div>
 
           <div class="field col-6">
-            <label for="addQr">
-              QR / Штрихкод
-            </label>
-
-            <input
-              id="addQr"
-              name="qr"
-              type="text"
-            >
-          </div>
-
-
-          <!-- Фото залишаємо функціонально, але компактно -->
-          <div class="field col-12 add-photo-row">
-            <label for="addPhoto">
-              Фото (посилання)
-            </label>
-
+            <label for="addPhoto">Фото (посилання)</label>
             <input
               id="addPhoto"
               name="photo"
@@ -780,8 +622,7 @@
             >
           </div>
 
-
-          <!-- Кнопки -->
+          <!-- Buttons -->
           <div class="add-form-actions col-12">
             <button
               id="addSubmitButton"
@@ -802,10 +643,7 @@
 
         </form>
 
-        <div
-          id="addResult"
-          class="add-result hidden"
-        ></div>
+        <div id="addResult" class="add-result hidden"></div>
 
       </section>
 
