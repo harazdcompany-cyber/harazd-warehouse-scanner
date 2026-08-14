@@ -155,7 +155,6 @@
             ⌕ &nbsp; ЗНАЙТИ
           </button>
 
-
         </div>
 
 
@@ -433,8 +432,9 @@
     
     
     
+    
     <!-- ADD EQUIPMENT PAGE -->
-    <section id="add" class="page">
+    <section id="add" class="page add-page">
 
       <div class="page-head add-page-head">
         <button class="back-btn" onclick="showPage('scanner')">
@@ -449,80 +449,67 @@
 
       <section class="panel add-native-panel">
 
-        <div class="add-section-head">
-          <div>
-            <div class="module-kicker">HARAZD WAREHOUSE</div>
-            <h2>Обладнання</h2>
-          </div>
-
-          <div class="add-api-state" id="addApiState">
-            <span></span>
-            Підключено до Google Sheets
-          </div>
+        <div class="add-api-state add-api-state-floating" id="addApiState">
+          <span></span>
+          Підключено до Google Sheets
         </div>
 
-        <form id="addEquipmentForm" class="add-form" onsubmit="submitNativeAddForm(event)">
+        <form id="addEquipmentForm" class="add-form add-form-approved" onsubmit="submitNativeAddForm(event)">
 
-          <div class="field span-2">
+          <!-- 1. NAME -->
+          <div class="field span-4">
             <label for="addName">Найменування <b>*</b></label>
             <input id="addName" name="name" type="text" required>
           </div>
 
-          <div class="field span-2">
+          <!-- 2. DESCRIPTION -->
+          <div class="field span-4">
             <label for="addDescription">Опис</label>
             <textarea id="addDescription" name="description" rows="3"></textarea>
           </div>
 
-          <div class="field">
+          <!-- 3. CATEGORY / SUBCATEGORY -->
+          <div class="field span-2">
             <label for="addCategory">Категорія <b>*</b></label>
             <select id="addCategory" name="category" required onchange="updateAddSubcategories()">
               <option value="">Оберіть категорію</option>
             </select>
           </div>
 
-          <div class="field">
+          <div class="field span-2">
             <label for="addSubcategory">Підкатегорія</label>
             <select id="addSubcategory" name="subcategory">
               <option value="">Спочатку оберіть категорію</option>
             </select>
           </div>
 
-          <div class="field">
-            <label for="addModel">Модель</label>
-            <input id="addModel" name="model" type="text">
-          </div>
-
-          <div class="field">
-            <label for="addManufacturer">Виробник</label>
-            <select id="addManufacturer" name="manufacturer">
-              <option value="">Оберіть виробника</option>
-            </select>
-          </div>
-
-          <div class="field">
+          <!-- 4. ACCOUNTING TYPE / MODEL -->
+          <div class="field span-2">
             <label for="addAccountingType">Тип обліку <b>*</b></label>
             <select id="addAccountingType" name="accountingType" required>
               <option value="">Оберіть тип обліку</option>
             </select>
           </div>
 
-          <div class="field">
-            <label for="addQuantity">Кількість <b>*</b></label>
-            <input id="addQuantity" name="quantity" type="number" min="1" step="1" value="1" required>
+          <div class="field span-2">
+            <label for="addModel">Модель</label>
+            <input id="addModel" name="model" type="text">
           </div>
 
-          <div class="field">
-            <label for="addWeight">Вага / кг</label>
-            <input id="addWeight" name="weight" type="number" min="0" step="0.01">
-          </div>
-
-          <div class="field">
+          <!-- 5. UNIT / QUANTITY -->
+          <div class="field span-2">
             <label for="addUnit">Одиниця виміру <b>*</b></label>
             <select id="addUnit" name="unit" required>
               <option value="">Оберіть одиницю</option>
             </select>
           </div>
 
+          <div class="field span-2">
+            <label for="addQuantity">Кількість <b>*</b></label>
+            <input id="addQuantity" name="quantity" type="number" min="1" step="1" value="1" required>
+          </div>
+
+          <!-- 6. LOCATION -->
           <div class="field">
             <label for="addWarehouse">Склад <b>*</b></label>
             <select id="addWarehouse" name="warehouse" required onchange="updateAddZones()">
@@ -551,11 +538,24 @@
             </select>
           </div>
 
+          <!-- 7. OTHER -->
+          <div class="field">
+            <label for="addManufacturer">Виробник</label>
+            <select id="addManufacturer" name="manufacturer">
+              <option value="">Оберіть виробника</option>
+            </select>
+          </div>
+
           <div class="field">
             <label for="addPackaging">Пакування</label>
             <select id="addPackaging" name="packaging">
               <option value="">Оберіть пакування</option>
             </select>
+          </div>
+
+          <div class="field span-2">
+            <label for="addWeight">Вага / кг</label>
+            <input id="addWeight" name="weight" type="number" min="0" step="0.01">
           </div>
 
           <div class="field">
@@ -578,23 +578,24 @@
             <input id="addBarcode" name="barcode" type="text">
           </div>
 
-          <div class="field">
+          <div class="field span-2">
             <label for="addQr">QR / Штрихкод</label>
             <input id="addQr" name="qr" type="text">
           </div>
 
           <div class="field span-2">
-            <label for="addPhoto">Фото</label>
+            <label for="addPhoto">Фото (посилання)</label>
             <input id="addPhoto" name="photo" type="url" placeholder="https://...">
           </div>
 
-          <div class="add-form-actions span-2">
-            <button type="button" class="btn btn-light" onclick="clearNativeAddForm()">
-              Очистити
+          <!-- BUTTONS: ADD FIRST, CLEAR SECOND -->
+          <div class="add-form-actions span-4">
+            <button id="addSubmitButton" type="submit" class="btn btn-dark add-primary-action">
+              ＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ
             </button>
 
-            <button id="addSubmitButton" type="submit" class="btn btn-dark">
-              ＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ
+            <button type="button" class="btn btn-light add-clear-action" onclick="clearNativeAddForm()">
+              Очистити
             </button>
           </div>
 

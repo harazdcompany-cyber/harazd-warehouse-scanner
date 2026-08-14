@@ -997,4 +997,196 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
-\n\n/* ===== FINAL HARAZD UI OVERRIDES v1.2 ===== */\n.search-row{grid-template-columns:minmax(0,1fr) 140px;}\n.search-row .btn-dark{font-size:14px;}\n.search-row .btn-dark::first-letter{font-size:16px;}\n\n/* Add page: one native surface, compact enough for desktop viewport */\n#add.page{max-width:1320px;padding-top:18px;}\n#add .page-head{margin-bottom:14px;align-items:center;}\n#add .page-head h1{font-size:25px;}\n#add .add-native-panel{padding:16px 18px 18px;border-radius:16px;}\n#add .add-section-head{margin-bottom:12px;}\n#add .add-section-head h2{font-size:18px;}\n#add .add-form{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 12px;}\n#add .field label{margin-bottom:4px;font-size:10.5px;}\n#add .field input,#add .field select{height:38px;padding:7px 10px;font-size:12px;border-radius:8px;}\n#add .field textarea{height:54px;min-height:54px;max-height:54px;resize:none;padding:8px 10px;font-size:12px;border-radius:8px;}\n#add .field.span-2{grid-column:span 2;}\n#add .add-form-actions{margin-top:2px;align-items:end;}\n#add .add-form-actions .btn{height:40px;min-width:150px;font-size:12px;}\n#add .add-result{margin-top:10px;padding:10px 12px;}\n\n@media (min-width:1200px) and (min-height:760px){\n  #add .page-head{margin-bottom:10px;}\n  #add .add-native-panel{padding-top:13px;}\n}\n\n@media(max-width:1100px){\n  .search-row{grid-template-columns:minmax(0,1fr) 130px;}\n  #add .add-form{grid-template-columns:repeat(2,minmax(0,1fr));}\n}\n@media(max-width:760px){\n  .search-row{grid-template-columns:1fr 110px;}\n  #add .add-form{grid-template-columns:1fr;}\n}\n@media(max-width:480px){.search-row{grid-template-columns:1fr;}}\n
+
+
+/* ============================================================
+   ADD EQUIPMENT — APPROVED FINAL DESIGN
+   ============================================================ */
+
+.add-page{
+  max-width:none;
+  width:100%;
+  padding:22px 26px 38px;
+}
+
+.add-page-head{
+  width:100%;
+  max-width:1240px;
+  margin:0 auto 18px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:start;
+  gap:28px;
+}
+
+.add-native-panel{
+  position:relative;
+  width:100%;
+  max-width:1240px;
+  margin:0 auto;
+  padding:26px 24px 22px;
+  border-radius:18px;
+}
+
+.add-api-state-floating{
+  position:absolute;
+  top:22px;
+  right:24px;
+  z-index:1;
+}
+
+.add-form-approved{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px 14px;
+  padding-top:0;
+}
+
+.add-form-approved .span-4{
+  grid-column:span 4;
+}
+
+.add-form-approved .span-2{
+  grid-column:span 2;
+}
+
+.add-form-approved .field label{
+  margin:0 0 6px;
+  color:#21252b;
+  font-size:11px;
+  font-weight:800;
+}
+
+.add-form-approved .field input,
+.add-form-approved .field select,
+.add-form-approved .field textarea{
+  width:100%;
+  border:1px solid #dfe3e8;
+  border-radius:10px;
+  background:#fff;
+  color:#15181d;
+  outline:none;
+  padding:10px 12px;
+  font-size:13px;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+
+.add-form-approved .field input,
+.add-form-approved .field select{
+  height:42px;
+}
+
+.add-form-approved .field textarea{
+  min-height:74px;
+  resize:vertical;
+}
+
+.add-form-approved .field input:focus,
+.add-form-approved .field select:focus,
+.add-form-approved .field textarea:focus{
+  border-color:#aab4c3;
+  box-shadow:0 0 0 3px rgba(23,105,255,.05);
+}
+
+.add-form-actions{
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  gap:14px;
+  margin-top:4px;
+}
+
+.add-primary-action{
+  width:270px;
+  height:44px;
+}
+
+.add-clear-action{
+  width:150px;
+  height:44px;
+}
+
+/* Keep card spacing proportional to the page title area */
+@media(min-width:1200px){
+  .add-page{
+    padding-left:26px;
+    padding-right:26px;
+  }
+
+  .add-page-head,
+  .add-native-panel{
+    max-width:1240px;
+  }
+}
+
+@media(max-width:1100px){
+  .add-form-approved{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .add-form-approved .span-4{
+    grid-column:span 2;
+  }
+
+  .add-form-approved .span-2{
+    grid-column:span 2;
+  }
+}
+
+@media(max-width:760px){
+  .add-page{
+    padding:18px 14px 30px;
+  }
+
+  .add-page-head{
+    gap:12px;
+  }
+
+  .add-native-panel{
+    padding:18px 14px;
+  }
+
+  .add-api-state-floating{
+    position:static;
+    margin-bottom:14px;
+  }
+
+  .add-form-approved{
+    grid-template-columns:1fr;
+  }
+
+  .add-form-approved .span-4,
+  .add-form-approved .span-2{
+    grid-column:span 1;
+  }
+
+  .add-form-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .add-primary-action,
+  .add-clear-action{
+    width:100%;
+  }
+}
+
+@media(max-width:460px){
+  .add-form-actions{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* Search button refinement */
+.search-row{
+  grid-template-columns:minmax(0,1fr) 140px;
+}
+
+.search-row .btn-dark{
+  font-size:14px;
+}
+
+.search-row .btn-dark::first-letter{
+  font-size:16px;
+}
