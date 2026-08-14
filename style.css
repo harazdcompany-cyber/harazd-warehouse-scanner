@@ -1085,3 +1085,134 @@ button{cursor:pointer}
     max-width:none;
   }
 }
+
+
+/* ============================================================
+   V23 — FINAL BUTTON PROPORTIONS
+   ============================================================ */
+
+.add-actions-v21{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  margin-top:8px !important;
+  flex-wrap:nowrap !important;
+}
+
+.add-actions-v21 .btn,
+.add-primary-v21,
+.add-clear-v21{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  height:40px !important;
+  min-height:40px !important;
+
+  width:auto !important;
+  max-width:none !important;
+
+  padding:0 18px !important;
+
+  border-radius:9px !important;
+
+  font-size:12.5px !important;
+  line-height:1 !important;
+  font-weight:800 !important;
+  letter-spacing:0 !important;
+
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+
+  flex:0 0 auto !important;
+  box-sizing:border-box !important;
+}
+
+.add-primary-v21{
+  min-width:205px !important;
+}
+
+.add-clear-v21{
+  min-width:108px !important;
+}
+
+/* Keep the plus symbol visually balanced */
+.add-primary-v21{
+  gap:8px !important;
+}
+
+/* Tablet/mobile */
+@media(max-width:760px){
+  .add-actions-v21{
+    flex-wrap:wrap !important;
+  }
+
+  .add-primary-v21{
+    min-width:190px !important;
+  }
+
+  .add-clear-v21{
+    min-width:100px !important;
+  }
+}
+
+@media(max-width:460px){
+  .add-actions-v21{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  .add-primary-v21,
+  .add-clear-v21{
+    width:100% !important;
+    min-width:0 !important;
+  }
+}
+
+/* ============================================================
+   V24 — STATUS RIGHT + POLISHED ACTION BUTTONS
+   ============================================================ */
+.add-api-state-v21{
+  justify-content:flex-end !important;
+  width:100% !important;
+  margin:0 0 12px !important;
+  text-align:right !important;
+}
+
+.add-actions-v21{
+  gap:12px !important;
+  margin-top:10px !important;
+}
+
+.add-actions-v21 .btn,
+.add-primary-v21,
+.add-clear-v21{
+  height:42px !important;
+  min-height:42px !important;
+  border-radius:10px !important;
+  padding:0 17px !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+}
+
+.add-primary-v21{
+  min-width:190px !important;
+  background:#11131c !important;
+  color:#fff !important;
+  border:1px solid #11131c !important;
+}
+
+.add-clear-v21{
+  min-width:104px !important;
+  background:#fff !important;
+  color:#171a20 !important;
+  border:1px solid #dfe3e8 !important;
+}
+
+.add-primary-v21:hover{background:#1a1d28 !important;}
+.add-clear-v21:hover{background:#f7f8fa !important;}
+.add-primary-v21 > span:first-child{font-size:18px;line-height:1;font-weight:500;margin-right:2px;}

@@ -1152,7 +1152,7 @@ function submitNativeAddForm(event) {
     },
     function(result) {
       button.disabled = false;
-      button.innerHTML = '＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ';
+      button.innerHTML = '<span aria-hidden="true">＋</span><span>Додати обладнання</span>';
 
       if (!result || !result.success) {
         showAddResult(
@@ -1171,7 +1171,7 @@ function submitNativeAddForm(event) {
     },
     function() {
       button.disabled = false;
-      button.innerHTML = '＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ';
+      button.innerHTML = '<span aria-hidden="true">＋</span><span>Додати обладнання</span>';
 
       showAddResult(
         'Помилка підключення до HARAZD API.',
