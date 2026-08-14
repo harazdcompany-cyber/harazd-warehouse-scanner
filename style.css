@@ -1242,3 +1242,21 @@ button{cursor:pointer}
   font-weight:800;
   margin-bottom:4px;
 }
+
+
+/* ============================================================
+   V29 — SINGLE SCAN FRAME
+   Keep only one white corner frame + green scan line
+   ============================================================ */
+
+.scan-box,
+.scan-inner-frame,
+.scanner-inner-frame,
+.scan-frame-inner{
+  display:none !important;
+}
+
+/* Do not hide the main frame/corners */
+.scan-frame{
+  display:block !important;
+}
