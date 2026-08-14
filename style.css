@@ -1022,3 +1022,66 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* ============================================================
+   V22 — ADD PAGE BUTTON POLISH
+   ============================================================ */
+.add-actions-v21{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  margin-top:6px;
+}
+
+.add-primary-v21,
+.add-clear-v21{
+  height:46px;
+  border-radius:10px;
+  padding:0 22px;
+  font-size:14px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:0;
+  white-space:nowrap;
+}
+
+.add-primary-v21{
+  width:auto;
+  min-width:238px;
+  max-width:280px;
+}
+
+.add-clear-v21{
+  width:auto;
+  min-width:132px;
+}
+
+@media(max-width:760px){
+  .add-actions-v21{
+    display:flex;
+    flex-wrap:wrap;
+  }
+
+  .add-primary-v21{
+    min-width:210px;
+  }
+
+  .add-clear-v21{
+    min-width:120px;
+  }
+}
+
+@media(max-width:460px){
+  .add-actions-v21{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .add-primary-v21,
+  .add-clear-v21{
+    width:100%;
+    max-width:none;
+  }
+}
