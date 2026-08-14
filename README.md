@@ -1,27 +1,17 @@
-# HARAZD WAREHOUSE — Native Add Page
+# HARAZD WAREHOUSE — GitHub package v1.2
 
-Ця версія ПОВНІСТЮ прибирає iframe зі сторінки `ДОДАТИ`.
+Готовий пакет для завантаження в корінь GitHub Pages репозиторію.
 
-Форма тепер малюється прямо в правій частині HARAZD WAREHOUSE:
-- без "сторінки в сторінці";
-- без внутрішнього скролу iframe;
-- усі поля є частиною GitHub UI;
-- адаптивна сітка 4 колонки на широкому екрані;
-- 2 колонки на середньому;
-- 1 колонка на телефоні.
+## Що виправлено
+- сторінка **ДОДАТИ** нативна, без iframe і без «сторінки в сторінці»;
+- форма розкладена у 4 колонки на широкому екрані;
+- поля компактніші, щоб максимально помістити форму в правому робочому блоці;
+- прибрана окрема кнопка/підказка Enter біля пошуку;
+- нормалізовані імена `index.html`, `manifest.json`, `sw.js`;
+- cache service worker піднято до v17.
 
-## Важливо
+## GitHub
+Завантажте `index.html`, `app.js`, `style.css`, `manifest.json`, `sw.js` поверх однойменних файлів у корені репозиторію.
 
-Фронтенд готовий, але для повністю робочого збереження та dropdown-ів
-потрібні два API actions у Apps Script:
-
-- `action=formData`
-- `action=addEquipment`
-
-Файл `APPS_SCRIPT_NATIVE_ADD_PATCH.gs` пояснює, що треба підключити.
-
-Щоб я зробив бекенд 1:1 без ризику зламати існуючу логіку,
-потрібен поточний код `13_AddEquipmentAPI.gs`.
-
-API:
-https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec
+## Apps Script
+Фронтенд очікує API actions `formData` та `addEquipment`. Файл `APPS_SCRIPT_NATIVE_ADD_PATCH.gs` описує точки підключення. Для повністю робочого збереження потрібна реалізація цих actions у вашому поточному Apps Script.
