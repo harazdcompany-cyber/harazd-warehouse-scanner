@@ -1260,3 +1260,49 @@ button{cursor:pointer}
 .scan-frame{
   display:block !important;
 }
+
+
+/* ============================================================
+   V32 — LOGO TYPOGRAPHY SWAP
+   HARAZD = previous WAREHOUSE style
+   WAREHOUSE = previous HARAZD style
+   ============================================================ */
+
+.brand-top{
+  font-size:24px !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:-0.4px !important;
+  color:#111318 !important;
+  margin:0 0 2px !important;
+}
+
+.brand-bottom{
+  font-size:12px !important;
+  line-height:1.1 !important;
+  font-weight:800 !important;
+  letter-spacing:2.0px !important;
+  color:#69717d !important;
+  margin:0 !important;
+}
+
+
+.brand .brand-small,
+.logo-text .brand-small,
+.sidebar-brand .brand-small{
+  font-size:24px !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:-0.4px !important;
+  color:#111318 !important;
+}
+
+.brand .brand-big,
+.logo-text .brand-big,
+.sidebar-brand .brand-big{
+  font-size:12px !important;
+  line-height:1.1 !important;
+  font-weight:800 !important;
+  letter-spacing:2.0px !important;
+  color:#69717d !important;
+}

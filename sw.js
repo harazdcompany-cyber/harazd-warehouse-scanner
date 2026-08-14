@@ -1,4 +1,4 @@
-const CACHE_NAME = 'harazd-warehouse-v31';
+const CACHE_NAME = 'harazd-warehouse-v32';
 
 const APP_SHELL = [
   './',
