@@ -1216,3 +1216,29 @@ button{cursor:pointer}
 .add-primary-v21:hover{background:#1a1d28 !important;}
 .add-clear-v21:hover{background:#f7f8fa !important;}
 .add-primary-v21 > span:first-child{font-size:18px;line-height:1;font-weight:500;margin-right:2px;}
+
+
+/* ============================================================
+   V27 — SCAN HELP WITHOUT ICONS
+   ============================================================ */
+
+.help-title{
+  font-weight:850;
+  margin-bottom:20px;
+}
+
+.help-step{
+  display:block;
+  margin:17px 0;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.help-step > div{
+  display:block;
+}
+
+.flash-title{
+  font-weight:800;
+  margin-bottom:4px;
+}
