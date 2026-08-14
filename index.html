@@ -32,19 +32,27 @@
 
       <nav class="nav">
 
-        <button class="nav-item active" data-page="scanner" onclick="showPage('scanner')">
-          <span class="nav-icon">▣</span>
-          <span>
-            <strong>СКАНЕР</strong>
-            <small>Сканування обладнання</small>
-          </span>
-        </button>
-
         <button class="nav-item" data-page="stock" onclick="notReady('Склад')">
           <span class="nav-icon">⌂</span>
           <span>
             <strong>СКЛАД</strong>
             <small>Усі одиниці обладнання</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="add" onclick="showPage('add');loadAddFormLists()">
+          <span class="nav-icon">＋</span>
+          <span>
+            <strong>ДОДАТИ</strong>
+            <small>Нове обладнання</small>
+          </span>
+        </button>
+
+        <button class="nav-item active" data-page="scanner" onclick="showPage('scanner')">
+          <span class="nav-icon">▣</span>
+          <span>
+            <strong>СКАНЕР</strong>
+            <small>Сканування обладнання</small>
           </span>
         </button>
 
@@ -61,14 +69,6 @@
           <span>
             <strong>ПОВЕРНЕННЯ</strong>
             <small>Вигрузка на склад</small>
-          </span>
-        </button>
-
-        <button class="nav-item" data-page="add" onclick="showPage('add');loadAddFormLists()">
-          <span class="nav-icon">＋</span>
-          <span>
-            <strong>ДОДАТИ</strong>
-            <small>Нове обладнання</small>
           </span>
         </button>
 
