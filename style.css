@@ -1306,3 +1306,32 @@ button{cursor:pointer}
   letter-spacing:2.0px !important;
   color:#69717d !important;
 }
+
+
+/* ============================================================
+   V33 — REMOVE BACK BUTTONS
+   Scanner + Add Equipment
+   ============================================================ */
+
+#scannerView .back-btn,
+#scannerPage .back-btn,
+.scanner-page .back-btn,
+.scanner-view .back-btn,
+#addView .back-btn,
+#addPage .back-btn,
+.add-page .back-btn,
+.add-view .back-btn,
+body[data-page="scanner"] .back-btn,
+body[data-page="add"] .back-btn {
+  display: none !important;
+}
+
+/* Current single-page app: hide back button whenever its page is active */
+.page-scanner .btn-back,
+.page-add .btn-back,
+#scannerView [onclick*="goHome"],
+#scannerView [onclick*="goBack"],
+#addView [onclick*="goHome"],
+#addView [onclick*="goBack"] {
+  display: none !important;
+}
