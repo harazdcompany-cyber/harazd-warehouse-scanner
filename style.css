@@ -1335,3 +1335,25 @@ body[data-page="add"] .back-btn {
 #addView [onclick*="goBack"] {
   display: none !important;
 }
+
+
+/* ============================================================
+   V34 — BACK BUTTONS REALLY REMOVED
+   ============================================================ */
+
+/* Scanner header: title starts from the left edge */
+#scanner .page-head{
+  display:block !important;
+}
+
+/* Add Equipment header: remove the now-empty first grid column */
+#add .add-page-head-v21{
+  display:block !important;
+  grid-template-columns:none !important;
+}
+
+/* Safety: no back buttons on these two pages */
+#scanner .back-btn,
+#add .back-btn{
+  display:none !important;
+}
