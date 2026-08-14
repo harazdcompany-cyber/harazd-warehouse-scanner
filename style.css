@@ -1001,16 +1001,10 @@ button{cursor:pointer}
 
 
 /* ============================================================
-   HARAZD WAREHOUSE — FINAL APPROVED ADD PAGE
-   Matches the approved generated design
+   HARAZD WAREHOUSE
+   ADD EQUIPMENT — LATEST GENERATED DESIGN
    ============================================================ */
 
-/* Scanner search: no separate Enter button */
-.search-row{
-  grid-template-columns:minmax(0,1fr) 140px;
-}
-
-/* Page dimensions */
 .add-page{
   width:100%;
   max-width:none;
@@ -1019,8 +1013,8 @@ button{cursor:pointer}
 }
 
 .add-page-head{
-  width:min(100%,1240px);
-  margin:0 auto 20px;
+  width:min(100%,1280px);
+  margin:0 auto 18px;
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   align-items:start;
@@ -1035,47 +1029,59 @@ button{cursor:pointer}
   margin:0;
 }
 
-/* Large right-side form card */
 .add-native-panel{
-  position:relative;
-  width:min(100%,1240px);
+  width:min(100%,1280px);
   margin:0 auto;
-  padding:30px 22px 22px;
+  padding:20px 18px 22px;
   border-radius:18px;
-  overflow:visible;
 }
 
-/* Connection status in top-right corner */
-.add-api-state-floating{
-  position:absolute;
-  top:17px;
-  right:22px;
-  z-index:2;
+.add-api-state-inline{
+  margin:0 0 12px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:#68707c;
+  font-size:11px;
+  font-weight:700;
 }
 
-/* Main grid */
-.add-form-final{
+.add-api-state-inline span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#12ae59;
+  box-shadow:0 0 0 4px rgba(18,174,89,.10);
+}
+
+.add-form-latest{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(12,minmax(0,1fr));
   gap:13px 14px;
   width:100%;
-  padding-top:4px;
 }
 
-.add-form-final .field{
-  min-width:0;
+.add-form-latest .col-12{
+  grid-column:span 12;
 }
 
-.add-form-final .span-4{
+.add-form-latest .col-6{
+  grid-column:span 6;
+}
+
+.add-form-latest .col-4{
   grid-column:span 4;
 }
 
-.add-form-final .span-2{
-  grid-column:span 2;
+.add-form-latest .col-3{
+  grid-column:span 3;
 }
 
-/* Fields */
-.add-form-final .field label{
+.add-form-latest .field{
+  min-width:0;
+}
+
+.add-form-latest .field label{
   display:block;
   margin:0 0 6px;
   color:#171a20;
@@ -1084,13 +1090,13 @@ button{cursor:pointer}
   font-weight:800;
 }
 
-.add-form-final .field label b{
+.add-form-latest .field label b{
   color:#e11d2e;
 }
 
-.add-form-final .field input,
-.add-form-final .field select,
-.add-form-final .field textarea{
+.add-form-latest .field input,
+.add-form-latest .field select,
+.add-form-latest .field textarea{
   width:100%;
   border:1px solid #dfe3e8;
   border-radius:9px;
@@ -1099,60 +1105,83 @@ button{cursor:pointer}
   outline:none;
   padding:10px 12px;
   font-size:13px;
-  transition:border-color .15s ease, box-shadow .15s ease;
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
 }
 
-.add-form-final .field input,
-.add-form-final .field select{
+.add-form-latest .field input,
+.add-form-latest .field select{
   height:40px;
 }
 
-.add-form-final .field textarea{
-  min-height:70px;
+.add-form-latest .field textarea{
+  min-height:92px;
   resize:vertical;
 }
 
-.add-form-final .field input:focus,
-.add-form-final .field select:focus,
-.add-form-final .field textarea:focus{
+.add-form-latest .field input:focus,
+.add-form-latest .field select:focus,
+.add-form-latest .field textarea:focus{
   border-color:#aab4c3;
   box-shadow:0 0 0 3px rgba(23,105,255,.05);
 }
 
-/* Buttons aligned to the first column */
+.add-photo-row{
+  margin-top:0;
+}
+
 .add-form-actions{
   display:flex;
   justify-content:flex-start;
   align-items:center;
-  gap:12px;
+  gap:10px;
   margin-top:0;
 }
 
 .add-primary-action{
-  width:250px;
+  width:230px;
   height:42px;
   white-space:nowrap;
 }
 
 .add-clear-action{
-  width:130px;
+  width:125px;
   height:42px;
 }
 
-/* Result message */
 .add-result{
   margin-top:14px;
 }
 
-/* Responsive */
+/* Wider desktop — right workspace uses the available width proportionally */
+@media(min-width:1400px){
+  .add-page-head,
+  .add-native-panel{
+    width:calc(100% - 10px);
+    max-width:1280px;
+  }
+}
+
 @media(max-width:1100px){
-  .add-form-final{
-    grid-template-columns:repeat(2,minmax(0,1fr));
+  .add-form-latest{
+    grid-template-columns:repeat(6,minmax(0,1fr));
   }
 
-  .add-form-final .span-4,
-  .add-form-final .span-2{
-    grid-column:span 2;
+  .add-form-latest .col-12{
+    grid-column:span 6;
+  }
+
+  .add-form-latest .col-6{
+    grid-column:span 6;
+  }
+
+  .add-form-latest .col-4{
+    grid-column:span 3;
+  }
+
+  .add-form-latest .col-3{
+    grid-column:span 3;
   }
 }
 
@@ -1166,20 +1195,17 @@ button{cursor:pointer}
   }
 
   .add-native-panel{
-    padding:18px 14px;
+    padding:16px 14px 18px;
   }
 
-  .add-api-state-floating{
-    position:static;
-    margin-bottom:14px;
-  }
-
-  .add-form-final{
+  .add-form-latest{
     grid-template-columns:1fr;
   }
 
-  .add-form-final .span-4,
-  .add-form-final .span-2{
+  .add-form-latest .col-12,
+  .add-form-latest .col-6,
+  .add-form-latest .col-4,
+  .add-form-latest .col-3{
     grid-column:span 1;
   }
 
