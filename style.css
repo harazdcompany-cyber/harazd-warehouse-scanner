@@ -999,70 +999,101 @@ button{cursor:pointer}
 }
 
 
+
 /* ============================================================
-   ADD EQUIPMENT — APPROVED FINAL DESIGN
+   HARAZD WAREHOUSE — FINAL APPROVED ADD PAGE
+   Matches the approved generated design
    ============================================================ */
 
+/* Scanner search: no separate Enter button */
+.search-row{
+  grid-template-columns:minmax(0,1fr) 140px;
+}
+
+/* Page dimensions */
 .add-page{
-  max-width:none;
   width:100%;
-  padding:22px 26px 38px;
+  max-width:none;
+  margin:0;
+  padding:20px 28px 34px;
 }
 
 .add-page-head{
-  width:100%;
-  max-width:1240px;
-  margin:0 auto 18px;
+  width:min(100%,1240px);
+  margin:0 auto 20px;
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   align-items:start;
   gap:28px;
 }
 
+.add-page-title h1{
+  margin:0 0 5px;
+}
+
+.add-page-title p{
+  margin:0;
+}
+
+/* Large right-side form card */
 .add-native-panel{
   position:relative;
-  width:100%;
-  max-width:1240px;
+  width:min(100%,1240px);
   margin:0 auto;
-  padding:26px 24px 22px;
+  padding:30px 22px 22px;
   border-radius:18px;
+  overflow:visible;
 }
 
+/* Connection status in top-right corner */
 .add-api-state-floating{
   position:absolute;
-  top:22px;
-  right:24px;
-  z-index:1;
+  top:17px;
+  right:22px;
+  z-index:2;
 }
 
-.add-form-approved{
+/* Main grid */
+.add-form-final{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:14px 14px;
-  padding-top:0;
+  gap:13px 14px;
+  width:100%;
+  padding-top:4px;
 }
 
-.add-form-approved .span-4{
+.add-form-final .field{
+  min-width:0;
+}
+
+.add-form-final .span-4{
   grid-column:span 4;
 }
 
-.add-form-approved .span-2{
+.add-form-final .span-2{
   grid-column:span 2;
 }
 
-.add-form-approved .field label{
+/* Fields */
+.add-form-final .field label{
+  display:block;
   margin:0 0 6px;
-  color:#21252b;
+  color:#171a20;
   font-size:11px;
+  line-height:1.2;
   font-weight:800;
 }
 
-.add-form-approved .field input,
-.add-form-approved .field select,
-.add-form-approved .field textarea{
+.add-form-final .field label b{
+  color:#e11d2e;
+}
+
+.add-form-final .field input,
+.add-form-final .field select,
+.add-form-final .field textarea{
   width:100%;
   border:1px solid #dfe3e8;
-  border-radius:10px;
+  border-radius:9px;
   background:#fff;
   color:#15181d;
   outline:none;
@@ -1071,64 +1102,56 @@ button{cursor:pointer}
   transition:border-color .15s ease, box-shadow .15s ease;
 }
 
-.add-form-approved .field input,
-.add-form-approved .field select{
-  height:42px;
+.add-form-final .field input,
+.add-form-final .field select{
+  height:40px;
 }
 
-.add-form-approved .field textarea{
-  min-height:74px;
+.add-form-final .field textarea{
+  min-height:70px;
   resize:vertical;
 }
 
-.add-form-approved .field input:focus,
-.add-form-approved .field select:focus,
-.add-form-approved .field textarea:focus{
+.add-form-final .field input:focus,
+.add-form-final .field select:focus,
+.add-form-final .field textarea:focus{
   border-color:#aab4c3;
   box-shadow:0 0 0 3px rgba(23,105,255,.05);
 }
 
+/* Buttons aligned to the first column */
 .add-form-actions{
   display:flex;
   justify-content:flex-start;
   align-items:center;
-  gap:14px;
-  margin-top:4px;
+  gap:12px;
+  margin-top:0;
 }
 
 .add-primary-action{
-  width:270px;
-  height:44px;
+  width:250px;
+  height:42px;
+  white-space:nowrap;
 }
 
 .add-clear-action{
-  width:150px;
-  height:44px;
+  width:130px;
+  height:42px;
 }
 
-/* Keep card spacing proportional to the page title area */
-@media(min-width:1200px){
-  .add-page{
-    padding-left:26px;
-    padding-right:26px;
-  }
-
-  .add-page-head,
-  .add-native-panel{
-    max-width:1240px;
-  }
+/* Result message */
+.add-result{
+  margin-top:14px;
 }
 
+/* Responsive */
 @media(max-width:1100px){
-  .add-form-approved{
+  .add-form-final{
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 
-  .add-form-approved .span-4{
-    grid-column:span 2;
-  }
-
-  .add-form-approved .span-2{
+  .add-form-final .span-4,
+  .add-form-final .span-2{
     grid-column:span 2;
   }
 }
@@ -1151,12 +1174,12 @@ button{cursor:pointer}
     margin-bottom:14px;
   }
 
-  .add-form-approved{
+  .add-form-final{
     grid-template-columns:1fr;
   }
 
-  .add-form-approved .span-4,
-  .add-form-approved .span-2{
+  .add-form-final .span-4,
+  .add-form-final .span-2{
     grid-column:span 1;
   }
 
@@ -1175,18 +1198,4 @@ button{cursor:pointer}
   .add-form-actions{
     grid-template-columns:1fr;
   }
-}
-
-
-/* Search button refinement */
-.search-row{
-  grid-template-columns:minmax(0,1fr) 140px;
-}
-
-.search-row .btn-dark{
-  font-size:14px;
-}
-
-.search-row .btn-dark::first-letter{
-  font-size:16px;
 }

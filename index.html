@@ -441,7 +441,7 @@
           ← &nbsp; Назад
         </button>
 
-        <div>
+        <div class="add-page-title">
           <h1>ДОДАТИ ОБЛАДНАННЯ</h1>
           <p>Нове обладнання на склад.</p>
         </div>
@@ -454,21 +454,21 @@
           Підключено до Google Sheets
         </div>
 
-        <form id="addEquipmentForm" class="add-form add-form-approved" onsubmit="submitNativeAddForm(event)">
+        <form id="addEquipmentForm" class="add-form add-form-final" onsubmit="submitNativeAddForm(event)">
 
-          <!-- 1. NAME -->
+          <!-- 1. Найменування -->
           <div class="field span-4">
             <label for="addName">Найменування <b>*</b></label>
             <input id="addName" name="name" type="text" required>
           </div>
 
-          <!-- 2. DESCRIPTION -->
+          <!-- 2. Опис -->
           <div class="field span-4">
             <label for="addDescription">Опис</label>
             <textarea id="addDescription" name="description" rows="3"></textarea>
           </div>
 
-          <!-- 3. CATEGORY / SUBCATEGORY -->
+          <!-- 3. Категорія / Підкатегорія -->
           <div class="field span-2">
             <label for="addCategory">Категорія <b>*</b></label>
             <select id="addCategory" name="category" required onchange="updateAddSubcategories()">
@@ -483,7 +483,7 @@
             </select>
           </div>
 
-          <!-- 4. ACCOUNTING TYPE / MODEL -->
+          <!-- 4. Тип обліку / Модель -->
           <div class="field span-2">
             <label for="addAccountingType">Тип обліку <b>*</b></label>
             <select id="addAccountingType" name="accountingType" required>
@@ -496,7 +496,7 @@
             <input id="addModel" name="model" type="text">
           </div>
 
-          <!-- 5. UNIT / QUANTITY -->
+          <!-- 5. Одиниця виміру / Кількість -->
           <div class="field span-2">
             <label for="addUnit">Одиниця виміру <b>*</b></label>
             <select id="addUnit" name="unit" required>
@@ -509,7 +509,7 @@
             <input id="addQuantity" name="quantity" type="number" min="1" step="1" value="1" required>
           </div>
 
-          <!-- 6. LOCATION -->
+          <!-- 6. Склад / Зона / Стелаж / Полиця -->
           <div class="field">
             <label for="addWarehouse">Склад <b>*</b></label>
             <select id="addWarehouse" name="warehouse" required onchange="updateAddZones()">
@@ -538,7 +538,7 @@
             </select>
           </div>
 
-          <!-- 7. OTHER -->
+          <!-- 7. Виробник / Пакування / Вага / Ціна -->
           <div class="field">
             <label for="addManufacturer">Виробник</label>
             <select id="addManufacturer" name="manufacturer">
@@ -553,7 +553,7 @@
             </select>
           </div>
 
-          <div class="field span-2">
+          <div class="field">
             <label for="addWeight">Вага / кг</label>
             <input id="addWeight" name="weight" type="number" min="0" step="0.01">
           </div>
@@ -563,6 +563,7 @@
             <input id="addPrice" name="price" type="number" min="0" step="0.01">
           </div>
 
+          <!-- 8. Оренда / Серійний ID / Barcode -->
           <div class="field">
             <label for="addRentalPrice">Вартість оренди / доба</label>
             <input id="addRentalPrice" name="rentalPrice" type="number" min="0" step="0.01">
@@ -573,11 +574,12 @@
             <input id="addSerial" name="serial" type="text">
           </div>
 
-          <div class="field">
+          <div class="field span-2">
             <label for="addBarcode">Barcode</label>
             <input id="addBarcode" name="barcode" type="text">
           </div>
 
+          <!-- 9. QR / Фото -->
           <div class="field span-2">
             <label for="addQr">QR / Штрихкод</label>
             <input id="addQr" name="qr" type="text">
@@ -588,7 +590,7 @@
             <input id="addPhoto" name="photo" type="url" placeholder="https://...">
           </div>
 
-          <!-- BUTTONS: ADD FIRST, CLEAR SECOND -->
+          <!-- Кнопки -->
           <div class="add-form-actions span-4">
             <button id="addSubmitButton" type="submit" class="btn btn-dark add-primary-action">
               ＋ &nbsp; ДОДАТИ ОБЛАДНАННЯ
