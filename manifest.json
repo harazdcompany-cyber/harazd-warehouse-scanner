@@ -4,7 +4,7 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f8fb",
-  "theme_color": "#ffffff",
+  "background_color":"#0d1017",
+  "theme_color":"#0d1017",
   "description": "HARAZD WAREHOUSE Management System"
 }

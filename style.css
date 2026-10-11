@@ -1357,3 +1357,34 @@ body[data-page="add"] .back-btn {
 #add .back-btn{
   display:none !important;
 }
+
+/* V35 — HARAZD dark interface */
+:root{color-scheme:dark;--bg:#0d1017;--panel:#191e29;--text:#f3f5fa;--muted:#9ca7bb;--border:#303747;--shadow:0 14px 36px rgba(0,0,0,.28);--blue:#6a9cff;--blue-soft:#202f50;--green:#28cb7b;--green-soft:#143a2c}
+html,body,.main{background:#0d1017!important;color:var(--text)!important}
+.sidebar,.topbar{background:#141923!important;border-color:#2b3342!important}
+.panel,.equipment-result,.equipment-photo-card,.equipment-content,.version-card,.id-item,.info-row,.photo-stage,.not-found,.result-section{background:#191e29!important;border-color:#303747!important;color:#f3f5fa!important}
+.scan-help,.search-state,.search-input-wrap,.search-row,.flash-row{background:#202633!important;border-color:#343d50!important;color:#f3f5fa!important}
+.nav-item{color:#e1e7f1!important;background:transparent!important}
+.nav-item:hover{background:#222b3d!important}
+.nav-item.active{background:#21365c!important;color:#8fb4ff!important}
+.nav-item.active strong,.nav-item.active small{color:#8fb4ff!important}
+.logo-small,.logo-main,.page-head h1,.help-title,.flash-title,.equipment-content h2,.version-card strong{color:#f6f7fa!important}
+.page-head p,.topbar-title,.nav-item small,.flash-row small,.version-card small,.equipment-subtitle,.info-row span,.id-item small{color:#9ca7bb!important}
+input,textarea,select,.search-input-wrap input{background:#151a24!important;color:#f4f6fa!important;border-color:#394256!important}
+input::placeholder,textarea::placeholder{color:#8c99ad!important}
+input:focus,textarea:focus,select:focus{outline:2px solid #517bd0!important;outline-offset:1px}
+.btn-light,.back-btn,.enter-hint{background:#242c3b!important;color:#f3f5fa!important;border:1px solid #3a465c!important}
+.btn-dark{background:#eef2fa!important;color:#121722!important;border-color:#eef2fa!important}
+.btn-dark:hover{background:#dbe6ff!important}
+.help-divider,.result-divider{border-color:#3a4354!important;background:#3a4354!important}
+.status-badge,.qr-chip{background:#15392d!important;color:#5ee0a0!important}
+.camera-box,#reader{background:#05070b!important}
+.scan-frame .c{border-color:#fff!important}
+.scan-line{background:#26d76d!important}
+.switch{background:#454d5b!important}
+.switch.on{background:#176d4b!important}
+button:focus-visible,a:focus-visible{outline:2px solid #84aaff!important;outline-offset:2px}
+/* Native add form and its custom grid */
+#add input,#add textarea,#add select,#add .form-field input,#add .form-field select{background:#151a24!important;color:#f3f5fa!important;border-color:#394256!important}
+#add .panel,#add .add-card,#add .add-form,#add .form-panel{background:#191e29!important;color:#f3f5fa!important}
+#add label,#add h1,#add h2,#add h3{color:#f3f5fa!important}
