@@ -1484,3 +1484,6 @@ button:hover{filter:brightness(1.1)}
 .eq-action-primary{background:#eaff00;border-color:#eaff00;color:#111}
 .stock-table tbody tr{cursor:pointer}.stock-table tbody tr:hover{background:#1c2734}
 @media(max-width:650px){.eq-overlay{padding:8px}.eq-card{max-height:96vh}.eq-card-head,.eq-card-body,.eq-card-footer{padding:17px}.eq-hero{grid-template-columns:1fr}.eq-quickstats{min-height:90px}.eq-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.eq-card-head h2{font-size:22px}}
+
+/* V40 edit form */
+.eq-edit-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:8px 0}.eq-edit-field{display:flex;flex-direction:column;gap:7px;color:#cbd5e1;font-size:13px;font-weight:650;min-width:0}.eq-edit-field input,.eq-edit-field textarea{width:100%;box-sizing:border-box;background:#111820;color:#f5f7fa;border:1px solid #354151;border-radius:9px;padding:12px;font:inherit;outline:none}.eq-edit-field input:focus,.eq-edit-field textarea:focus{border-color:#e8ff00}.eq-edit-field textarea{min-height:85px;resize:vertical}.eq-edit-actions{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}@media(max-width:620px){.eq-edit-form{grid-template-columns:1fr}}

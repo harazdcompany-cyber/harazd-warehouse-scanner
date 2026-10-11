@@ -1380,9 +1380,52 @@ function openEquipmentCard(item) {
   cardSection(body,'Вартість та ідентифікація', [['Ціна за одиницю / грн',item.price],['Загальна вартість / грн',item.totalValue],['Оренда за добу / грн',item.rentalPrice],['Серійний ID',item.serial],['Barcode',item.barcode],['QR / Штрихкод',item.qr]]);
   overlay.hidden=false;document.body.classList.add('eq-modal-open');document.getElementById('eqCardClose').focus();
 }
-function closeEquipmentCard(){document.getElementById('equipmentCard').hidden=true;document.body.classList.remove('eq-modal-open');if(cardPreviousFocus&&cardPreviousFocus.isConnected)cardPreviousFocus.focus();activeEquipmentCard=null;}
+function closeEquipmentCard(){editingEquipment=false;document.getElementById('equipmentCard').hidden=true;document.body.classList.remove('eq-modal-open');if(cardPreviousFocus&&cardPreviousFocus.isConnected)cardPreviousFocus.focus();activeEquipmentCard=null;}
 document.getElementById('eqCardClose')?.addEventListener('click',closeEquipmentCard);
 document.getElementById('eqCardDone')?.addEventListener('click',closeEquipmentCard);
 document.getElementById('equipmentCard')?.addEventListener('click',e=>{if(e.target.id==='equipmentCard')closeEquipmentCard()});
 document.addEventListener('keydown',e=>{const m=document.getElementById('equipmentCard');if(m&&!m.hidden){if(e.key==='Escape')closeEquipmentCard();if(e.key==='Tab'){const controls=[...m.querySelectorAll('button:not([disabled])')];const first=controls[0],last=controls[controls.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}}});
 document.getElementById('eqCopyId')?.addEventListener('click',async()=>{if(!activeEquipmentCard?.id)return;try{await navigator.clipboard.writeText(activeEquipmentCard.id);showToast('EQ-ID скопійовано')}catch(e){showToast('Не вдалося скопіювати EQ-ID')}});
+
+// V40 — inline equipment editing, save via Apps Script API.
+const EDIT_FIELDS = [
+ ['name','Найменування'],['description','Опис'],['category','Категорія'],['subcategory','Підкатегорія'],
+ ['manufacturer','Виробник'],['model','Модель'],['accountingType','Тип обліку'],['unit','Одиниця виміру'],
+ ['total','Кількість'],['repair','На ремонті'],['weight','Вага / кг'],['warehouse','Склад'],
+ ['zone','Зона'],['rack','Стелаж'],['shelf','Полиця'],['packaging','Пакування'],
+ ['price','Ціна за одиницю'],['rentalPrice','Оренда за добу'],['serial','Серійний ID'],
+ ['barcode','Barcode'],['qr','QR / Штрихкод'],['photo','Фото (URL)']
+];
+let editingEquipment=false;
+function equipmentEditForm(item){
+ const form=cardNode('form','eq-edit-form');form.id='eqEditForm';
+ EDIT_FIELDS.forEach(([key,label])=>{
+  const wrap=cardNode('label','eq-edit-field');wrap.append(cardNode('span','',label));
+  const el=document.createElement(key==='description'?'textarea':'input');el.name=key;
+  if(['total','repair','weight','price','rentalPrice'].includes(key)){el.type='number';el.min='0';el.step=['total','repair'].includes(key)?'1':'any';}
+  el.value=item[key]??'';if(['name','category','accountingType','unit','warehouse'].includes(key))el.required=true;
+  wrap.append(el);form.append(wrap);
+ });
+ const actions=cardNode('div','eq-edit-actions');
+ const save=cardNode('button','eq-action eq-action-primary','Зберегти зміни');save.type='submit';
+ const cancel=cardNode('button','eq-action','Скасувати');cancel.type='button';cancel.addEventListener('click',()=>{editingEquipment=false;openEquipmentCard(activeEquipmentCard)});
+ actions.append(save,cancel);form.append(actions);
+ form.addEventListener('submit',event=>{
+  event.preventDefault();if(!form.reportValidity())return;
+  const payload=Object.fromEntries(new FormData(form));
+  if(Number(payload.repair)>Number(payload.total)){showToast('На ремонті не може бути більше, ніж загальна кількість');return;}
+  if(!confirm('Зберегти зміни обладнання '+item.id+' у Google Sheets?'))return;
+  save.disabled=true;save.textContent='Збереження...';
+  callHarazdJsonp({action:'updateEquipment',id:item.id,payload:JSON.stringify(payload)},result=>{
+    save.disabled=false;save.textContent='Зберегти зміни';
+    if(!result?.success){showToast(result?.message||'Не вдалося зберегти');return;}
+    editingEquipment=false;stockNeedsRefresh=true;closeEquipmentCard();loadStockEquipment();showToast('Зміни збережено');
+  },()=>{save.disabled=false;save.textContent='Зберегти зміни';showToast('Помилка зв’язку з API')});
+ });return form;
+}
+document.getElementById('eqEditButton')?.addEventListener('click',()=>{
+ if(!activeEquipmentCard)return;
+ editingEquipment=true;
+ const body=document.getElementById('eqCardBody');body.replaceChildren(equipmentEditForm(activeEquipmentCard));
+ body.querySelector('input')?.focus();
+});
