@@ -7,7 +7,7 @@
   <title>HARAZD WAREHOUSE</title>
 
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="style.css?v=37">
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -32,7 +32,7 @@
 
       <nav class="nav">
 
-        <button class="nav-item" data-page="stock" onclick="notReady('Склад')">
+        <button class="nav-item" data-page="stock" onclick="openStock()">
           <span class="nav-icon">⌂</span>
           <span>
             <strong>СКЛАД</strong>
@@ -94,7 +94,7 @@
 
     <div class="version-card">
       <strong>HARAZD WAREHOUSE</strong>
-      <span>v1.1.0</span>
+      <span>V37</span>
       <small>© 2026 Harazd Company</small>
     </div>
 
@@ -430,6 +430,17 @@
     
     
     
+
+    <!-- STOCK PAGE V37 -->
+    <section id="stock" class="page stock-page">
+      <div class="page-head stock-heading"><div><h1>Склад обладнання</h1><p>Обладнання з Google Sheets · актуальні залишки</p></div><button class="btn stock-refresh" onclick="loadStock(true)">↻ Оновити</button></div>
+      <div class="stock-stats"><div class="stock-stat"><small>Найменувань / позицій</small><strong id="stockItems">—</strong></div><div class="stock-stat"><small>Загальна кількість</small><strong id="stockTotal">—</strong></div><div class="stock-stat"><small>Доступно</small><strong id="stockAvailable">—</strong></div><div class="stock-stat"><small>На ремонті</small><strong id="stockRepair">—</strong></div></div>
+      <section class="panel stock-panel"><div class="stock-controls"><input id="stockSearch" type="search" placeholder="Пошук за назвою, EQ-ID, моделлю, Barcode..." oninput="renderStock()"><select id="stockCategory" onchange="renderStock()"><option value="">Усі категорії</option></select><select id="stockWarehouse" onchange="renderStock()"><option value="">Усі склади</option></select></div>
+      <div class="stock-meta"><span id="stockCount">Завантаження...</span><span id="stockSync"></span></div>
+      <div class="stock-table-wrap"><table class="stock-table"><thead><tr><th>Обладнання</th><th>EQ-ID</th><th>Категорія</th><th>Склад / місце</th><th>Всього</th><th>Доступно</th><th>Статус</th></tr></thead><tbody id="stockRows"><tr><td colspan="7" class="stock-empty">Завантаження даних...</td></tr></tbody></table></div>
+      <div id="stockError" class="stock-error hidden"></div></section>
+    </section>
+
     <!-- ADD EQUIPMENT PAGE -->
     <section id="add" class="page add-page-v21">
 
@@ -617,7 +628,7 @@
   window.HARAZD_API_URL = "https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec";
 </script>
 
-<script src="app.js?v=36"></script>
+<script src="app.js?v=37"></script>
 
 </body>
 </html>

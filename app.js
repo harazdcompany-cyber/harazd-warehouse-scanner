@@ -1145,6 +1145,7 @@ function submitNativeAddForm(event) {
         true
       );
 
+      stockNeedsRefresh = true;
       clearNativeAddForm();
     },
     function() {
@@ -1239,4 +1240,97 @@ function callHarazdJsonp(params, onSuccess, onError) {
   };
 
   document.body.appendChild(script);
+}
+
+
+// ============================================================
+// V37 — STOCK FROM GOOGLE SHEETS
+// ============================================================
+let stockData = [];
+let stockNeedsRefresh = true;
+let stockLoaded = false;
+let stockLoading = false;
+
+function openStock() {
+  showPage('stock');
+  if (!stockLoaded || stockNeedsRefresh) loadStock();
+}
+function loadStock(force) {
+  if (stockLoading) return;
+  stockLoading = true;
+  document.getElementById('stockCount').textContent = 'Завантаження обладнання...';
+  document.getElementById('stockError').classList.add('hidden');
+  callHarazdJsonp({action:'listEquipment'}, function(result) {
+    stockLoading = false;
+    if (!result || !result.success || !Array.isArray(result.items)) {
+      stockLoadError(result && result.message || 'Не вдалося завантажити склад.'); return;
+    }
+    stockData = result.items;
+    stockLoaded = true;
+    stockNeedsRefresh = false;
+    stockFillFilters();
+    renderStock();
+    document.getElementById('stockSync').textContent = 'Оновлено: ' + new Date().toLocaleTimeString('uk-UA');
+  }, function() {
+    stockLoading = false;
+    stockLoadError('Помилка з’єднання з Google Sheets. Перевірте Apps Script API.');
+  });
+}
+function stockLoadError(message) {
+  document.getElementById('stockCount').textContent = 'Помилка завантаження';
+  const el = document.getElementById('stockError');
+  el.textContent = message;
+  el.classList.remove('hidden');
+  if (!stockLoaded) document.getElementById('stockRows').innerHTML = '<tr><td colspan="7" class="stock-empty">Дані недоступні</td></tr>';
+}
+function stockFillFilters() {
+  [['stockCategory','category','Усі категорії'],['stockWarehouse','warehouse','Усі склади']].forEach(([id,key,placeholder]) => {
+    const select = document.getElementById(id), old = select.value;
+    const values = [...new Set(stockData.map(x=>String(x[key]||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));
+    select.replaceChildren(new Option(placeholder,''), ...values.map(x=>new Option(x,x)));
+    select.value = values.includes(old) ? old : '';
+  });
+}
+function stockText(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.textContent = text == null || text === '' ? '—' : String(text);
+  if (cls) el.className = cls;
+  return el;
+}
+function renderStock() {
+  const q = (document.getElementById('stockSearch').value||'').trim().toLocaleLowerCase('uk');
+  const cat = document.getElementById('stockCategory').value;
+  const wh = document.getElementById('stockWarehouse').value;
+  const items = stockData.filter(x => (!cat || x.category===cat) && (!wh || x.warehouse===wh) && (!q || [x.name,x.id,x.serial,x.barcode,x.qr,x.model,x.manufacturer,x.subcategory].some(v=>String(v||'').toLocaleLowerCase('uk').includes(q))));
+  const total = arr => arr.reduce((s,x)=>s+(Number(x)||0),0);
+  document.getElementById('stockItems').textContent = stockData.length;
+  document.getElementById('stockTotal').textContent = total(stockData.map(x=>x.total));
+  document.getElementById('stockAvailable').textContent = total(stockData.map(x=>x.available));
+  document.getElementById('stockRepair').textContent = total(stockData.map(x=>x.repair));
+  document.getElementById('stockCount').textContent = 'Показано ' + items.length + ' із ' + stockData.length + ' позицій';
+  const tbody = document.getElementById('stockRows'); tbody.replaceChildren();
+  if (!items.length) { const tr=document.createElement('tr'), td=stockText('td','Обладнання не знайдено','stock-empty');td.colSpan=7;tr.appendChild(td);tbody.appendChild(tr);return; }
+  const fragment = document.createDocumentFragment();
+  items.forEach(x => {
+    const tr=document.createElement('tr');
+    const name=document.createElement('td');name.append(stockText('strong',x.name,'stock-name'),stockText('small',[x.manufacturer,x.model].filter(Boolean).join(' · '),'stock-secondary'));tr.appendChild(name);
+    tr.appendChild(stockText('td',x.id));
+    tr.appendChild(stockText('td',[x.category,x.subcategory].filter(Boolean).join(' / ')));
+    tr.appendChild(stockText('td',[x.warehouse,x.zone,x.rack,x.shelf].filter(Boolean).join(' / ')));
+    tr.appendChild(stockText('td',x.total));
+    tr.appendChild(stockText('td',x.available));
+    const td=document.createElement('td');const available=Number(x.available||0),repair=Number(x.repair||0);
+    td.appendChild(stockText('span',available>0?'Доступно':repair>0?'На ремонті':'Недоступно','stock-status '+(available>0?'ok':repair>0?'repair':'off')));tr.appendChild(td);
+    tr.tabIndex=0;tr.title='Відкрити картку обладнання';
+    tr.addEventListener('click',()=>stockOpenItem(x));
+    tr.addEventListener('keydown',e=>{if(e.key==='Enter')stockOpenItem(x)});
+    fragment.appendChild(tr);
+  });
+  tbody.appendChild(fragment);
+}
+function stockOpenItem(item) {
+  if (!item.id) {showToast('Для цієї позиції відсутній EQ-ID');return;}
+  showPage('scanner');
+  document.getElementById('manualCode').value=item.id;
+  findEquipmentByCode(item.id);
 }
