@@ -18,6 +18,7 @@ let lastScanAt = 0;
 // ============================================================
 
 function showPage(id) {
+  if (id !== 'scanner' && scannerRunning) stopScanner();
   document.querySelectorAll('.page').forEach(page => {
     page.classList.remove('active');
   });
@@ -1146,7 +1147,7 @@ function submitNativeAddForm(event) {
       );
 
       stockNeedsRefresh = true;
-      clearNativeAddForm();
+      // Зберігаємо значення форми після додавання; очищення лише окремою кнопкою.
     },
     function() {
       button.disabled = false;
@@ -1258,6 +1259,7 @@ function openStock() {
 function loadStock(force) {
   if (stockLoading) return;
   stockLoading = true;
+  document.getElementById('stockSync').textContent = '';
   document.getElementById('stockCount').textContent = 'Завантаження обладнання...';
   document.getElementById('stockError').classList.add('hidden');
   callHarazdJsonp({action:'listEquipment'}, function(result) {
@@ -1278,6 +1280,7 @@ function loadStock(force) {
 }
 function stockLoadError(message) {
   document.getElementById('stockCount').textContent = 'Помилка завантаження';
+  stockNeedsRefresh = true;
   const el = document.getElementById('stockError');
   el.textContent = message;
   el.classList.remove('hidden');
