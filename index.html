@@ -7,7 +7,7 @@
   <title>HARAZD WAREHOUSE</title>
 
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=36">
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -435,8 +435,8 @@
 
       <div class="page-head add-page-head-v21">
 <div>
-          <h1>ДОДАТИ ОБЛАДНАННЯ</h1>
-          <p>Нове обладнання на склад.</p>
+          <h1>Нове обладнання</h1>
+          <p>Додайте обладнання та вкажіть його місце на складі</p>
         </div>
       </div>
 
@@ -453,6 +453,7 @@
           onsubmit="submitNativeAddForm(event)"
         >
 
+          <div class="section-heading">⬡ &nbsp; Основна інформація</div>
           <!-- 1. НАЙМЕНУВАННЯ -->
           <div class="field-v21 span-30">
             <label for="addName">Найменування <b>*</b></label>
@@ -518,6 +519,7 @@
             <input id="addWeight" name="weight" type="number" min="0" step="0.01">
           </div>
 
+          <div class="section-heading section-purple">◉ &nbsp; Розміщення та пакування</div>
           <!-- 6. СКЛАД / ЗОНА / СТЕЛАЖ / ПОЛИЦЯ / ПАКУВАННЯ -->
           <div class="field-v21 span-6">
             <label for="addWarehouse">Склад <b>*</b></label>
@@ -554,6 +556,7 @@
             </select>
           </div>
 
+          <div class="section-heading">▤ &nbsp; Вартість та ідентифікація</div>
           <!-- 7. ЦІНА / ОРЕНДА -->
           <div class="field-v21 span-15">
             <label for="addPrice">Ціна за одиницю</label>
@@ -614,7 +617,7 @@
   window.HARAZD_API_URL = "https://script.google.com/macros/s/AKfycbytXZesXbry1qyynsnGGcBPj2vaomE5CPYG65h1A2fPZZNxUQ-G0u_fpxE3IwxHjHM8/exec";
 </script>
 
-<script src="app.js"></script>
+<script src="app.js?v=36"></script>
 
 </body>
 </html>

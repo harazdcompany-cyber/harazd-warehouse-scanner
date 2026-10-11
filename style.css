@@ -1388,3 +1388,46 @@ button:focus-visible,a:focus-visible{outline:2px solid #84aaff!important;outline
 #add input,#add textarea,#add select,#add .form-field input,#add .form-field select{background:#151a24!important;color:#f3f5fa!important;border-color:#394256!important}
 #add .panel,#add .add-card,#add .add-form,#add .form-panel{background:#191e29!important;color:#f3f5fa!important}
 #add label,#add h1,#add h2,#add h3{color:#f3f5fa!important}
+
+
+/* V36 NEON DARK: visual-only overrides; existing scanner and API logic unchanged */
+:root{--bg:#090c11;--panel:#10151c;--text:#f3f5fa;--muted:#9eabc2;--border:#2b3442;--shadow:0 14px 40px #0006;--blue:#e9f900;--blue-soft:#222716;--green:#19c36d;--green-soft:#142a21;--yellow:#e9fa00}
+html,body{background:#090c11!important;color:#f3f5fa!important;color-scheme:dark}
+.sidebar{background:#080b0f!important;border-right:1px solid #27303d!important;color:#f3f5fa!important}
+.logo-small,.logo-big{color:#f3f5fa!important}
+.logo-icon{color:#eaff00!important;border:1px solid #eaff00!important;background:#10151c!important}
+.nav-item{color:#c6d0e0!important;border-radius:10px!important}
+.nav-item.active{background:#202511!important;color:#f0ff00!important;border-left:3px solid #efff00!important}
+.nav-item.active .nav-icon{color:#efff00!important}
+.version-card{background:#11161d!important;color:#aab6ca!important;border:1px solid #283241!important}
+.topbar{background:#0b0f14!important;border-bottom:1px solid #283241!important;color:#f1f4fa!important}
+.topbar-title,.topbar-title *{color:#dce5f2!important}
+.home-btn,.btn-light{background:#11161e!important;color:#f4f7ff!important;border:1px solid #3a4556!important}
+main,.main,.content,.main-content,.page{background:#090c11!important;color:#f4f6fa!important}
+.page-head h1{color:#f6f7fb!important;text-transform:none!important;font-size:clamp(26px,2.3vw,36px)!important}
+.page-head p{color:#a6b7d0!important}
+.panel,.add-panel-v21,.scanner-card,.scan-card,.help-card,.equipment-card{background:linear-gradient(130deg,#10151b,#0d1117)!important;border:1px solid #28313d!important;box-shadow:0 16px 42px #0005!important;color:#f2f5fb!important}
+.add-panel-v21{padding:22px!important;border-radius:10px!important}
+.add-form-v21{gap:14px!important}
+.add-api-state-v21{margin-left:auto!important;margin-bottom:10px!important;color:#9fb0c6!important;text-align:right!important}
+.field-v21 label{color:#dce3ed!important;font-weight:600!important}
+.field-v21 label b{color:#d95dff!important}
+.field-v21 input,.field-v21 textarea,.field-v21 select,input,textarea,select{background:#141a22!important;color:#f1f5ff!important;border:1px solid #364354!important;border-radius:7px!important;box-shadow:none!important}
+.field-v21 input:focus,.field-v21 textarea:focus,.field-v21 select:focus,input:focus,textarea:focus,select:focus{border-color:#eaff00!important;outline:1px solid #eaff00!important}
+input::placeholder,textarea::placeholder{color:#91a0b9!important}
+.section-heading{grid-column:1/-1!important;font-weight:800;font-size:17px;color:#f4f6fc;border-top:1px solid #303946;padding:17px 0 4px;margin-top:5px}
+.section-heading:first-child{border-top:0;margin-top:0;padding-top:0}
+.section-heading::first-letter{color:#eaff00}
+.section-purple::first-letter{color:#c35bff}
+.add-actions-v21{justify-content:flex-start!important;display:flex!important;gap:12px!important;flex-wrap:wrap!important}
+.add-primary-v21{background:linear-gradient(105deg,#edff00 0%,#f3e45c 33%,#d74dff 100%)!important;color:#101016!important;border:0!important;font-weight:800!important;white-space:nowrap!important;min-width:220px!important;max-width:100%!important;width:auto!important;padding:0 23px!important}
+.add-primary-v21 span{color:#101016!important}
+.add-clear-v21{background:#10151d!important;color:#e9edf7!important;border:1px solid #536075!important;min-width:140px!important;width:auto!important;padding:0 20px!important}
+.btn-dark{background:#eaff00!important;color:#101217!important;border-color:#eaff00!important}
+button{transition:background .2s,border-color .2s,transform .2s}
+button:hover{filter:brightness(1.1)}
+#reader,#reader *{color:#e6edfa}
+#reader video{border-radius:10px}
+#scanner .panel,#scanner .scanner-area{border-color:#303b4b!important}
+.toast{background:#202734!important;color:#fff!important}
+@media(max-width:760px){.add-panel-v21{padding:15px!important}.section-heading{font-size:15px}.add-primary-v21,.add-clear-v21{min-width:0!important;flex:1 1 180px!important}}
