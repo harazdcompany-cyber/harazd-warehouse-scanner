@@ -1333,7 +1333,56 @@ function renderStock() {
 }
 function stockOpenItem(item) {
   if (!item.id) {showToast('Для цієї позиції відсутній EQ-ID');return;}
-  showPage('scanner');
-  document.getElementById('manualCode').value=item.id;
-  findEquipmentByCode(item.id);
+  openEquipmentCard(item);
 }
+
+// V39: картка обладнання — лише читання даних з уже завантаженого складу.
+let activeEquipmentCard = null;
+let cardPreviousFocus = null;
+function cardNode(tag, cls, value) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (value !== undefined && value !== null) n.textContent = String(value);
+  return n;
+}
+function cardField(grid, label, value) {
+  const cell=cardNode('div','eq-field');
+  cell.append(cardNode('small','',label),cardNode('strong','',value === '' || value === null || value === undefined ? '—' : value));
+  grid.append(cell);
+}
+function cardSection(parent,title,entries) {
+  const section=cardNode('section','eq-section');
+  section.append(cardNode('h3','',title));
+  const grid=cardNode('div','eq-fields');
+  entries.forEach(([label,value])=>cardField(grid,label,value));
+  section.append(grid);parent.append(section);
+}
+function openEquipmentCard(item) {
+  const overlay=document.getElementById('equipmentCard');
+  if(!overlay) return;
+  activeEquipmentCard=item;cardPreviousFocus=document.activeElement;
+  document.getElementById('eqCardTitle').textContent=item.name||'Обладнання';
+  document.getElementById('eqCardSubtitle').textContent=[item.manufacturer,item.model,item.id].filter(Boolean).join(' · ');
+  const body=document.getElementById('eqCardBody');body.replaceChildren();
+  const top=cardNode('div','eq-hero');
+  const media=cardNode('div','eq-photo');
+  if(item.photo && /^https:\/\//i.test(item.photo)) {
+    const img=document.createElement('img');img.src=item.photo;img.alt='Фото обладнання';img.loading='lazy';
+    img.onerror=()=>{media.replaceChildren(cardNode('span','','Фото недоступне'));};media.append(img);
+  } else media.append(cardNode('span','','Фото не додано'));
+  top.append(media);
+  const stats=cardNode('div','eq-quickstats');
+  [['Всього',item.total],['Доступно',item.available],['На ремонті',item.repair]].forEach(([k,v])=>{const c=cardNode('div','eq-quickstat');c.append(cardNode('small','',k),cardNode('strong','',v??0));stats.append(c)});
+  top.append(stats);body.append(top);
+  if(item.description){const desc=cardNode('div','eq-description');desc.append(cardNode('small','','Опис'),cardNode('p','',item.description));body.append(desc)}
+  cardSection(body,'Основна інформація', [['EQ-ID',item.id],['Категорія',item.category],['Підкатегорія',item.subcategory],['Виробник',item.manufacturer],['Модель',item.model],['Тип обліку',item.accountingType],['Вага / кг',item.weight],['Одиниця виміру',item.unit]]);
+  cardSection(body,'Розміщення', [['Склад',item.warehouse],['Зона',item.zone],['Стелаж',item.rack],['Полиця',item.shelf],['Пакування',item.packaging]]);
+  cardSection(body,'Вартість та ідентифікація', [['Ціна за одиницю / грн',item.price],['Загальна вартість / грн',item.totalValue],['Оренда за добу / грн',item.rentalPrice],['Серійний ID',item.serial],['Barcode',item.barcode],['QR / Штрихкод',item.qr]]);
+  overlay.hidden=false;document.body.classList.add('eq-modal-open');document.getElementById('eqCardClose').focus();
+}
+function closeEquipmentCard(){document.getElementById('equipmentCard').hidden=true;document.body.classList.remove('eq-modal-open');if(cardPreviousFocus&&cardPreviousFocus.isConnected)cardPreviousFocus.focus();activeEquipmentCard=null;}
+document.getElementById('eqCardClose')?.addEventListener('click',closeEquipmentCard);
+document.getElementById('eqCardDone')?.addEventListener('click',closeEquipmentCard);
+document.getElementById('equipmentCard')?.addEventListener('click',e=>{if(e.target.id==='equipmentCard')closeEquipmentCard()});
+document.addEventListener('keydown',e=>{const m=document.getElementById('equipmentCard');if(m&&!m.hidden){if(e.key==='Escape')closeEquipmentCard();if(e.key==='Tab'){const controls=[...m.querySelectorAll('button:not([disabled])')];const first=controls[0],last=controls[controls.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}}});
+document.getElementById('eqCopyId')?.addEventListener('click',async()=>{if(!activeEquipmentCard?.id)return;try{await navigator.clipboard.writeText(activeEquipmentCard.id);showToast('EQ-ID скопійовано')}catch(e){showToast('Не вдалося скопіювати EQ-ID')}});

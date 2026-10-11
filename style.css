@@ -1454,3 +1454,33 @@ button:hover{filter:brightness(1.1)}
 .stock-empty{text-align:center;padding:35px!important;color:#a3b0c2!important}.stock-error{margin-top:12px;padding:12px;border:1px solid #733d45;background:#321c23;color:#ffb2bc;border-radius:8px}
 @media(max-width:1050px){.stock-controls{grid-template-columns:1fr 1fr}.stock-controls input{grid-column:1/-1}}
 @media(max-width:760px){.stock-page{padding:18px 14px}.stock-stats{grid-template-columns:1fr 1fr}.stock-controls{grid-template-columns:1fr}.stock-controls input{grid-column:auto}.stock-heading{align-items:flex-start}.stock-refresh{white-space:nowrap}}
+
+/* V39 equipment details */
+.eq-modal-open{overflow:hidden}
+.eq-overlay[hidden]{display:none!important}
+.eq-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:24px}
+.eq-card{width:min(900px,100%);max-height:min(92vh,980px);overflow:auto;background:#10161e;border:1px solid #34404f;border-radius:18px;color:#eef2f8;box-shadow:0 24px 90px #000a}
+.eq-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:24px 28px;border-bottom:1px solid #2a3441}
+.eq-card-head small{font-size:11px;color:#eaff00;letter-spacing:1.5px;font-weight:700}
+.eq-card-head h2{font-size:28px;margin:8px 0 5px;line-height:1.2}
+.eq-card-head span{color:#a6b5c8;font-size:13px}
+.eq-close{border:1px solid #34404f;background:#1b2531;color:#fff;border-radius:10px;min-width:42px;height:42px;font-size:27px;cursor:pointer}
+.eq-card-body{padding:26px 28px}
+.eq-hero{display:grid;grid-template-columns:minmax(180px,1fr) 1.4fr;gap:18px;align-items:stretch}
+.eq-photo{min-height:185px;background:#0a0f15;border:1px solid #2d3947;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8997a9;overflow:hidden}
+.eq-photo img{width:100%;height:220px;object-fit:contain}
+.eq-quickstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.eq-quickstat{border:1px solid #2d3947;background:#151e29;border-radius:12px;padding:18px 12px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.eq-quickstat small,.eq-field small,.eq-description small{font-size:12px;color:#91a4ba}
+.eq-quickstat strong{font-size:27px;color:#eaff00}
+.eq-description{margin-top:22px;padding:16px;border:1px solid #2d3947;border-radius:12px}
+.eq-description p{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.eq-section{margin-top:25px}.eq-section h3{font-size:16px;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid #2d3947}
+.eq-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.eq-field{padding:12px;background:#151e29;border:1px solid #273341;border-radius:10px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.eq-field strong{font-size:13px;overflow-wrap:anywhere;font-weight:600}
+.eq-card-footer{display:flex;justify-content:flex-end;gap:10px;padding:17px 28px;border-top:1px solid #2a3441}
+.eq-action{padding:12px 18px;border:1px solid #3b4858;background:transparent;border-radius:9px;color:#fff;font-weight:700;cursor:pointer}
+.eq-action-primary{background:#eaff00;border-color:#eaff00;color:#111}
+.stock-table tbody tr{cursor:pointer}.stock-table tbody tr:hover{background:#1c2734}
+@media(max-width:650px){.eq-overlay{padding:8px}.eq-card{max-height:96vh}.eq-card-head,.eq-card-body,.eq-card-footer{padding:17px}.eq-hero{grid-template-columns:1fr}.eq-quickstats{min-height:90px}.eq-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.eq-card-head h2{font-size:22px}}
