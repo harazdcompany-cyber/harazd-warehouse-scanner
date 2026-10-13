@@ -27,3 +27,41 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 
 /* V42 Equipment Gallery */
 #warehouse .heading h1{font-size:clamp(28px,3vw,39px);letter-spacing:-.045em}#warehouse .heading p{color:#a8b8c8}#warehouse .stats .panel{background:linear-gradient(145deg,#1b2634,#111923);border-color:#304052;border-radius:17px}#warehouse .stats strong{font-size:35px;letter-spacing:-.05em}#warehouse .inventory-panel{background:#111923;border:1px solid #2a3748;border-radius:19px;padding:24px}#warehouse .inventory-toolbar h2{font-size:23px;letter-spacing:-.03em}#warehouse .filters{gap:10px}#warehouse .filters input,#warehouse .filters select{background:#0b121c;border-color:#334154;border-radius:10px;min-height:44px}.gallery-topline{display:flex;align-items:center;justify-content:space-between;margin:20px 0 15px;color:#a9bacd;font-size:12px}.gallery-clear{border:0;background:transparent;color:#e1f700;font-size:12px;cursor:pointer;padding:8px}.equipment-cards{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:19px}.gallery-card{background:#171f2a;border:1px solid #344253;border-radius:17px;box-shadow:0 8px 25px #0002}.gallery-card:hover,.gallery-card:focus-visible{border-color:#e0f600;box-shadow:0 16px 40px #0007;transform:translateY(-3px)}.gallery-photo{height:205px;position:relative;background:radial-gradient(ellipse at 50% 38%,#2a3647 0%,#141c27 70%);font-size:68px}.gallery-photo img{object-fit:contain;padding:18px;box-sizing:border-box}.gallery-photo-label{position:absolute;bottom:12px;left:12px;background:#0c121bdc;border:1px solid #39495b;border-radius:8px;padding:6px 9px;font-size:11px;color:#e2e9f3}.gallery-card-arrow{position:absolute;right:12px;top:12px;background:#0c121bc9;border:1px solid #3d4b5d;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;font-size:18px;color:#e6f600}.gallery-body{padding:18px}.gallery-body h3{font-size:22px;margin:15px 0 4px;letter-spacing:-.035em}.gallery-body .card-model{font-size:12px;margin-bottom:20px}.gallery-stock{display:flex;justify-content:space-between;align-items:end;margin-top:14px}.gallery-stock small{display:block;font-size:11px;color:#91a6bc;margin-bottom:4px}.gallery-stock strong{font-size:23px;color:#f4f8ff}.gallery-stock em{font-size:13px;color:#90a2b7;font-style:normal;font-weight:500}.gallery-stock>span{font-size:12px;color:#cce400}.gallery-progress{height:6px;background:#34404d;border-radius:10px;margin:11px 0 17px;overflow:hidden}.gallery-progress span{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#b8d600,#e9ff00)}.gallery-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #303e4c;padding-top:14px;font-size:11px;color:#aebed0}.gallery-footer>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.gallery-open{color:#e4fa00;white-space:nowrap;font-weight:700}.status.partial{color:#f9c66a;background:#493819}.status.repair{color:#ff9a9a;background:#49252a}@media(max-width:600px){#warehouse .inventory-panel{padding:13px}.equipment-cards{grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}.gallery-photo{height:180px}.gallery-body{padding:14px}.gallery-topline{margin:15px 0}}
+
+/* V43 unified Equipment Gallery visual language for all modules */
+.page:not(#warehouse) .heading{margin-bottom:25px;align-items:flex-start}
+.page:not(#warehouse) .heading h1{font-size:clamp(28px,3vw,39px);letter-spacing:-.045em;margin:7px 0}
+.page:not(#warehouse) .heading p{font-size:13px;color:#9caec3}
+.section-eyebrow{color:#e5fa00;font-size:10px;font-weight:850;letter-spacing:.16em}
+.section-pill{font-size:10px;font-weight:750;letter-spacing:.06em;color:#d6ed00;background:#202b1a;border:1px solid #4a5828;padding:10px 12px;border-radius:10px;white-space:nowrap}
+.page:not(#warehouse) .panel{background:#111923;border:1px solid #2d3c4c;border-radius:18px;padding:24px}
+#add #equipmentForm{max-width:none;padding:clamp(18px,2.4vw,32px)}
+#add #equipmentForm h3{color:#e7f0fa;font-size:17px;letter-spacing:-.02em;margin:23px 0 17px;padding:0 0 13px;border-bottom:1px solid #304051}
+#add #equipmentForm h3:first-child{margin-top:0}
+#add .fields{gap:16px 14px;margin:0 0 26px}
+#add label{color:#b4c5d7;font-size:12px}
+#add label input,#add label select,#add label textarea,#categories input,#categories select,#scanner input{background:#0b131e;border:1px solid #344459;border-radius:10px;min-height:46px;color:#f0f5ff;transition:border-color .15s,box-shadow .15s}
+#add label textarea{min-height:105px;resize:vertical}
+#add label input:focus,#add label select:focus,#add label textarea:focus,#categories input:focus,#scanner input:focus{border-color:#e5fa00;box-shadow:0 0 0 3px #e5fa0012}
+#add .actions{padding-top:18px;border-top:1px solid #304051}
+#add .actions button{min-height:45px;padding:12px 20px}
+#scanner .scanner-panel{max-width:1050px;margin:0 auto}
+#scanner .scanner-panel .filters{display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:22px}
+#scanner .scanner-panel .filters button{min-width:145px}
+#scanner .scanner-frame{max-width:none;min-height:320px;border:1px solid #394b5d;border-radius:16px;background:radial-gradient(ellipse at center,#202b38,#0b1119 75%);position:relative}
+#scanner .scanner-frame:empty:after{content:'КАМЕРА ВИМКНЕНА';color:#8fa3b8;letter-spacing:.12em;font-size:12px;position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+#scanner .help{background:#171f2b;border:1px solid #303f51;border-radius:13px;padding:22px}
+#scanner .help h3{color:#e5fa00}
+#scanner .help p{color:#b6c4d5;padding:7px 0;border-bottom:1px solid #2b3948}
+#categories .directory-grid{gap:18px}
+#categories .directory-grid .panel{min-height:340px}
+#categories .directory-grid h3{font-size:18px;margin:0 0 20px}
+#categories .inline-form{margin-bottom:22px}
+#categories .directory-entry{padding:13px 10px;background:#17212d;border:1px solid #2b3949;border-radius:9px;margin-bottom:8px}
+.module-preview{background:linear-gradient(130deg,#182332,#111923);border:1px solid #344456;border-radius:20px;min-height:310px;display:flex;align-items:center;gap:35px;padding:clamp(24px,5vw,65px)}
+.module-visual{width:180px;height:180px;flex:none;border-radius:25px;background:radial-gradient(circle,#3a4c35,#17232a 75%);border:1px solid #536044;display:grid;place-items:center;font-size:75px;color:#e5fa00}
+.module-preview h2{font-size:27px;letter-spacing:-.035em;margin:13px 0}
+.module-preview p{max-width:580px;color:#aabdd1;line-height:1.7}
+.module-tag{color:#e5fa00;letter-spacing:.14em;font-weight:800;font-size:11px}
+@media(max-width:850px){.section-pill{display:none}.module-preview{flex-direction:column;align-items:flex-start}.module-visual{width:100%;height:130px}.directory-grid{grid-template-columns:1fr!important}}
+@media(max-width:550px){#scanner .scanner-panel .filters{grid-template-columns:1fr}#add #equipmentForm{padding:15px}.module-preview{padding:20px}}
