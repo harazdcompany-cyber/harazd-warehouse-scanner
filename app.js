@@ -59,30 +59,45 @@ async function saveReferenceEdit(e){e.preventDefault();const a=activeReferenceEd
 async function loadLocationNodes(){
  const {data,error}=await db.from('storage_locations').select('*').order('name');
  locationReady=!error;
- if(error){$('#locSetupNotice').textContent='Для створення місць спочатку виконайте файл SUPABASE_LOCATIONS_V45.sql у SQL Editor Supabase. '+error.message;locationNodes=[];}
+ if(error){$('#locSetupNotice').textContent='Не вдалося завантажити місця з Supabase. Перевірте таблицю storage_locations та права доступу. '+error.message;locationNodes=[];}
  else{$('#locSetupNotice').textContent='Місця зберігаються в Supabase. Зміна назв у цьому дереві не змінює існуючі текстові поля обладнання.';locationNodes=data||[];}
  refreshLocationSelectors();renderLocationTree();
 }
 function refreshLocationSelectors(){
  const w=$('#locWarehouse');if(!w)return;
  const selected=w.value;opts(w,warehouses,'Оберіть склад',selected);
- const type=$('#locType').value, wh=w.value;
- $('#locZoneWrap').classList.toggle('hidden',type==='zone');$('#locRackWrap').classList.toggle('hidden',type!=='shelf');
- const z=$('#locZone'), oldZone=z.value;opts(z,locationNodes.filter(n=>n.kind==='zone'&&n.warehouse_id===wh),'Оберіть зону',oldZone);
- const r=$('#locRack'),oldRack=r.value;opts(r,locationNodes.filter(n=>n.kind==='rack'&&n.parent_id===z.value),'Оберіть стелаж',oldRack);
+ const type=$('#locType').value,wh=w.value;
+ $('#locZoneWrap').classList.toggle('hidden',type!=='rack'&&type!=='shelf');
+ $('#locRackWrap').classList.toggle('hidden',type!=='shelf');
+ $('#locParentWrap').classList.toggle('hidden',type!=='place');
+ const z=$('#locZone'),oldZone=z.value;
+ opts(z,locationNodes.filter(n=>n.kind==='zone'&&n.warehouse_id===wh),'Оберіть зону',oldZone);
+ const r=$('#locRack'),oldRack=r.value;
+ opts(r,locationNodes.filter(n=>n.kind==='rack'&&n.parent_id===z.value),'Оберіть стелаж',oldRack);
+ const nodes=locationNodes.filter(n=>n.warehouse_id===wh&&['zone','rack','shelf'].includes(n.kind));
+ const byId=new Map(locationNodes.map(n=>[n.id,n]));
+ const path=n=>{let parts=[],current=n,seen=new Set();while(current&&!seen.has(current.id)){seen.add(current.id);parts.unshift(current.name);current=byId.get(current.parent_id)}return parts.join(' / ')};
+ const parent=$('#locParent'),previous=parent.value;
+ parent.innerHTML='<option value="">Оберіть зону, стелаж або полицю</option>'+nodes.sort((a,b)=>path(a).localeCompare(path(b),'uk')).map(n=>`<option value="${esc(n.id)}">${esc(({zone:'Зона',rack:'Стелаж',shelf:'Полиця'})[n.kind])} · ${esc(path(n))}</option>`).join('');
+ if(nodes.some(n=>n.id===previous))parent.value=previous;
 }
 function renderLocationTree(){
  const root=$('#locationTree');if(!root)return;
- const whname=id=>warehouses.find(w=>w.id===id)?.name||'Невідомий склад';
- const children=(parent,warehouse,kind)=>locationNodes.filter(n=>n.kind===kind&&n.warehouse_id===warehouse&&(n.parent_id||null)===(parent||null));
- const line=(node,depth)=>`<div class="storage-node" style="--depth:${depth}"><span><small>${{zone:'Зона',rack:'Стелаж',shelf:'Полиця'}[node.kind]}</small><b>${esc(node.name)}</b></span><button type="button" data-node-edit="${esc(node.id)}" title="Перейменувати">✎</button></div>`;
- root.innerHTML=warehouses.map(w=>{const zones=children(null,w.id,'zone');return `<div class="storage-group"><h4>▣ ${esc(whname(w.id))}</h4>${zones.map(z=>line(z,0)+children(z.id,w.id,'rack').map(r=>line(r,1)+children(r.id,w.id,'shelf').map(sh=>line(sh,2)).join('')).join('')).join('')||'<p class="muted">Зон поки немає</p>'}</div>`}).join('');
+ const labels={zone:'Зона',rack:'Стелаж',shelf:'Полиця',place:'Місце'};
+ const children=(parent,warehouse)=>locationNodes.filter(n=>n.warehouse_id===warehouse&&(n.parent_id||null)===(parent||null));
+ const line=(node,depth,visited=new Set())=>{
+  if(visited.has(node.id))return '';const next=new Set(visited);next.add(node.id);
+  return `<div class="storage-node" style="--depth:${depth}"><span><small>${labels[node.kind]||'Місце'}</small><b>${esc(node.name)}</b></span><button type="button" data-node-edit="${esc(node.id)}" title="Перейменувати">✎</button></div>`+children(node.id,node.warehouse_id).map(n=>line(n,depth+1,next)).join('');
+ };
+ root.innerHTML=warehouses.map(w=>{const zones=children(null,w.id);return `<div class="storage-group"><h4>▣ ${esc(w.name)}</h4>${zones.map(z=>line(z,0)).join('')||'<p class="muted">Зон поки немає</p>'}</div>`}).join('');
 }
 async function createLocation(e){
  e.preventDefault();if(!locationReady){toast('Спочатку виконайте SQL для таблиці storage_locations',true);return}
  const warehouse_id=$('#locWarehouse').value,kind=$('#locType').value,name=clean($('#locName').value);
- const parent_id=kind==='zone'?null:kind==='rack'?$('#locZone').value:$('#locRack').value;
+ const parent_id=kind==='zone'?null:kind==='rack'?$('#locZone').value:kind==='shelf'?$('#locRack').value:$('#locParent').value;
  if(!warehouse_id||!name||(kind!=='zone'&&!parent_id)){toast('Оберіть склад і батьківське місце',true);return}
+ const parent=locationNodes.find(n=>n.id===parent_id);
+ if(kind!=='zone'&&(!parent||parent.warehouse_id!==warehouse_id||!({rack:['zone'],shelf:['rack'],place:['zone','rack','shelf']}[kind]||[]).includes(parent.kind))){toast('Неправильне розташування місця',true);return}
  const btn=$('#locCreateButton');btn.disabled=true;
  try{const {data,error}=await db.from('storage_locations').insert({warehouse_id,parent_id,kind,name}).select('id').single();if(error)throw error;if(!data)throw Error('Не підтверджено створення');$('#locName').value='';await loadLocationNodes();toast('Місце створено в Supabase')}
  catch(err){toast('Не вдалося створити місце: '+err.message,true)}finally{btn.disabled=false}
