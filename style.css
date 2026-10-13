@@ -89,3 +89,13 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 
 /* V45 · location hierarchy */
 .location-create{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));align-items:end;gap:12px;margin:20px 0}.location-create label{display:flex;flex-direction:column;gap:7px;color:#c5d2e4;font-size:13px}.location-create input,.location-create select{width:100%;min-height:45px}.location-create button{min-height:45px}.location-create .hidden{display:none}.storage-group{background:#101b28;border:1px solid #253445;border-radius:14px;padding:14px;margin:12px 0}.storage-group h4{margin:0 0 12px;color:#e6f4ff}.storage-node{margin:5px 0 5px calc(var(--depth) * 23px);border:1px solid #27384a;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;background:#172331}.storage-node span{display:flex;flex-direction:column;gap:3px}.storage-node small{font-size:11px;color:#90a5bb}.storage-node b{color:#f3f7fc}.storage-node button{background:#253443;color:#dfff00;border:1px solid #34465b;border-radius:8px;cursor:pointer;padding:9px 14px}
+/* V47.1 cascading warehouse selectors */
+.location-cascade{grid-column:1/-1;display:block;padding:18px;border:1px solid #293747;border-radius:14px;background:#0c1520;margin:6px 0 12px}
+.location-cascade-title{font-weight:800;margin-bottom:14px;color:#f1f5fa}
+.location-cascade-title small{display:block;color:#9bb0c8;font-size:12px;font-weight:400;margin-top:5px}
+.location-cascade-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.location-cascade-grid label{min-width:0}
+.location-cascade-grid select{width:100%;margin-top:8px}
+.location-cascade-grid select:disabled{opacity:.5;cursor:not-allowed}
+.location-cascade>small{display:block;margin-top:12px}
+@media(max-width:700px){.location-cascade-grid{grid-template-columns:1fr}}
