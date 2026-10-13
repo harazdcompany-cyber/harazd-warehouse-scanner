@@ -65,3 +65,24 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 .module-tag{color:#e5fa00;letter-spacing:.14em;font-weight:800;font-size:11px}
 @media(max-width:850px){.section-pill{display:none}.module-preview{flex-direction:column;align-items:flex-start}.module-visual{width:100%;height:130px}.directory-grid{grid-template-columns:1fr!important}}
 @media(max-width:550px){#scanner .scanner-panel .filters{grid-template-columns:1fr}#add #equipmentForm{padding:15px}.module-preview{padding:20px}}
+
+/* V44 editable reference data */
+#categories .directory-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#categories .location-panel{grid-column:1/-1;min-height:0}
+#categories .directory-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:49px}
+#categories .directory-entry span{min-width:0;overflow-wrap:anywhere}
+#categories .ref-edit{border:1px solid #3c4b57;border-radius:9px;background:#222e3a;color:#e5fa00;min-width:38px;min-height:36px;cursor:pointer;font-size:17px;flex:none}
+#categories .ref-edit:hover{background:#e5fa00;color:#0b1017}
+#categories #locationList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#categories .location-entry{margin:0}
+#categories .location-entry span{display:grid;gap:6px}
+#categories .location-entry small{font-size:11px;color:#9dafc3}
+#categories .location-entry b{font-size:14px}
+.reference-dialog{background:#101a25;color:#f2f5fb;border:1px solid #3c4b57;border-radius:17px;width:min(480px,calc(100% - 24px));padding:26px}
+.reference-dialog::backdrop{background:#000b}
+.reference-dialog h2{margin:0 0 12px}
+.reference-dialog label{display:grid;gap:8px;margin:18px 0;font-weight:700}
+.reference-dialog input{background:#0b131e;color:white;border:1px solid #3c4b57;border-radius:9px;padding:13px;width:100%;box-sizing:border-box}
+.reference-dialog .actions{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:950px){#categories #locationList{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){#categories #locationList{grid-template-columns:1fr}}
