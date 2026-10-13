@@ -985,6 +985,13 @@ function loadAddFormLists() {
       }
 
       const raw = result.data || result;
+      if (!Array.isArray(raw.categories) || raw.categories.length === 0) {
+        const msg = raw.message || raw.error || 'API повернув відповідь без категорій. Перевірте публікацію 12_ScannerAPI.gs та адресу API.';
+        console.error('[HARAZD] formData response:', result);
+        setAddApiState(false, msg);
+        alert('Не завантажено категорії: ' + msg);
+        return;
+      }
        const categoryMap = raw.subcategories && !Array.isArray(raw.subcategories) ? raw.subcategories : {};
        (raw.categorySubcategories || []).forEach(entry => {
          const category = String(entry.category || '').trim();
@@ -1018,8 +1025,9 @@ function loadAddFormLists() {
 
       setAddApiState(true, 'Підключено до Google Sheets');
     },
-    function() {
-      setAddApiState(false, 'Помилка підключення до Google Sheets');
+    function(error) {
+      console.error('[HARAZD] formData request failed:', error);
+      setAddApiState(false, 'Помилка завантаження довідників (API / тайм-аут)');
     }
   );
 }
