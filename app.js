@@ -6,7 +6,9 @@ const db=configured&&window.supabase?window.supabase.createClient(cfg.SUPABASE_U
 let locationNodes=[],locationReady=false;
 let session=null,items=[],categories=[],subcategories=[],warehouses=[],editing=null,selected=null,scanner=null,scanBusy=false;
 function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className=error?'error':'';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',5500)}
-function show(id){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id!=='scanner')stopScan();}
+const LAST_PAGE_KEY='harazd-last-page-v47';
+function savedPage(){const id=sessionStorage.getItem(LAST_PAGE_KEY);return $$('.page').some(p=>p.id===id)?id:'warehouse'}
+function show(id){if(!$$('.page').some(p=>p.id===id))id='warehouse';sessionStorage.setItem(LAST_PAGE_KEY,id);$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id!=='scanner')stopScan();}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function opts(el,data,placeholder,selectedValue=''){el.replaceChildren(new Option(placeholder,''),...data.map(x=>new Option(x.name,x.id)));el.value=selectedValue||''}
 function current(){return !!session}
@@ -232,6 +234,38 @@ async function addReference(table,form){const fd=new FormData(form),record={name
 function findCode(code){const val=String(code||'').trim().toUpperCase();const x=items.find(x=>[x.eq_id,x.serial,x.barcode,x.qr].some(v=>v&&String(v).trim().toUpperCase()===val));if(x)details(x);else toast('Обладнання не знайдено',true)}
 async function startScan(){if(scanner)return;if(!window.Html5Qrcode){toast('Бібліотека сканування недоступна',true);return}try{scanner=new Html5Qrcode('reader',{verbose:false});await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:230}},async text=>{if(scanBusy)return;scanBusy=true;await stopScan();$('#scanSearch').value=text;findCode(text);scanBusy=false},()=>{});}catch(e){toast('Камера недоступна: '+e.message,true);await stopScan()}}
 async function stopScan(){if(!scanner)return;const s=scanner;scanner=null;try{if(s.isScanning)await s.stop();s.clear()}catch(e){console.warn(e)}}
-async function init(){if(!db){$('#setup').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));return}const {data,error}=await db.auth.getSession();if(error)toast(error.message,true);session=data?.session||null;await applySession();db.auth.onAuthStateChange((_event,s)=>{session=s;setTimeout(()=>applySession(),0)})}
-async function applySession(){if(!session){$('#auth').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));$('#userPanel').textContent='Не авторизовано';return}$('#auth').classList.add('hidden');$('#userPanel').replaceChildren(document.createTextNode(session.user.email+' '));const b=document.createElement('button');b.textContent='Вийти';b.onclick=()=>db.auth.signOut();$('#userPanel').append(b);try{await loadReference();await loadItems();show('warehouse')}catch(e){toast('Помилка підключення: '+e.message,true)}}
+let appliedUserId=null;
+async function init(){
+ if(!db){$('#setup').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));return}
+ const {data,error}=await db.auth.getSession();
+ if(error)toast(error.message,true);
+ session=data?.session||null;
+ await applySession();
+ db.auth.onAuthStateChange((event,s)=>{
+   const previousUser=appliedUserId;
+   session=s;
+   // Supabase refreshes tokens when a background tab becomes active.
+   // Do not reload the application or reset its active page on token refresh.
+   if(event==='TOKEN_REFRESHED' || (s?.user?.id && s.user.id===previousUser))return;
+   setTimeout(()=>applySession(),0);
+ });
+}
+async function applySession(){
+ if(!session){
+   appliedUserId=null;
+   $('#auth').classList.remove('hidden');
+   $$('.page').forEach(x=>x.classList.add('hidden'));
+   $('#userPanel').textContent='Не авторизовано';
+   return;
+ }
+ if(appliedUserId===session.user.id)return;
+ appliedUserId=session.user.id;
+ $('#auth').classList.add('hidden');
+ $('#userPanel').replaceChildren(document.createTextNode(session.user.email+' '));
+ const b=document.createElement('button');b.textContent='Вийти';
+ b.onclick=()=>{sessionStorage.removeItem(LAST_PAGE_KEY);db.auth.signOut()};
+ $('#userPanel').append(b);
+ try{await loadReference();await loadItems();show(savedPage())}
+ catch(e){toast('Помилка підключення: '+e.message,true)}
+}
 $$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#formWarehouse').onchange=()=>refreshEquipmentLocations('');$('#equipmentZone').onchange=()=>refreshEquipmentRack();$('#equipmentRack').onchange=()=>refreshEquipmentShelf();$('#equipmentShelf').onchange=()=>refreshEquipmentPlace();$('#equipmentLocation').onchange=applyEquipmentLocation;$('#equipmentForm').onsubmit=saveEquipment;$('#cancelEdit').onclick=resetForm;$('#equipmentRows').onclick=e=>{const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#editItem').onclick=()=>selected&&edit(selected);$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
