@@ -984,7 +984,30 @@ function loadAddFormLists() {
         return;
       }
 
-      addDirectoryData = Object.assign(addDirectoryData, result.data || result);
+      const raw = result.data || result;
+       const categoryMap = raw.subcategories && !Array.isArray(raw.subcategories) ? raw.subcategories : {};
+       (raw.categorySubcategories || []).forEach(entry => {
+         const category = String(entry.category || '').trim();
+         const subcategory = String(entry.subcategory || '').trim();
+         if (!category || !subcategory) return;
+         if (!categoryMap[category]) categoryMap[category] = [];
+         if (!categoryMap[category].includes(subcategory)) categoryMap[category].push(subcategory);
+       });
+       const locationMap = raw.locations && !Array.isArray(raw.locations) ? raw.locations : {};
+       if (Array.isArray(raw.locations)) raw.locations.forEach(entry => {
+         const warehouse = String(entry.warehouse || '').trim();
+         const zone = String(entry.zone || '').trim();
+         const rack = String(entry.rack || '').trim();
+         const shelf = String(entry.shelf || '').trim();
+         if (!warehouse) return;
+         if (!locationMap[warehouse]) locationMap[warehouse] = {};
+         if (!zone) return;
+         if (!locationMap[warehouse][zone]) locationMap[warehouse][zone] = {};
+         if (!rack) return;
+         if (!locationMap[warehouse][zone][rack]) locationMap[warehouse][zone][rack] = [];
+         if (shelf && !locationMap[warehouse][zone][rack].includes(shelf)) locationMap[warehouse][zone][rack].push(shelf);
+       });
+       addDirectoryData = Object.assign(addDirectoryData, raw, {subcategories:categoryMap,locations:locationMap});
 
       fillSelect('addCategory', addDirectoryData.categories, 'Оберіть категорію');
       fillSelect('addManufacturer', addDirectoryData.manufacturers, 'Оберіть виробника');
@@ -1419,7 +1442,7 @@ function equipmentEditForm(item){
   callHarazdJsonp({action:'updateEquipment',id:item.id,payload:JSON.stringify(payload)},result=>{
     save.disabled=false;save.textContent='Зберегти зміни';
     if(!result?.success){showToast(result?.message||'Не вдалося зберегти');return;}
-    editingEquipment=false;stockNeedsRefresh=true;closeEquipmentCard();loadStockEquipment();showToast('Зміни збережено');
+    editingEquipment=false;stockNeedsRefresh=true;closeEquipmentCard();loadStock(true);showToast('Зміни збережено');
   },()=>{save.disabled=false;save.textContent='Зберегти зміни';showToast('Помилка зв’язку з API')});
  });return form;
 }
