@@ -296,7 +296,8 @@ function staffSetPreset(role){const s=new Set(STAFF_PRESETS[role]||[]);$$('#staf
 function staffOpen(x=null){if(!staffAllowed('personnel_manage'))return;staffEditId=x?.user_id||null;staffCurrent=x;const f=$('#staffForm');f.reset();f.elements.email.value=x?.email||'';f.elements.email.readOnly=!!x;f.elements.full_name.value=x?.full_name||'';f.elements.position.value=x?.position||'';f.elements.role.value=x?.role||'viewer';f.elements.status.value=x?.status||'active';$('#staffDialogTitle').textContent=x?'Редагувати працівника':'Додати працівника';f.elements.password.required=!x;f.elements.password.value='';$('#staffPasswordNote').textContent=x?'Новий пароль (необов’язково): введіть, щоб змінити пароль працівника. Поточний пароль переглянути неможливо.':'Вкажіть початковий пароль від 8 символів. Пароль не зберігається у профілі персоналу.';$('#staffPermissions').innerHTML=STAFF_PERMISSIONS.map(([id,label,group])=>`<label class="staff-perm"><input type="checkbox" value="${id}"><span><small>${esc(group)}</small>${esc(label)}</span></label>`).join('');staffSetPreset(f.elements.role.value);if(x)$$('#staffPermissions input').forEach(c=>c.checked=x.permissions?.[c.value]===true);$('#staffDialog').showModal()}
 async function staffSave(e){
  e.preventDefault();if(!staffAllowed('personnel_manage'))return;
- const f=e.currentTarget;
+ const f=e.target?.closest?.('form') || document.querySelector('#staffForm');
+ if(!f){toast('Форму працівника не знайдено',true);return}
  const payload={email:f.elements.email.value.trim().toLowerCase(),full_name:f.elements.full_name.value.trim(),position:f.elements.position.value.trim(),role:f.elements.role.value,status:f.elements.status.value,permissions:Object.fromEntries($$('#staffPermissions input').map(c=>[c.value,c.checked]))};
  const password=f.elements.password.value;
  if(!staffEditId&&!password){toast('Введіть початковий пароль',true);return}
