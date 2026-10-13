@@ -1,5 +1,18 @@
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+// V48.2: capture staff submissions before the browser can navigate to ?email=...
+// Capture phase also works when another UI initializer fails before attaching handlers.
+document.addEventListener('submit',event=>{
+ const form=event.target;
+ if(form?.id!=='staffForm')return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ Promise.resolve().then(()=>staffSave(event)).catch(err=>{
+  console.error('Personnel form:',err);
+  toast('Помилка форми персоналу: '+(err?.message||String(err)),true);
+ });
+},true);
+
 const cfg=window.HARAZD_CONFIG||{};
 const configured=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(cfg.SUPABASE_URL||'') && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.startsWith('YOUR_');
 const db=configured&&window.supabase?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
@@ -280,7 +293,7 @@ function staffApplyUI(){const manage=staffAllowed('personnel_manage');$('#staffA
 async function staffLoad(){if(!session)return;await staffLoadSelf();const {data,error}=await db.from('warehouse_staff').select('*').order('full_name');if(error){$('#staffNotice').textContent='Не вдалося завантажити персонал: '+error.message;return}staffProfiles=data||[];staffRender()}
 function staffRender(){const q=$('#staffSearch').value.trim().toLowerCase();const visible=staffProfiles.filter(x=>[x.full_name,x.email,x.position,x.role].some(v=>String(v||'').toLowerCase().includes(q)));const roleName={admin:'Адміністратор',manager:'Менеджер',warehouse:'Комірник',viewer:'Перегляд'};$('#staffList').innerHTML=visible.map(x=>`<div class="staff-card"><span class="staff-avatar">${esc((x.full_name||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase())}</span><div class="staff-person"><strong>${esc(x.full_name)}</strong><small>${esc(x.position||'Без посади')} · ${esc(x.email)}</small></div><div class="staff-meta"><strong>${esc(roleName[x.role]||x.role)}</strong><small>${x.status==='active'?'Активний':'Заблокований'}</small></div>${staffAllowed('personnel_manage')?`<button type="button" data-staff-edit="${esc(x.user_id)}">✎ Редагувати</button>`:''}</div>`).join('')||'<p class="muted">Працівників не знайдено.</p>'}
 function staffSetPreset(role){const s=new Set(STAFF_PRESETS[role]||[]);$$('#staffPermissions input[type=checkbox]').forEach(c=>c.checked=s.has(c.value))}
-function staffOpen(x=null){if(!staffAllowed('personnel_manage'))return;staffEditId=x?.user_id||null;staffCurrent=x;const f=$('#staffForm');f.reset();f.elements.email.value=x?.email||'';f.elements.email.readOnly=!!x;f.elements.full_name.value=x?.full_name||'';f.elements.position.value=x?.position||'';f.elements.role.value=x?.role||'viewer';f.elements.status.value=x?.status||'active';$('#staffDialogTitle').textContent=x?'Редагувати працівника':'Додати працівника';f.elements.password.required=!x;f.elements.password.value='';$('#staffPasswordWrap').querySelector('label')?.remove();$('#staffPasswordNote').textContent=x?'Новий пароль (необов’язково): введіть, щоб змінити пароль працівника. Поточний пароль переглянути неможливо.':'Вкажіть початковий пароль від 8 символів. Пароль не зберігається у профілі персоналу.';$('#staffPermissions').innerHTML=STAFF_PERMISSIONS.map(([id,label,group])=>`<label class="staff-perm"><input type="checkbox" value="${id}"><span><small>${esc(group)}</small>${esc(label)}</span></label>`).join('');staffSetPreset(f.elements.role.value);if(x)$$('#staffPermissions input').forEach(c=>c.checked=x.permissions?.[c.value]===true);$('#staffDialog').showModal()}
+function staffOpen(x=null){if(!staffAllowed('personnel_manage'))return;staffEditId=x?.user_id||null;staffCurrent=x;const f=$('#staffForm');f.reset();f.elements.email.value=x?.email||'';f.elements.email.readOnly=!!x;f.elements.full_name.value=x?.full_name||'';f.elements.position.value=x?.position||'';f.elements.role.value=x?.role||'viewer';f.elements.status.value=x?.status||'active';$('#staffDialogTitle').textContent=x?'Редагувати працівника':'Додати працівника';f.elements.password.required=!x;f.elements.password.value='';$('#staffPasswordNote').textContent=x?'Новий пароль (необов’язково): введіть, щоб змінити пароль працівника. Поточний пароль переглянути неможливо.':'Вкажіть початковий пароль від 8 символів. Пароль не зберігається у профілі персоналу.';$('#staffPermissions').innerHTML=STAFF_PERMISSIONS.map(([id,label,group])=>`<label class="staff-perm"><input type="checkbox" value="${id}"><span><small>${esc(group)}</small>${esc(label)}</span></label>`).join('');staffSetPreset(f.elements.role.value);if(x)$$('#staffPermissions input').forEach(c=>c.checked=x.permissions?.[c.value]===true);$('#staffDialog').showModal()}
 async function staffSave(e){
  e.preventDefault();if(!staffAllowed('personnel_manage'))return;
  const f=e.currentTarget;
@@ -291,9 +304,21 @@ async function staffSave(e){
  const submit=f.querySelector('[type=submit]');submit.disabled=true;
  try{
   const {data,error}=await db.functions.invoke('warehouse-staff-admin',{body:{action:staffEditId?'update':'create',...payload,password:password||undefined}});
-  if(error)throw new Error(error.message||'Помилка Edge Function');
+  if(error){let message=error.message||'Помилка Edge Function';try{const body=await error.context?.json();message=body?.error||body?.message||message}catch(_){}throw new Error(message)}
   if(data?.error)throw new Error(data.error);
   $('#staffDialog').close();await staffLoad();toast(staffEditId?'Працівника оновлено':'Працівника створено. Він може увійти за email і паролем.');
  }catch(err){toast('Помилка: '+err.message,true)}finally{submit.disabled=false}
 }
-$('#staffAdd').onclick=()=>staffOpen();$('#staffRefresh').onclick=staffLoad;$('#staffSearch').oninput=staffRender;$('#staffRole').onchange=e=>staffSetPreset(e.target.value);$('#staffCancel').onclick=()=>$('#staffDialog').close();$('#staffForm').onsubmit=staffSave;$('#staffList').onclick=e=>{const b=e.target.closest('[data-staff-edit]');if(b)staffOpen(staffProfiles.find(x=>x.user_id===b.dataset.staffEdit))};
+// Optional UI controls must not prevent the personnel form from working.
+function bindPersonnelControls(){
+ const on=(selector,event,handler)=>{const el=$(selector);if(el)el.addEventListener(event,handler)};
+ on('#staffAdd','click',()=>staffOpen());
+ on('#staffRefresh','click',()=>staffLoad());
+ on('#staffSearch','input',()=>staffRender());
+ on('#staffRole','change',e=>staffSetPreset(e.target.value));
+ on('#staffCancel','click',()=>$('#staffDialog')?.close());
+ on('#staffList','click',e=>{const b=e.target.closest('[data-staff-edit]');if(b)staffOpen(staffProfiles.find(x=>x.user_id===b.dataset.staffEdit))});
+ const form=$('#staffForm');if(form)form.setAttribute('method','post');
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindPersonnelControls,{once:true});
+else bindPersonnelControls();
