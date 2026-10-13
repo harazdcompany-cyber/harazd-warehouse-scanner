@@ -116,3 +116,27 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 .storage-zone-children{padding:0 12px 12px 0}
 .storage-zone-children>.storage-node{margin-left:calc(var(--depth) * 23px - 10px)}
 @media(max-width:640px){.storage-zone-count{display:none}}
+
+/* V47.4: scroll only the entries; headings and add forms stay in place. */
+#categories #categoryList,
+#categories #subcategoryList,
+#categories #warehouseList {
+  max-height: 420px; /* 5 rows x (76px row + 8px gap) */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+}
+#categories #categoryList::-webkit-scrollbar,
+#categories #subcategoryList::-webkit-scrollbar,
+#categories #warehouseList::-webkit-scrollbar { display: none; width: 0; height: 0; }
+#categories #categoryList > .directory-entry,
+#categories #subcategoryList > .directory-entry,
+#categories #warehouseList > .directory-entry {
+  min-height: 76px;
+  margin-bottom: 8px;
+}
+#categories #categoryList > .directory-entry:last-child,
+#categories #subcategoryList > .directory-entry:last-child,
+#categories #warehouseList > .directory-entry:last-child { margin-bottom: 0; }
