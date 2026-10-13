@@ -87,7 +87,14 @@ function renderLocationTree(){
  const children=(parent,warehouse)=>locationNodes.filter(n=>n.warehouse_id===warehouse&&(n.parent_id||null)===(parent||null));
  const line=(node,depth,visited=new Set())=>{
   if(visited.has(node.id))return '';const next=new Set(visited);next.add(node.id);
-  return `<div class="storage-node" style="--depth:${depth}"><span><small>${labels[node.kind]||'Місце'}</small><b>${esc(node.name)}</b></span><button type="button" data-node-edit="${esc(node.id)}" title="Перейменувати">✎</button></div>`+children(node.id,node.warehouse_id).map(n=>line(n,depth+1,next)).join('');
+  const descendants=children(node.id,node.warehouse_id);
+  const heading=`<span><small>${labels[node.kind]||'Місце'}</small><b>${esc(node.name)}</b></span>`;
+  const edit=`<button type="button" data-node-edit="${esc(node.id)}" title="Перейменувати ${esc(node.name)}" aria-label="Перейменувати ${esc(node.name)}">✎</button>`;
+  if(node.kind==='zone'){
+   // Every zone is collapsed by default; native details supports mouse, keyboard and touch.
+   return `<details class="storage-zone" style="--depth:${depth}"><summary><span class="storage-chevron" aria-hidden="true">▸</span>${heading}<span class="storage-zone-count">${descendants.length} підрозділів</span></summary><div class="storage-zone-actions">${edit}</div><div class="storage-zone-children">${descendants.map(n=>line(n,depth+1,next)).join('')||'<p class="muted">У зоні ще немає місць</p>'}</div></details>`;
+  }
+  return `<div class="storage-node" style="--depth:${depth}">${heading}${edit}</div>`+descendants.map(n=>line(n,depth+1,next)).join('');
  };
  root.innerHTML=warehouses.map(w=>{const zones=children(null,w.id);return `<div class="storage-group"><h4>▣ ${esc(w.name)}</h4>${zones.map(z=>line(z,0)).join('')||'<p class="muted">Зон поки немає</p>'}</div>`}).join('');
 }

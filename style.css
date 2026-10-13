@@ -99,3 +99,20 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 .location-cascade-grid select:disabled{opacity:.5;cursor:not-allowed}
 .location-cascade>small{display:block;margin-top:12px}
 @media(max-width:700px){.location-cascade-grid{grid-template-columns:1fr}}
+
+/* V47.3: zones are collapsed by default. Click the zone header to expand. */
+.storage-zone{position:relative;margin:7px 0 7px calc(var(--depth) * 23px);border:1px solid #2b3c50;border-radius:10px;background:#172331;overflow:hidden}
+.storage-zone>summary{display:flex;align-items:center;gap:11px;min-height:57px;padding:10px 60px 10px 13px;cursor:pointer;list-style:none;user-select:none}
+.storage-zone>summary::-webkit-details-marker{display:none}
+.storage-zone>summary:focus-visible{outline:2px solid #dfff00;outline-offset:-3px}
+.storage-zone>summary>span:nth-child(2){display:flex;flex-direction:column;gap:3px}
+.storage-zone>summary small{font-size:11px;color:#90a5bb}
+.storage-zone>summary b{color:#f3f7fc}
+.storage-chevron{font-size:20px;color:#dfff00;transition:transform .16s ease}
+.storage-zone[open] .storage-chevron{transform:rotate(90deg)}
+.storage-zone-count{margin-left:auto;color:#90a5bb;font-size:12px}
+.storage-zone-actions{position:absolute;right:10px;top:10px}
+.storage-zone-actions button{background:#253443;color:#dfff00;border:1px solid #34465b;border-radius:8px;cursor:pointer;padding:9px 14px}
+.storage-zone-children{padding:0 12px 12px 0}
+.storage-zone-children>.storage-node{margin-left:calc(var(--depth) * 23px - 10px)}
+@media(max-width:640px){.storage-zone-count{display:none}}
