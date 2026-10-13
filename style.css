@@ -86,3 +86,6 @@ body{background:#090e14}.sidebar{background:#080c11}.content{max-width:1660px;pa
 .reference-dialog .actions{display:flex;gap:10px;flex-wrap:wrap}
 @media(max-width:950px){#categories #locationList{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){#categories #locationList{grid-template-columns:1fr}}
+
+/* V45 · location hierarchy */
+.location-create{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));align-items:end;gap:12px;margin:20px 0}.location-create label{display:flex;flex-direction:column;gap:7px;color:#c5d2e4;font-size:13px}.location-create input,.location-create select{width:100%;min-height:45px}.location-create button{min-height:45px}.location-create .hidden{display:none}.storage-group{background:#101b28;border:1px solid #253445;border-radius:14px;padding:14px;margin:12px 0}.storage-group h4{margin:0 0 12px;color:#e6f4ff}.storage-node{margin:5px 0 5px calc(var(--depth) * 23px);border:1px solid #27384a;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;background:#172331}.storage-node span{display:flex;flex-direction:column;gap:3px}.storage-node small{font-size:11px;color:#90a5bb}.storage-node b{color:#f3f7fc}.storage-node button{background:#253443;color:#dfff00;border:1px solid #34465b;border-radius:8px;cursor:pointer;padding:9px 14px}

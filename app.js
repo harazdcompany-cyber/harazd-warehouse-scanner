@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const cfg=window.HARAZD_CONFIG||{};
 const configured=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(cfg.SUPABASE_URL||'') && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.startsWith('YOUR_');
 const db=configured&&window.supabase?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
+let locationNodes=[],locationReady=false;
 let session=null,items=[],categories=[],subcategories=[],warehouses=[],editing=null,selected=null,scanner=null,scanBusy=false;
 function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className=error?'error':'';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',5500)}
 function show(id){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id!=='scanner')stopScan();}
@@ -10,7 +11,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function opts(el,data,placeholder,selectedValue=''){el.replaceChildren(new Option(placeholder,''),...data.map(x=>new Option(x.name,x.id)));el.value=selectedValue||''}
 function current(){return !!session}
 async function query(table,order='name'){let r=await db.from(table).select('*').order(order);if(r.error)throw r.error;return r.data||[]}
-async function loadReference(){[categories,subcategories,warehouses]=await Promise.all([query('categories'),query('subcategories'),query('warehouses')]);renderReference()}
+async function loadReference(){[categories,subcategories,warehouses]=await Promise.all([query('categories'),query('subcategories'),query('warehouses')]);renderReference();await loadLocationNodes()}
 function renderReference(){
  opts($('#formCategory'),categories,'Оберіть категорію');opts($('#directoryCategory'),categories,'Оберіть категорію');opts($('#formWarehouse'),warehouses,'Оберіть склад');opts($('#categoryFilter'),categories,'Усі категорії',$('#categoryFilter').value);opts($('#warehouseFilter'),warehouses,'Усі склади',$('#warehouseFilter').value);updateSubcategories();
  const row=(table,x,label)=>`<div class="directory-entry"><span>${esc(label)}</span><button type="button" class="ref-edit" data-ref-table="${table}" data-ref-id="${esc(x.id)}" aria-label="Редагувати ${esc(label)}" title="Редагувати">✎</button></div>`;
@@ -52,6 +53,45 @@ async function saveReferenceEdit(e){e.preventDefault();const a=activeReferenceEd
   }
   $('#referenceDialog').close();await loadReference();await loadItems();renderLocations();
  }catch(err){toast('Помилка редагування: '+err.message,true)}finally{button.disabled=false}
+}
+
+
+async function loadLocationNodes(){
+ const {data,error}=await db.from('storage_locations').select('*').order('name');
+ locationReady=!error;
+ if(error){$('#locSetupNotice').textContent='Для створення місць спочатку виконайте файл SUPABASE_LOCATIONS_V45.sql у SQL Editor Supabase. '+error.message;locationNodes=[];}
+ else{$('#locSetupNotice').textContent='Місця зберігаються в Supabase. Зміна назв у цьому дереві не змінює існуючі текстові поля обладнання.';locationNodes=data||[];}
+ refreshLocationSelectors();renderLocationTree();
+}
+function refreshLocationSelectors(){
+ const w=$('#locWarehouse');if(!w)return;
+ const selected=w.value;opts(w,warehouses,'Оберіть склад',selected);
+ const type=$('#locType').value, wh=w.value;
+ $('#locZoneWrap').classList.toggle('hidden',type==='zone');$('#locRackWrap').classList.toggle('hidden',type!=='shelf');
+ const z=$('#locZone'), oldZone=z.value;opts(z,locationNodes.filter(n=>n.kind==='zone'&&n.warehouse_id===wh),'Оберіть зону',oldZone);
+ const r=$('#locRack'),oldRack=r.value;opts(r,locationNodes.filter(n=>n.kind==='rack'&&n.parent_id===z.value),'Оберіть стелаж',oldRack);
+}
+function renderLocationTree(){
+ const root=$('#locationTree');if(!root)return;
+ const whname=id=>warehouses.find(w=>w.id===id)?.name||'Невідомий склад';
+ const children=(parent,warehouse,kind)=>locationNodes.filter(n=>n.kind===kind&&n.warehouse_id===warehouse&&(n.parent_id||null)===(parent||null));
+ const line=(node,depth)=>`<div class="storage-node" style="--depth:${depth}"><span><small>${{zone:'Зона',rack:'Стелаж',shelf:'Полиця'}[node.kind]}</small><b>${esc(node.name)}</b></span><button type="button" data-node-edit="${esc(node.id)}" title="Перейменувати">✎</button></div>`;
+ root.innerHTML=warehouses.map(w=>{const zones=children(null,w.id,'zone');return `<div class="storage-group"><h4>▣ ${esc(whname(w.id))}</h4>${zones.map(z=>line(z,0)+children(z.id,w.id,'rack').map(r=>line(r,1)+children(r.id,w.id,'shelf').map(sh=>line(sh,2)).join('')).join('')).join('')||'<p class="muted">Зон поки немає</p>'}</div>`}).join('');
+}
+async function createLocation(e){
+ e.preventDefault();if(!locationReady){toast('Спочатку виконайте SQL для таблиці storage_locations',true);return}
+ const warehouse_id=$('#locWarehouse').value,kind=$('#locType').value,name=clean($('#locName').value);
+ const parent_id=kind==='zone'?null:kind==='rack'?$('#locZone').value:$('#locRack').value;
+ if(!warehouse_id||!name||(kind!=='zone'&&!parent_id)){toast('Оберіть склад і батьківське місце',true);return}
+ const btn=$('#locCreateButton');btn.disabled=true;
+ try{const {data,error}=await db.from('storage_locations').insert({warehouse_id,parent_id,kind,name}).select('id').single();if(error)throw error;if(!data)throw Error('Не підтверджено створення');$('#locName').value='';await loadLocationNodes();toast('Місце створено в Supabase')}
+ catch(err){toast('Не вдалося створити місце: '+err.message,true)}finally{btn.disabled=false}
+}
+async function renameLocationNode(id){
+ const node=locationNodes.find(n=>String(n.id)===id);if(!node)return;
+ const name=clean(prompt('Нова назва місця:',node.name));if(!name||name===node.name)return;
+ try{const {data,error}=await db.from('storage_locations').update({name}).eq('id',id).select('id,name').single();if(error)throw error;if(!data||data.name!==name)throw Error('Не вдалося підтвердити зміну');await loadLocationNodes();toast('Місце перейменовано')}
+ catch(err){toast('Помилка: '+err.message,true)}
 }
 
 function updateSubcategories(value=''){opts($('#formSubcategory'),subcategories.filter(x=>x.category_id===$('#formCategory').value),'Оберіть підкатегорію',value)}
@@ -101,4 +141,4 @@ async function startScan(){if(scanner)return;if(!window.Html5Qrcode){toast('Бі
 async function stopScan(){if(!scanner)return;const s=scanner;scanner=null;try{if(s.isScanning)await s.stop();s.clear()}catch(e){console.warn(e)}}
 async function init(){if(!db){$('#setup').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));return}const {data,error}=await db.auth.getSession();if(error)toast(error.message,true);session=data?.session||null;await applySession();db.auth.onAuthStateChange((_event,s)=>{session=s;setTimeout(()=>applySession(),0)})}
 async function applySession(){if(!session){$('#auth').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));$('#userPanel').textContent='Не авторизовано';return}$('#auth').classList.add('hidden');$('#userPanel').replaceChildren(document.createTextNode(session.user.email+' '));const b=document.createElement('button');b.textContent='Вийти';b.onclick=()=>db.auth.signOut();$('#userPanel').append(b);try{await loadReference();await loadItems();show('warehouse')}catch(e){toast('Помилка підключення: '+e.message,true)}}
-$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#equipmentForm').onsubmit=saveEquipment;$('#cancelEdit').onclick=resetForm;$('#equipmentRows').onclick=e=>{const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#editItem').onclick=()=>selected&&edit(selected);$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
+$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#equipmentForm').onsubmit=saveEquipment;$('#cancelEdit').onclick=resetForm;$('#equipmentRows').onclick=e=>{const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#editItem').onclick=()=>selected&&edit(selected);$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
