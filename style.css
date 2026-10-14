@@ -310,3 +310,10 @@ body *::-webkit-scrollbar {
 .danger-solid{background:#f33245!important;border-color:#f33245!important;color:white!important;font-weight:700;}
 .danger-solid:hover{background:#d92739!important;}
 .danger-solid:disabled{opacity:.55;cursor:wait;}
+
+/* V49.9: equipment details footer alignment and red delete button */
+#itemDialog > .actions { justify-content:flex-start; gap:12px; }
+#itemDialog > .actions #deleteItem { margin-right:0; background:#ff3345; border:1px solid #ff3345; color:#080b10; font-weight:800; }
+#itemDialog > .actions #deleteItem:hover { background:#e62b3c; border-color:#e62b3c; color:#080b10; }
+#itemDialog > .actions #editItem { margin-right:auto; }
+#itemDialog > .actions #closeDialog { margin-left:0; }
