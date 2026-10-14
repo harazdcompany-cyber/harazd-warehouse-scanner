@@ -572,3 +572,7 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 
 /* V50.31: Hide personnel refresh button, keep DOM hook for app.js */
 #personnel #staffRefresh { display: none !important; }
+
+/* V50.32: white transparent HARAZD truss logo */
+.brand .brand-logo{display:block;width:38px;height:46px;object-fit:contain;flex:none}
+.brand .mark{display:none}
