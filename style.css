@@ -276,3 +276,20 @@ body *::-webkit-scrollbar {
 #warehouse .search-icon {top:50%;transform:translateY(-50%);line-height:1 !important;display:flex;align-items:center;justify-content:center;height:30px;width:30px}
 #warehouse .live-indicator {display:inline-flex;align-items:center;gap:8px;line-height:1.2}
 @media(max-width:700px){#warehouse .heading-actions > button{height:44px !important;min-height:44px !important}}
+
+/* V49.6 — optical and geometric centering of search icon (no font glyph baseline) */
+#warehouse .warehouse-search {position:relative !important;}
+#warehouse .warehouse-search .search-icon {
+ position:absolute !important; left:21px !important; top:50% !important;
+ transform:translateY(-50%) !important; width:22px !important; height:22px !important;
+ display:block !important; margin:0 !important; padding:0 !important;
+ font-size:0 !important; line-height:0 !important; pointer-events:none !important;
+}
+#warehouse .warehouse-search .search-icon::before {
+ content:""; position:absolute; left:1px; top:1px; width:13px; height:13px;
+ border:2.5px solid #f0f6fc; border-radius:50%; box-sizing:content-box;
+}
+#warehouse .warehouse-search .search-icon::after {
+ content:""; position:absolute; width:10px; height:2.5px; background:#f0f6fc;
+ border-radius:2px; left:14px; top:17px; transform:rotate(-45deg); transform-origin:left center;
+}
