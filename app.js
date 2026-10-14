@@ -350,6 +350,15 @@ else bindPersonnelControls();
 
 // V50 — repair tickets (Supabase-backed)
 let repairJobs=[],repairEditId=null;
+const REPAIR_PHOTO_BUCKET='repair-photos';
+let repairPhotoFiles=[],repairExistingPhotos=[],repairPhotoObjectUrls=[];
+function repairPhotoClear(){repairPhotoObjectUrls.forEach(u=>URL.revokeObjectURL(u));repairPhotoObjectUrls=[];repairPhotoFiles=[];repairExistingPhotos=[];const inp=$('#repairPhotoInput');if(inp)inp.value='';repairPhotoDraw();}
+function repairPhotoNotice(message){const el=$('#repairPhotoNotice');if(!el)return;el.hidden=!message;el.textContent=message||'';}
+function repairPhotoDraw(){const el=$('#repairPhotoPreview');if(!el)return;el.replaceChildren();for(const [i,photo] of repairExistingPhotos.entries()){const wrap=document.createElement('div');wrap.className='repair-photo-tile';const img=document.createElement('img');img.alt='Фото несправності';img.loading='lazy';if(photo.signedUrl)img.src=photo.signedUrl;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title='Прибрати фото';remove.setAttribute('aria-label','Прибрати фото');remove.addEventListener('click',()=>{photo.remove=true;wrap.remove();});if(photo.remove)continue;wrap.append(img,remove);el.append(wrap);}for(const [i,file] of repairPhotoFiles.entries()){const wrap=document.createElement('div');wrap.className='repair-photo-tile';const img=document.createElement('img');img.alt=file.name;const url=URL.createObjectURL(file);repairPhotoObjectUrls.push(url);img.src=url;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title='Прибрати фото';remove.addEventListener('click',()=>{repairPhotoFiles.splice(i,1);repairPhotoObjectUrls.forEach(u=>URL.revokeObjectURL(u));repairPhotoObjectUrls=[];repairPhotoDraw();});wrap.append(img,remove);el.append(wrap);}}
+function repairPhotoChoose(event){const chosen=[...(event.target.files||[])];const allowed=['image/jpeg','image/png','image/webp'];let message='';for(const file of chosen){if(!allowed.includes(file.type)){message='Підтримуються лише JPG, PNG і WEBP';continue;}if(file.size>10*1024*1024){message='Кожне фото має бути до 10 МБ';continue;}if(repairPhotoFiles.length+repairExistingPhotos.filter(x=>!x.remove).length>=10){message='Максимум 10 фотографій';break;}repairPhotoFiles.push(file);}event.target.value='';repairPhotoNotice(message);repairPhotoObjectUrls.forEach(u=>URL.revokeObjectURL(u));repairPhotoObjectUrls=[];repairPhotoDraw();}
+async function repairPhotoLoad(jobId){const {data,error}=await db.from('repair_job_photos').select('id,storage_path,created_at').eq('job_id',jobId).order('created_at');if(error)throw error;repairExistingPhotos=data||[];for(const photo of repairExistingPhotos){const {data:link,error:e}=await db.storage.from(REPAIR_PHOTO_BUCKET).createSignedUrl(photo.storage_path,3600);if(!e)photo.signedUrl=link.signedUrl;}repairPhotoDraw();}
+async function repairPhotoSync(jobId){const deleted=repairExistingPhotos.filter(x=>x.remove);const added=[];for(const file of repairPhotoFiles){const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=jobId+'/'+crypto.randomUUID()+'.'+ext;const {error:uploadError}=await db.storage.from(REPAIR_PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});if(uploadError)throw uploadError;added.push(path);const {error:metaError}=await db.from('repair_job_photos').insert({job_id:jobId,storage_path:path});if(metaError){await db.storage.from(REPAIR_PHOTO_BUCKET).remove([path]);throw metaError;}}for(const photo of deleted){const {error}=await db.from('repair_job_photos').delete().eq('id',photo.id);if(error)throw error;const {error:storageError}=await db.storage.from(REPAIR_PHOTO_BUCKET).remove([photo.storage_path]);if(storageError)console.warn('Photo cleanup',storageError);}}
+
 const repairLabels={new:'Нова заявка',diagnostics:'Діагностика',waiting:'Очікує запчастин',progress:'В ремонті',done:'Завершено',cancelled:'Скасовано'};
 const repairActiveStatuses=['new','diagnostics','waiting','progress'];
 async function repairLoad(){if(!session)return;const el=$('#repairList');el.innerHTML='<p class="muted">Завантаження ремонтів...</p>';const {data,error}=await db.from('repair_jobs').select('*').order('created_at',{ascending:false});if(error){el.innerHTML='<p class="muted">Не вдалося завантажити ремонти. Спочатку виконайте SQL із ZIP. '+esc(error.message)+'</p>';return;}repairJobs=data||[];repairRender();}
@@ -365,7 +374,7 @@ function repairPopulateAssignees(selected=''){
 }
 async function repairOpen(job=null){
  if(!staffAllowed('repairs_manage')){toast('Недостатньо прав для оформлення ремонту',true);return;}
- repairEditId=job?.id||null;const form=$('#repairForm');form.reset();
+ repairEditId=job?.id||null;const form=$('#repairForm');form.reset();repairPhotoClear();repairPhotoNotice('');
  $('#repairDialogTitle').textContent=job?'Редагувати ремонт':'Нова заявка на ремонт';
  $('#repairEditExtras').hidden=!job;$('#repairDelete').hidden=!job;repairSelectEquipment(null);$('#repairEquipmentSearch').value='';repairHideResults();repairStopCamera();
  // Завантажити актуальний персонал, навіть якщо вкладку «Персонал» ще не відкривали.
@@ -373,7 +382,7 @@ async function repairOpen(job=null){
  repairPopulateAssignees(job?.assignee||'');
  if(job){for(const field of ['status','started_on','due_on','completed_on','cost','problem','notes'])if(form.elements[field])form.elements[field].value=job[field]??'';repairSelectEquipment(items.find(x=>String(x.id)===String(job.equipment_id))||null);}
  else {form.elements.started_on.value=new Date().toLocaleDateString('en-CA');form.elements.status.value='new';form.elements.cost.value=0;}
- repairToggleCompletion();$('#repairDialog').showModal();
+ repairToggleCompletion();$('#repairDialog').showModal();if(job){try{await repairPhotoLoad(job.id);}catch(e){repairPhotoNotice('Не вдалося завантажити фото: '+e.message);}}
 }
 async function repairSave(event){
  event.preventDefault();if(!staffAllowed('repairs_manage'))return;
@@ -384,7 +393,7 @@ async function repairSave(event){
  if(repairEditId){const done=fd.get('status')==='done';if(done&&!fd.get('completed_on')){toast('Вкажіть дату завершення ремонту',true);return;}Object.assign(record,{status:fd.get('status'),completed_on:done?(fd.get('completed_on')||null):null,cost:done?Number(fd.get('cost')||0):0,notes:String(fd.get('notes')||'').trim()});}
  else Object.assign(record,{status:'new',quantity:1,completed_on:null,cost:0,notes:''});
  const btn=$('#repairSave');btn.disabled=true;
- try{const result=repairEditId?await db.from('repair_jobs').update(record).eq('id',repairEditId).select('id'):await db.from('repair_jobs').insert(record).select('id');if(result.error)throw result.error;if(result.data?.length!==1)throw Error('Запис не підтверджено. Перевірте дозволи RLS.');$('#repairDialog').close();await loadItems();await repairLoad();toast('Заявку на ремонт збережено');}
+ try{const result=repairEditId?await db.from('repair_jobs').update(record).eq('id',repairEditId).select('id'):await db.from('repair_jobs').insert(record).select('id');if(result.error)throw result.error;if(result.data?.length!==1)throw Error('Запис не підтверджено. Перевірте дозволи RLS.');const savedId=result.data[0].id;let photoError=null;try{if(repairPhotoFiles.length||repairExistingPhotos.some(x=>x.remove))await repairPhotoSync(savedId);}catch(e){photoError=e;}$('#repairDialog').close();repairPhotoClear();await loadItems();await repairLoad();toast(photoError?'Заявку збережено, але фото не вдалося зберегти: '+photoError.message:'Заявку на ремонт збережено',!!photoError);}
  catch(err){toast('Помилка ремонту: '+err.message,true);}finally{btn.disabled=false;}
 }
 function repairConfirmDelete(){
@@ -402,11 +411,11 @@ async function repairDelete(){
   const {data,error}=await db.from('repair_jobs').delete().eq('id',repairEditId).select('id');
   if(error)throw error;
   if(!data?.length)throw Error('Видалення не підтверджено. Перевірте політики DELETE у Supabase.');
-  $('#repairDeleteConfirmDialog').close();$('#repairDialog').close();repairEditId=null;
+  $('#repairDeleteConfirmDialog').close();$('#repairDialog').close();repairPhotoClear();repairEditId=null;
   await loadItems();await repairLoad();toast('Заявку на ремонт видалено');
  }catch(err){toast('Помилка видалення: '+err.message,true)}finally{btn.disabled=false;}
 }
-function bindRepairs(){const on=(s,ev,fn)=>$(s)?.addEventListener(ev,fn);on('#repairAdd','click',()=>repairOpen());on('#repairRefresh','click',repairLoad);on('#repairSearch','input',repairRender);on('#repairFilter','change',repairRender);on('#repairOnlyMine','change',repairRender);on('#repairDelete','click',repairConfirmDelete);on('#repairConfirmDelete','click',repairDelete);on('#repairCancelDelete','click',()=>$('#repairDeleteConfirmDialog').close());on('#repairCancel','click',()=>{repairStopCamera();$('#repairDialog').close()});on('#repairDialog','close',repairStopCamera);on('#repairEquipmentSearch','input',repairShowResults);on('#repairEquipmentSearch','focus',repairShowResults);on('#repairEquipmentSearch','keydown',repairSearchKey);on('#repairEquipmentResults','click',e=>{const btn=e.target.closest('[data-equipment-choice]');if(btn)repairSelectEquipment(items.find(x=>x.id===btn.dataset.equipmentChoice));});on('#repairCameraButton','click',repairToggleCamera);on('#repairCameraClose','click',repairStopCamera);on('#repairForm','submit',repairSave);on('#repairForm select[name=status]','change',repairToggleCompletion);on('#repairList','click',e=>{const b=e.target.closest('[data-repair-edit]');if(b)repairOpen(repairJobs.find(x=>x.id===b.dataset.repairEdit));});}
+function bindRepairs(){const on=(s,ev,fn)=>$(s)?.addEventListener(ev,fn);on('#repairAdd','click',()=>repairOpen());on('#repairRefresh','click',repairLoad);on('#repairSearch','input',repairRender);on('#repairFilter','change',repairRender);on('#repairOnlyMine','change',repairRender);on('#repairDelete','click',repairConfirmDelete);on('#repairConfirmDelete','click',repairDelete);on('#repairCancelDelete','click',()=>$('#repairDeleteConfirmDialog').close());on('#repairCancel','click',()=>{repairStopCamera();repairPhotoClear();$('#repairDialog').close()});on('#repairDialog','close',repairStopCamera);on('#repairEquipmentSearch','input',repairShowResults);on('#repairEquipmentSearch','focus',repairShowResults);on('#repairEquipmentSearch','keydown',repairSearchKey);on('#repairEquipmentResults','click',e=>{const btn=e.target.closest('[data-equipment-choice]');if(btn)repairSelectEquipment(items.find(x=>x.id===btn.dataset.equipmentChoice));});on('#repairCameraButton','click',repairToggleCamera);on('#repairCameraClose','click',repairStopCamera);on('#repairForm','submit',repairSave);on('#repairPhotoInput','change',repairPhotoChoose);on('#repairForm select[name=status]','change',repairToggleCompletion);on('#repairList','click',e=>{const b=e.target.closest('[data-repair-edit]');if(b)repairOpen(repairJobs.find(x=>x.id===b.dataset.repairEdit));});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindRepairs,{once:true});else bindRepairs();
 
 // Repair equipment lookup: searchable by text, EQ-ID, serial, barcode or QR; USB scanners act as keyboards.
