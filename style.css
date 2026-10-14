@@ -563,3 +563,9 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
     padding: 0 10px !important;
   }
 }
+
+/* V50.29 — clean warehouse header; retain DOM nodes for app.js bindings. */
+#warehouse #refresh,
+#warehouse > .stats,
+#warehouse .stats { display: none !important; }
+#warehouse > .heading { margin-bottom: 24px; }
