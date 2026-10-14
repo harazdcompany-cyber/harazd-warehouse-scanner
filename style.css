@@ -459,3 +459,34 @@ body *::-webkit-scrollbar {
   outline: 2px solid #e5ff00;
   outline-offset: 3px;
 }
+
+/* V50.23 — photo viewer: keep entire image visible and preserve aspect ratio */
+dialog#equipmentPhotoLightbox {
+  box-sizing: border-box !important;
+  width: min(96vw, 1600px) !important;
+  max-width: 96vw !important;
+  height: min(96dvh, 1100px) !important;
+  max-height: 96dvh !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+}
+dialog#equipmentPhotoLightbox[open] { display: flex !important; }
+dialog#equipmentPhotoLightbox #equipmentPhotoLightboxClose {
+  float: none !important; margin: 0 0 0 auto !important;
+  flex: 0 0 auto; align-self: flex-end;
+}
+dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important; height: auto !important;
+  min-height: 0 !important; max-width: 100% !important;
+  max-height: calc(96dvh - 100px) !important;
+  object-fit: contain !important;
+  margin: auto !important;
+  flex: 0 1 auto;
+}
