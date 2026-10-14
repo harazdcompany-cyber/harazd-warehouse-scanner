@@ -11,7 +11,7 @@
   select.parentNode.insertBefore(wrap,select);wrap.appendChild(select);
   const trigger=document.createElement('button');trigger.type='button';trigger.className='hd-trigger';trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
   const text=document.createElement('span');text.className='hd-value';trigger.appendChild(text);
-  const arrow=document.createElement('span');arrow.className='hd-chevron';arrow.setAttribute('aria-hidden','true');arrow.textContent='⌄';trigger.appendChild(arrow);
+  const arrow=document.createElement('span');arrow.className='hd-chevron';arrow.setAttribute('aria-hidden','true');arrow.textContent='';trigger.appendChild(arrow);
   const menu=document.createElement('div');menu.className='hd-menu';menu.setAttribute('role','listbox');menu.hidden=true;
   wrap.append(trigger,menu);
   function render(){
