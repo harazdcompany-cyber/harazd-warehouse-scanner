@@ -396,3 +396,14 @@ body *::-webkit-scrollbar {
 
 /* V50.11 — optional repair issue photos */
 .repair-photo-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;color:#b0c4d9}.repair-photo-label span{font-size:12px;color:#8fa6bb}.repair-photo-drop{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:150px;padding:20px;border:1px dashed #506178;border-radius:13px;background:#101925;cursor:pointer;text-align:center;color:#edf3fb}.repair-photo-drop:hover{border-color:#dfff00}.repair-photo-drop small{color:#8fa6bb;font-size:12px}.repair-photo-icon{font-size:30px;color:#dfff00}.repair-photo-previews{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}.repair-photo-tile{width:118px;height:102px;position:relative;border:1px solid #34465a;border-radius:12px;overflow:hidden;background:#0a111b}.repair-photo-tile img{width:100%;height:100%;object-fit:cover}.repair-photo-tile button{position:absolute;top:5px;right:5px;width:27px;height:27px;min-height:0;padding:0;border:1px solid #66778b;border-radius:7px;background:#1a2433;color:#fff;font-size:21px;line-height:1}.repair-photo-tile button:hover{background:#ff535c;color:#101010}#repairPhotoNotice{margin:10px 0 0;color:#ffb0b6}
+
+/* V50.12: interactive repair photo previews */
+.repair-photo-tile img{cursor:zoom-in}.repair-photo-tile img:focus-visible{outline:2px solid #dfff00;outline-offset:-2px}
+.repair-photo-viewer{border:1px solid #34465a;border-radius:18px;background:#101824;color:#f3f6fb;padding:12px;max-width:min(96vw,1200px);width:96vw;max-height:96vh;box-shadow:0 22px 90px #000b}
+.repair-photo-viewer::backdrop,.repair-photo-delete-dialog::backdrop{background:rgba(0,0,0,.85)}
+.repair-viewer-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 10px;color:#a8bed4}
+.repair-viewer-toolbar button{font-size:28px;min-height:38px;min-width:42px;padding:0}
+.repair-viewer-content{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:160px}
+.repair-viewer-content img{display:block;max-width:calc(100% - 110px);max-height:calc(96vh - 100px);width:auto;height:auto;object-fit:contain;margin:auto}
+.repair-viewer-content button{font-size:32px;flex:0 0 42px;min-height:56px;padding:0}
+@media(max-width:600px){.repair-photo-viewer{padding:8px}.repair-viewer-content{gap:4px}.repair-viewer-content img{max-width:calc(100% - 78px)}.repair-viewer-content button{flex-basis:34px}}
