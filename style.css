@@ -353,3 +353,6 @@ body *::-webkit-scrollbar {
 #repairCameraReader{width:100%;min-height:170px}
 .repair-camera-area>button{margin-top:8px}
 @media(max-width:650px){.repair-equipment-input{flex-wrap:wrap}.repair-equipment-input button{min-height:42px}}
+
+/* V50.2: діагностика */
+.repair-diagnostics{color:#a9caff;background:rgba(76,133,231,.13);border-color:rgba(76,133,231,.3)}
