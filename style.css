@@ -375,3 +375,9 @@ body *::-webkit-scrollbar {
 .repair-mine-filter input[type="checkbox"]{width:19px;height:19px;min-width:19px;accent-color:#dfff00;cursor:pointer;margin:0}
 .repair-toolbar .repair-mine-filter{flex:0 0 auto}
 @media(max-width:780px){.repair-mine-filter{width:100%;padding:6px 0}}
+
+/* V50.8: compact repairs heading */
+#repairs .repairs-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+#repairs .repairs-heading h1{margin:0;line-height:1.2}
+#repairs .repairs-heading #repairAdd{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-height:42px}
+@media(max-width:650px){#repairs .repairs-heading{flex-wrap:wrap}#repairs .repairs-heading h1{font-size:23px}}
