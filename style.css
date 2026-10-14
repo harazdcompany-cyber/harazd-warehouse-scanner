@@ -213,3 +213,18 @@ body *::-webkit-scrollbar {
 @media(max-width:1200px){#warehouse .warehouse-filter-selects{flex-basis:100%}#warehouse .warehouse-filter-actions{width:100%;justify-content:space-between}}
 @media(max-width:700px){#warehouse .inventory-panel{padding:15px}#warehouse .warehouse-filter-selects{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#warehouse .warehouse-filter-actions{flex-wrap:wrap}#warehouse .clear-filter-btn{min-height:48px}#warehouse .heading-actions .add-product-button,#warehouse .heading-actions .refresh-button{min-height:45px;padding:0 13px;font-size:13px}}
 @media(max-width:410px){#warehouse .warehouse-filter-selects{grid-template-columns:1fr}#warehouse .warehouse-filter-actions{flex-direction:column}#warehouse .view-switch{justify-content:center}}
+
+/* V49.4 — compact inventory summary (50% height), tighter actions */
+#warehouse .stats{gap:14px;margin-bottom:12px}
+#warehouse .stats .panel{min-height:64px;height:64px;padding:9px 18px 8px 27px;margin-bottom:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
+#warehouse .stats .panel:before{top:12px;bottom:12px}
+#warehouse .stats strong{font-size:23px;line-height:1.05;margin-top:1px;letter-spacing:-.03em}
+#warehouse .stats .panel{font-size:12px;line-height:1.25}
+#warehouse .add-product-button,#warehouse .refresh-button{min-height:44px;height:44px;padding:0 18px;border-radius:11px;font-size:14px}
+#warehouse .add-plus{font-size:22px}
+#warehouse .refresh-symbol{font-size:23px}
+#warehouse .warehouse-search input{height:49px}
+#warehouse .warehouse-filter-selects select{height:44px}
+#warehouse .view-switch button{padding:8px 13px}
+#warehouse .warehouse-filterbar{margin-bottom:15px}
+@media(max-width:700px){#warehouse .stats .panel{min-height:66px;height:66px;padding:8px 10px 8px 17px}#warehouse .stats strong{font-size:22px}#warehouse .warehouse-search input{height:46px}}
