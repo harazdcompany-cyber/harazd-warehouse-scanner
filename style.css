@@ -416,3 +416,6 @@ body *::-webkit-scrollbar {
 #scanner .scanner-action svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #scanner .scanner-action:disabled{opacity:.42}
 @media(max-width:550px){#scanner .scanner-action{flex:1 1 100%}}
+
+/* V50.15: equipment photo first in main information */
+#equipmentForm .equipment-photo-first{display:block}#equipmentForm .equipment-photo-label{display:block;font-weight:700;margin-bottom:5px}
