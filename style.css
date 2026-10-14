@@ -381,3 +381,10 @@ body *::-webkit-scrollbar {
 #repairs .repairs-heading h1{margin:0;line-height:1.2}
 #repairs .repairs-heading #repairAdd{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-height:42px}
 @media(max-width:650px){#repairs .repairs-heading{flex-wrap:wrap}#repairs .repairs-heading h1{font-size:23px}}
+
+/* V50.9 — equipment photos in repair requests */
+.repair-row-main{display:flex;align-items:center;gap:18px;min-width:0;flex:1}
+.repair-row-info{min-width:0;overflow-wrap:anywhere}
+.repair-photo{width:124px;height:100px;flex:0 0 124px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #304052;border-radius:12px;background:#101a26;color:#71849a;font-size:32px}
+.repair-photo img{width:100%;height:100%;object-fit:contain;display:block}
+@media(max-width:600px){.repair-row-main{align-items:flex-start;gap:12px}.repair-photo{width:88px;height:88px;flex-basis:88px}.repair-row-actions{width:100%;justify-content:flex-end}}
