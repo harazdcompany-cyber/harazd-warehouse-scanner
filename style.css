@@ -490,3 +490,13 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
   margin: auto !important;
   flex: 0 1 auto;
 }
+
+/* V50.24 — Match equipment photo caption to "Найменування" label */
+#add #equipmentForm .equipment-photo-first > .equipment-photo-label {
+  display: block;
+  color: #b4c5d7;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: normal;
+  margin-bottom: 7px;
+}
