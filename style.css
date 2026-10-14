@@ -173,3 +173,14 @@ body *::-webkit-scrollbar {
 .gallery-availability .gallery-progress{margin:12px 0 0}
 .gallery-footer>span:first-child{white-space:normal}
 @media(max-width:370px){.gallery-info{gap:8px}.gallery-location{padding-right:7px}.gallery-location-line{font-size:11px}}
+
+/* V49.2 — align warehouse gallery with header's right edge */
+@media (min-width: 651px) {
+  .content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+}
