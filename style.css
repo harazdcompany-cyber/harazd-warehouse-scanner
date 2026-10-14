@@ -228,3 +228,51 @@ body *::-webkit-scrollbar {
 #warehouse .view-switch button{padding:8px 13px}
 #warehouse .warehouse-filterbar{margin-bottom:15px}
 @media(max-width:700px){#warehouse .stats .panel{min-height:66px;height:66px;padding:8px 10px 8px 17px}#warehouse .stats strong{font-size:22px}#warehouse .warehouse-search input{height:46px}}
+
+/* V49.5 — precise vertical centering for gallery controls */
+#warehouse .heading-actions > button,
+#warehouse .warehouse-filter-actions button,
+#warehouse .view-switch button {
+  display:inline-flex !important;
+  flex-direction:row;
+  align-items:center !important;
+  justify-content:center !important;
+  vertical-align:middle;
+  line-height:1.2 !important;
+  box-sizing:border-box;
+}
+#warehouse .heading-actions > button > span,
+#warehouse .warehouse-filter-actions button > span,
+#warehouse .view-switch button > span {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0;
+  padding:0;
+  vertical-align:middle;
+}
+#warehouse .add-product-button,
+#warehouse .refresh-button {height:44px !important;min-height:44px !important;gap:10px}
+#warehouse .add-plus {font-size:23px;line-height:1 !important;transform:none}
+#warehouse .refresh-symbol {font-size:24px;line-height:1 !important;transform:none}
+#warehouse .warehouse-filter-selects select {
+  height:44px;
+  min-height:44px;
+  line-height:normal;
+  padding-top:0;
+  padding-bottom:0;
+  vertical-align:middle;
+}
+#warehouse .warehouse-filter-actions {align-items:center}
+#warehouse .clear-filter-btn {height:44px;min-height:44px;line-height:1.2 !important}
+#warehouse .clear-x {font-size:23px;line-height:1 !important}
+#warehouse .view-switch {display:inline-flex;align-items:center;min-height:44px;height:44px;padding:3px;box-sizing:border-box}
+#warehouse .view-switch button {height:36px;min-height:36px;padding:0 13px !important;gap:9px}
+#warehouse .outline-square {width:17px;height:17px;box-sizing:border-box}
+#warehouse .three-lines {font-size:20px;line-height:1 !important;transform:none}
+#warehouse .warehouse-search input {height:49px;line-height:normal;box-sizing:border-box}
+#warehouse .search-icon {top:50%;transform:translateY(-50%);line-height:1 !important;display:flex;align-items:center;justify-content:center;height:30px;width:30px}
+#warehouse .live-indicator {display:inline-flex;align-items:center;gap:8px;line-height:1.2}
+@media(max-width:700px){#warehouse .heading-actions > button{height:44px !important;min-height:44px !important}}
