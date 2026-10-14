@@ -297,3 +297,16 @@ body *::-webkit-scrollbar {
 /* V49.7: search without icon; align placeholder with regular field padding */
 #warehouse .warehouse-search input { padding-left:18px !important; }
 #warehouse .warehouse-search .search-icon, #warehouse .warehouse-search .search-icon::before, #warehouse .warehouse-search .search-icon::after { display:none !important; content:none !important; }
+
+/* V49.8: deletion confirmation */
+#itemDialog>.actions .danger-outline{margin-right:auto;color:#ff777e;border:1px solid #9d4048;background:#311b25;}
+#itemDialog>.actions .danger-outline:hover{background:#4a202c;}
+.delete-confirm-dialog{width:min(460px,calc(100vw - 32px));padding:28px;background:#111b28;color:#f1f5fa;border:1px solid #33465a;border-radius:18px;box-shadow:0 25px 90px #000b;}
+.delete-confirm-dialog::backdrop{background:#000b;backdrop-filter:blur(4px);}
+.delete-confirm-dialog h2{margin:10px 0;font-size:24px;}
+.delete-confirm-dialog p{line-height:1.55;overflow-wrap:anywhere;}
+.delete-confirm-dialog .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:24px;}
+.delete-warning-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#4c2029;color:#ff6573;font-weight:800;font-size:24px;}
+.danger-solid{background:#f33245!important;border-color:#f33245!important;color:white!important;font-weight:700;}
+.danger-solid:hover{background:#d92739!important;}
+.danger-solid:disabled{opacity:.55;cursor:wait;}
