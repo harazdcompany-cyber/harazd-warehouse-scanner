@@ -293,3 +293,7 @@ body *::-webkit-scrollbar {
  content:""; position:absolute; width:10px; height:2.5px; background:#f0f6fc;
  border-radius:2px; left:14px; top:17px; transform:rotate(-45deg); transform-origin:left center;
 }
+
+/* V49.7: search without icon; align placeholder with regular field padding */
+#warehouse .warehouse-search input { padding-left:18px !important; }
+#warehouse .warehouse-search .search-icon, #warehouse .warehouse-search .search-icon::before, #warehouse .warehouse-search .search-icon::after { display:none !important; content:none !important; }
