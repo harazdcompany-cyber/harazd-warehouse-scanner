@@ -407,3 +407,12 @@ body *::-webkit-scrollbar {
 .repair-viewer-content img{display:block;max-width:calc(100% - 110px);max-height:calc(96vh - 100px);width:auto;height:auto;object-fit:contain;margin:auto}
 .repair-viewer-content button{font-size:32px;flex:0 0 42px;min-height:56px;padding:0}
 @media(max-width:600px){.repair-photo-viewer{padding:8px}.repair-viewer-content{gap:4px}.repair-viewer-content img{max-width:calc(100% - 78px)}.repair-viewer-content button{flex-basis:34px}}
+
+/* V50.13 scanner controls */
+#scanner .heading{margin-bottom:18px}
+#scanner .heading h1{margin-bottom:0}
+#scanner .scanner-panel .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#scanner .scanner-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;line-height:1.2;padding:10px 14px}
+#scanner .scanner-action svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#scanner .scanner-action:disabled{opacity:.42}
+@media(max-width:550px){#scanner .scanner-action{flex:1 1 100%}}
