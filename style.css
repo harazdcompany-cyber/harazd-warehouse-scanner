@@ -356,3 +356,9 @@ body *::-webkit-scrollbar {
 
 /* V50.2: діагностика */
 .repair-diagnostics{color:#a9caff;background:rgba(76,133,231,.13);border-color:rgba(76,133,231,.3)}
+
+/* V50.3 — simplified repair request */
+.repair-edit-extras{border-top:1px solid #304052;padding-top:16px;margin-top:4px}
+.repair-edit-extras h3{margin:0 0 14px;color:#eef4ff}
+.repair-form-grid [hidden]{display:none!important}
+#repairAssigneeChoice{min-height:52px}
