@@ -18,3 +18,5 @@ config.js, sw.js, manifest.json, SQL, Supabase Auth та Edge Functions не з�
 
 Якщо місце не прив'язано до запису, показується «—».
 Після оновлення GitHub виконайте Ctrl+Shift+R.
+
+V49.1: прибрано підзаголовок галереї, Equipment Gallery та пояснення, верхній і нижній лічильники. Решта функцій збережена. Не видаляйте свій config.js з GitHub.
