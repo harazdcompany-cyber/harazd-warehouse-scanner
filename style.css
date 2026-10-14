@@ -531,3 +531,35 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 #add #equipmentForm label > .hd-select {
   margin-top: 7px !important;
 }
+
+/* V50.28 — Equipment photo button matches "Очистити / скасувати" */
+#equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick {
+  background: #101823 !important;
+  color: #f2f5fa !important;
+  border: 1px solid #344255 !important;
+  box-shadow: none !important;
+  font-family: inherit;
+  font-weight: 400 !important;
+  font-size: 16px !important;
+  letter-spacing: normal;
+  border-radius: 14px !important;
+  padding: 0 22px !important;
+  min-height: 52px;
+  text-decoration: none;
+  cursor: pointer;
+}
+#equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick:hover {
+  background: #172333 !important;
+  border-color: #52667f !important;
+  color: #fff !important;
+}
+#equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick:focus-visible {
+  outline: 2px solid #dfff00;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  #equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick {
+    font-size: 13px !important;
+    padding: 0 10px !important;
+  }
+}
