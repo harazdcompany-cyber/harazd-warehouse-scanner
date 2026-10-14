@@ -387,21 +387,26 @@ async function repairSave(event){
  try{const result=repairEditId?await db.from('repair_jobs').update(record).eq('id',repairEditId).select('id'):await db.from('repair_jobs').insert(record).select('id');if(result.error)throw result.error;if(result.data?.length!==1)throw Error('Запис не підтверджено. Перевірте дозволи RLS.');$('#repairDialog').close();await loadItems();await repairLoad();toast('Заявку на ремонт збережено');}
  catch(err){toast('Помилка ремонту: '+err.message,true);}finally{btn.disabled=false;}
 }
-async function repairDelete(){
+function repairConfirmDelete(){
  if(!repairEditId||!staffAllowed('repairs_manage'))return;
  const job=repairJobs.find(j=>String(j.id)===String(repairEditId));
  const eq=items.find(x=>String(x.id)===String(job?.equipment_id));
- if(!window.confirm(`Видалити заявку на ремонт${eq?' для «'+eq.name+'»':''}?\n\nЦю дію неможливо скасувати.\n\nТак — видалити, Ні — залишити.`))return;
- const btn=$('#repairDelete');btn.disabled=true;
+ const name=eq?.name||'обраного обладнання';
+ $('#repairDeleteConfirmText').textContent=`Ви дійсно хочете видалити заявку на ремонт обладнання «${name}»?`;
+ $('#repairDeleteConfirmDialog').showModal();
+}
+async function repairDelete(){
+ if(!repairEditId||!staffAllowed('repairs_manage'))return;
+ const btn=$('#repairConfirmDelete');btn.disabled=true;
  try{
   const {data,error}=await db.from('repair_jobs').delete().eq('id',repairEditId).select('id');
   if(error)throw error;
   if(!data?.length)throw Error('Видалення не підтверджено. Перевірте політики DELETE у Supabase.');
-  $('#repairDialog').close();repairEditId=null;
+  $('#repairDeleteConfirmDialog').close();$('#repairDialog').close();repairEditId=null;
   await loadItems();await repairLoad();toast('Заявку на ремонт видалено');
  }catch(err){toast('Помилка видалення: '+err.message,true)}finally{btn.disabled=false;}
 }
-function bindRepairs(){const on=(s,ev,fn)=>$(s)?.addEventListener(ev,fn);on('#repairAdd','click',()=>repairOpen());on('#repairRefresh','click',repairLoad);on('#repairSearch','input',repairRender);on('#repairFilter','change',repairRender);on('#repairDelete','click',repairDelete);on('#repairCancel','click',()=>{repairStopCamera();$('#repairDialog').close()});on('#repairDialog','close',repairStopCamera);on('#repairEquipmentSearch','input',repairShowResults);on('#repairEquipmentSearch','focus',repairShowResults);on('#repairEquipmentSearch','keydown',repairSearchKey);on('#repairEquipmentResults','click',e=>{const btn=e.target.closest('[data-equipment-choice]');if(btn)repairSelectEquipment(items.find(x=>x.id===btn.dataset.equipmentChoice));});on('#repairCameraButton','click',repairToggleCamera);on('#repairCameraClose','click',repairStopCamera);on('#repairForm','submit',repairSave);on('#repairForm select[name=status]','change',repairToggleCompletion);on('#repairList','click',e=>{const b=e.target.closest('[data-repair-edit]');if(b)repairOpen(repairJobs.find(x=>x.id===b.dataset.repairEdit));});}
+function bindRepairs(){const on=(s,ev,fn)=>$(s)?.addEventListener(ev,fn);on('#repairAdd','click',()=>repairOpen());on('#repairRefresh','click',repairLoad);on('#repairSearch','input',repairRender);on('#repairFilter','change',repairRender);on('#repairDelete','click',repairConfirmDelete);on('#repairConfirmDelete','click',repairDelete);on('#repairCancelDelete','click',()=>$('#repairDeleteConfirmDialog').close());on('#repairCancel','click',()=>{repairStopCamera();$('#repairDialog').close()});on('#repairDialog','close',repairStopCamera);on('#repairEquipmentSearch','input',repairShowResults);on('#repairEquipmentSearch','focus',repairShowResults);on('#repairEquipmentSearch','keydown',repairSearchKey);on('#repairEquipmentResults','click',e=>{const btn=e.target.closest('[data-equipment-choice]');if(btn)repairSelectEquipment(items.find(x=>x.id===btn.dataset.equipmentChoice));});on('#repairCameraButton','click',repairToggleCamera);on('#repairCameraClose','click',repairStopCamera);on('#repairForm','submit',repairSave);on('#repairForm select[name=status]','change',repairToggleCompletion);on('#repairList','click',e=>{const b=e.target.closest('[data-repair-edit]');if(b)repairOpen(repairJobs.find(x=>x.id===b.dataset.repairEdit));});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindRepairs,{once:true});else bindRepairs();
 
 // Repair equipment lookup: searchable by text, EQ-ID, serial, barcode or QR; USB scanners act as keyboards.

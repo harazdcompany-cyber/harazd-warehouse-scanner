@@ -362,3 +362,10 @@ body *::-webkit-scrollbar {
 .repair-edit-extras h3{margin:0 0 14px;color:#eef4ff}
 .repair-form-grid [hidden]{display:none!important}
 #repairAssigneeChoice{min-height:52px}
+
+/* V50.6: Repair deletion confirmation */
+.repair-delete-confirm-dialog{width:min(520px,calc(100vw - 32px));padding:30px;background:#141d29;color:#f1f5fa;border:1px solid #344355;border-radius:22px;}
+.repair-delete-confirm-dialog .actions{justify-content:flex-start;flex-wrap:wrap;}
+.repair-delete-confirm-dialog .danger-solid{background:#ff4b55!important;border-color:#ff4b55!important;color:#090d12!important;}
+.repair-delete-confirm-dialog .danger-solid:hover{background:#ff6971!important;}
+.repair-delete-confirm-dialog .actions button{min-height:46px;}
