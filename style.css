@@ -337,3 +337,19 @@ body *::-webkit-scrollbar {
 
 /* V50 Repairs */
 .repair-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.repair-stats .panel{min-height:75px!important;display:flex;flex-direction:column;justify-content:center;gap:6px}.repair-stats small{color:#9fb2c7}.repair-stats strong{font-size:27px}.repair-toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.repair-toolbar input{flex:1;min-width:230px}.repair-toolbar select{min-width:190px}.repair-row{display:flex;justify-content:space-between;gap:16px;align-items:center;border:1px solid #304052;border-radius:14px;background:#0c141e;padding:18px;margin:10px 0}.repair-row h3{margin:5px 0 7px;font-size:18px}.repair-row p{margin:0 0 9px;white-space:pre-wrap}.repair-row small,.repair-kicker{color:#96acc3;font-size:12px}.repair-row-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.repair-tag{display:inline-flex;padding:7px 11px;border-radius:20px;font-size:12px;background:#27394a;color:#c6e4fa;white-space:nowrap}.repair-progress{background:#253b4e;color:#8fd6ff}.repair-waiting{background:#42391f;color:#ffdc8a}.repair-done{background:#143e31;color:#5ee5ac}.repair-cancelled{background:#3c2529;color:#ffabb1}.repair-dialog{width:min(760px,95vw);max-height:90vh;overflow:auto;background:#141d29;color:#f2f6ff;border:1px solid #354458;border-radius:20px;padding:26px}.repair-dialog::backdrop{background:#000b}.repair-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.repair-form-grid label{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#a8bdd2}.repair-form-grid input,.repair-form-grid select,.repair-form-grid textarea{width:100%;box-sizing:border-box}.repair-wide{grid-column:1/-1}@media(max-width:780px){.repair-stats{grid-template-columns:1fr 1fr}.repair-form-grid{grid-template-columns:1fr}.repair-row{align-items:flex-start;flex-direction:column}}
+
+/* V50.1 — equipment search and QR/barcode scanner in repairs */
+.repair-equipment-field{position:relative;min-width:0;display:flex;flex-direction:column;gap:7px;font-size:13px;color:#a8bdd2}
+.repair-equipment-input{display:flex;gap:8px;min-width:0}
+.repair-equipment-input input{flex:1;min-width:0;width:100%}
+.repair-equipment-input button{flex-shrink:0;white-space:nowrap;background:#202e3e;color:#eef4ff;border:1px solid #3a5067;border-radius:10px;padding:0 13px;cursor:pointer}
+.repair-equipment-input button:hover{border-color:#e3fa00}
+.repair-equipment-results{position:absolute;z-index:110;top:100%;left:0;right:0;max-height:240px;overflow:auto;border:1px solid #40526a;border-radius:12px;background:#0c1420;box-shadow:0 12px 30px #0009;padding:5px}
+.repair-equipment-results button{display:block;width:100%;text-align:left;padding:12px;border:0;border-radius:8px;background:transparent;color:#eef4ff;cursor:pointer}
+.repair-equipment-results button:hover,.repair-equipment-results button:focus{background:#293747}
+.repair-equipment-results p{padding:8px 12px;color:#a8bdd2}
+.repair-equipment-selected{color:#e3fa00;font-size:12px}
+.repair-camera-area{border:1px solid #354458;border-radius:12px;padding:10px;background:#0b121b}
+#repairCameraReader{width:100%;min-height:170px}
+.repair-camera-area>button{margin-top:8px}
+@media(max-width:650px){.repair-equipment-input{flex-wrap:wrap}.repair-equipment-input button{min-height:42px}}
