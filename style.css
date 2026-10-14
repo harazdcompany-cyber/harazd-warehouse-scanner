@@ -184,3 +184,32 @@ body *::-webkit-scrollbar {
     padding-right: 26px;
   }
 }
+
+/* V49.3 — Approved gallery controls */
+#warehouse .inventory-panel{padding:26px 28px 30px}
+#warehouse .warehouse-search{position:relative;margin-bottom:16px}
+#warehouse .warehouse-search input{width:100%;height:58px;padding:15px 18px 15px 60px;background:#0a121d;border:1px solid #34485c;border-radius:12px;font-size:15px;color:#f5f8fc;outline:none}
+#warehouse .warehouse-search input:focus{border-color:#e4fa00;box-shadow:0 0 0 3px #e4fa001c}
+#warehouse .search-icon{position:absolute;left:19px;top:50%;transform:translateY(-54%);font-size:33px;color:#f0f6fc;pointer-events:none;line-height:1}
+#warehouse .warehouse-filterbar{display:flex;align-items:stretch;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:24px}
+#warehouse .warehouse-filter-selects{display:grid;grid-template-columns:repeat(4,minmax(135px,1fr));gap:12px;flex:1 1 620px}
+#warehouse .warehouse-filter-selects select{min-width:0;width:100%;height:52px;background:#0b131e;border:1px solid #34485c;border-radius:11px;color:#f4f7fc;padding:0 16px}
+#warehouse .warehouse-filter-actions{display:flex;align-items:stretch;gap:12px;flex:0 0 auto}
+#warehouse .clear-filter-btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px;background:linear-gradient(135deg,#162635,#101c29);border:1px solid #2f465c;border-radius:11px;white-space:nowrap;font-weight:600;color:#f1f5fb}
+#warehouse .clear-filter-btn:hover{border-color:#e5fa00;background:#1d2b36}
+#warehouse .clear-x{font-size:27px;font-weight:300;line-height:1}
+#warehouse .view-switch{align-items:center;border:1px solid #34475b;border-radius:11px;padding:4px;gap:4px}
+#warehouse .view-switch button{display:flex;align-items:center;gap:9px;padding:12px 15px;border-radius:9px;font-size:13px}
+#warehouse .view-switch button.selected{background:#e5fa00;color:#0b130b;box-shadow:0 3px 14px #e5fa0025}
+#warehouse .outline-square{width:17px;height:17px;display:inline-block;border:2px solid currentColor;border-radius:1px;flex-shrink:0}
+#warehouse .three-lines{font-size:20px;line-height:15px;display:inline-block;transform:scaleX(1.12)}
+#warehouse .heading-actions{gap:13px}
+#warehouse .add-product-button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:55px;padding:0 24px;border-radius:13px;background:linear-gradient(180deg,#edff00,#dfff00);border:1px solid #eaff00;box-shadow:0 5px 18px #dfff0015;font-size:15px;transition:transform .15s,box-shadow .15s}
+#warehouse .add-product-button:hover{transform:translateY(-2px);box-shadow:0 9px 24px #dfff002b;background:#f0ff33}
+#warehouse .add-plus{font-size:25px;font-weight:400;line-height:1}
+#warehouse .refresh-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:55px;padding:0 22px;background:linear-gradient(150deg,#172838,#0e1c2a);border:1px solid #30485d;border-radius:13px;color:#f4f7fc;font-size:15px;font-weight:650;transition:background .15s,transform .15s}
+#warehouse .refresh-button:hover{background:#203448;border-color:#8ba3b9;transform:translateY(-2px)}
+#warehouse .refresh-symbol{font-size:27px;line-height:1}
+@media(max-width:1200px){#warehouse .warehouse-filter-selects{flex-basis:100%}#warehouse .warehouse-filter-actions{width:100%;justify-content:space-between}}
+@media(max-width:700px){#warehouse .inventory-panel{padding:15px}#warehouse .warehouse-filter-selects{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#warehouse .warehouse-filter-actions{flex-wrap:wrap}#warehouse .clear-filter-btn{min-height:48px}#warehouse .heading-actions .add-product-button,#warehouse .heading-actions .refresh-button{min-height:45px;padding:0 13px;font-size:13px}}
+@media(max-width:410px){#warehouse .warehouse-filter-selects{grid-template-columns:1fr}#warehouse .warehouse-filter-actions{flex-direction:column}#warehouse .view-switch{justify-content:center}}
