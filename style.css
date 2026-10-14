@@ -317,3 +317,23 @@ body *::-webkit-scrollbar {
 #itemDialog > .actions #deleteItem:hover { background:#e62b3c; border-color:#e62b3c; color:#080b10; }
 #itemDialog > .actions #editItem { margin-right:auto; }
 #itemDialog > .actions #closeDialog { margin-left:0; }
+
+/* V49.10 — consistent HARAZD buttons in equipment detail and delete confirmation */
+#itemDialog > .actions {display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap;}
+#itemDialog > .actions > button,
+#deleteConfirmDialog .actions > button {display:inline-flex;align-items:center;justify-content:center;min-height:44px;height:44px;padding:0 20px;border-radius:10px;font-size:14px;font-weight:750;line-height:1.2;box-shadow:none;transition:background-color .16s,border-color .16s,transform .16s;}
+#itemDialog > .actions #deleteItem {order:0;margin:0;background:#ff3b47;border:1px solid #ff3b47;color:#0b1016;font-weight:800;}
+#itemDialog > .actions #deleteItem:hover {background:#ff5963;border-color:#ff5963;color:#0b1016;}
+#itemDialog > .actions #editItem {order:1;margin:0 auto 0 0;background:#e6fa00;border:1px solid #e6fa00;color:#111600;font-weight:800;}
+#itemDialog > .actions #editItem:hover {background:#f0ff4c;border-color:#f0ff4c;}
+#itemDialog > .actions #closeDialog {order:2;margin:0;background:#121923;border:1px solid #354153;color:#f5f7fc;font-weight:650;}
+#itemDialog > .actions #closeDialog:hover {border-color:#e6fa00;background:#1d2734;}
+#deleteConfirmDialog .actions #cancelDelete {background:#121923;border:1px solid #354153;color:#f5f7fc;}
+#deleteConfirmDialog .actions #cancelDelete:hover {border-color:#e6fa00;background:#1d2734;}
+#deleteConfirmDialog .actions #confirmDelete {background:#ff3b47!important;border:1px solid #ff3b47!important;color:#0b1016!important;font-weight:800;}
+#deleteConfirmDialog .actions #confirmDelete:hover {background:#ff5963!important;border-color:#ff5963!important;}
+#itemDialog > .actions > button:focus-visible,#deleteConfirmDialog .actions > button:focus-visible {outline:2px solid #e6fa00;outline-offset:3px;}
+@media(max-width:480px){#itemDialog > .actions{gap:8px;}#itemDialog > .actions > button{padding:0 12px;font-size:13px;}}
+
+/* V50 Repairs */
+.repair-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.repair-stats .panel{min-height:75px!important;display:flex;flex-direction:column;justify-content:center;gap:6px}.repair-stats small{color:#9fb2c7}.repair-stats strong{font-size:27px}.repair-toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.repair-toolbar input{flex:1;min-width:230px}.repair-toolbar select{min-width:190px}.repair-row{display:flex;justify-content:space-between;gap:16px;align-items:center;border:1px solid #304052;border-radius:14px;background:#0c141e;padding:18px;margin:10px 0}.repair-row h3{margin:5px 0 7px;font-size:18px}.repair-row p{margin:0 0 9px;white-space:pre-wrap}.repair-row small,.repair-kicker{color:#96acc3;font-size:12px}.repair-row-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.repair-tag{display:inline-flex;padding:7px 11px;border-radius:20px;font-size:12px;background:#27394a;color:#c6e4fa;white-space:nowrap}.repair-progress{background:#253b4e;color:#8fd6ff}.repair-waiting{background:#42391f;color:#ffdc8a}.repair-done{background:#143e31;color:#5ee5ac}.repair-cancelled{background:#3c2529;color:#ffabb1}.repair-dialog{width:min(760px,95vw);max-height:90vh;overflow:auto;background:#141d29;color:#f2f6ff;border:1px solid #354458;border-radius:20px;padding:26px}.repair-dialog::backdrop{background:#000b}.repair-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.repair-form-grid label{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#a8bdd2}.repair-form-grid input,.repair-form-grid select,.repair-form-grid textarea{width:100%;box-sizing:border-box}.repair-wide{grid-column:1/-1}@media(max-width:780px){.repair-stats{grid-template-columns:1fr 1fr}.repair-form-grid{grid-template-columns:1fr}.repair-row{align-items:flex-start;flex-direction:column}}
