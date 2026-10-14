@@ -159,3 +159,17 @@ body *::-webkit-scrollbar {
 
 /* V48.1 staff */
 .staff-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}.staff-top input{flex:1;min-width:220px}.staff-list{display:grid;gap:10px}.staff-card{display:flex;align-items:center;gap:16px;padding:15px;border:1px solid #253347;background:#172230;border-radius:12px}.staff-avatar{display:grid;place-items:center;width:48px;height:48px;flex-shrink:0;border-radius:13px;background:#273326;color:#e5ff00;font-weight:800}.staff-person{flex:1;min-width:0}.staff-person strong,.staff-person small,.staff-meta strong,.staff-meta small{display:block}.staff-person small,.staff-meta small{color:#91a6bf;margin-top:5px}.staff-meta{text-align:right}.staff-dialog{width:min(780px,95vw);max-height:90vh;overflow:auto;border:1px solid #29384b;border-radius:20px;background:#131c28;color:#edf2ff;padding:28px}.staff-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.staff-fields label{display:grid;gap:7px;color:#a7b8d0}.staff-fields input,.staff-fields select{width:100%}.staff-permissions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.staff-perm{display:flex;align-items:center;gap:12px;padding:12px;background:#1b2736;border:1px solid #2b3b50;border-radius:10px}.staff-perm input{width:18px;height:18px;accent-color:#e5ff00}.staff-perm small{display:block;color:#9db0c7;font-size:11px}.staff-dialog h3{margin-top:24px}@media(max-width:720px){.staff-fields,.staff-permissions{grid-template-columns:1fr}.staff-card{flex-wrap:wrap}.staff-meta{text-align:left}}
+
+/* V49 — equipment card layout */
+.gallery-card-arrow{display:none!important}
+.gallery-body .card-model{min-height:1.4em;line-height:1.5;color:#9eb7d1;overflow-wrap:anywhere}
+.gallery-info{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:stretch;margin:18px 0 20px}
+.gallery-location{display:flex;flex-direction:column;gap:9px;min-width:0;padding-right:12px;border-right:1px solid #354458}
+.gallery-location-line{font-size:12px;line-height:1.35;color:#a4bbd3;overflow-wrap:anywhere}
+.gallery-location-line b{font-weight:500;color:#eef4ff}
+.gallery-availability{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.gallery-availability .gallery-stock{margin-top:0;gap:5px;align-items:end}
+.gallery-availability .gallery-stock strong{font-size:24px}
+.gallery-availability .gallery-progress{margin:12px 0 0}
+.gallery-footer>span:first-child{white-space:normal}
+@media(max-width:370px){.gallery-info{gap:8px}.gallery-location{padding-right:7px}.gallery-location-line{font-size:11px}}
