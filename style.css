@@ -569,3 +569,6 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 #warehouse > .stats,
 #warehouse .stats { display: none !important; }
 #warehouse > .heading { margin-bottom: 24px; }
+
+/* V50.31: Hide personnel refresh button, keep DOM hook for app.js */
+#personnel #staffRefresh { display: none !important; }
