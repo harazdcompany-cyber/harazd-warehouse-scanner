@@ -369,3 +369,9 @@ body *::-webkit-scrollbar {
 .repair-delete-confirm-dialog .danger-solid{background:#ff4b55!important;border-color:#ff4b55!important;color:#090d12!important;}
 .repair-delete-confirm-dialog .danger-solid:hover{background:#ff6971!important;}
 .repair-delete-confirm-dialog .actions button{min-height:46px;}
+
+/* V50.7: repair ownership filter */
+.repair-mine-filter{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;cursor:pointer;color:#dbe6f3;font-size:14px;padding:0 10px;min-height:44px;user-select:none}
+.repair-mine-filter input[type="checkbox"]{width:19px;height:19px;min-width:19px;accent-color:#dfff00;cursor:pointer;margin:0}
+.repair-toolbar .repair-mine-filter{flex:0 0 auto}
+@media(max-width:780px){.repair-mine-filter{width:100%;padding:6px 0}}
