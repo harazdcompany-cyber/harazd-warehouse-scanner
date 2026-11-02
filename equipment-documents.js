@@ -37,4 +37,34 @@
  }
  async function open(d,download){try{const {data,error}=await db.storage.from(BUCKET).createSignedUrl(d.file_path,60,{download:download?d.file_name:undefined});if(error)throw error;const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener noreferrer';if(download)a.download=d.file_name;document.body.append(a);a.click();a.remove()}catch(e){fail(e)}}
  async function remove(d,id){if(!confirm(`Видалити документ «${d.title}»?`))return;try{const {data,error}=await db.from('equipment_documents').delete().eq('id',d.id).select('id');if(error)throw error;if(data?.length!==1)throw Error('Видалення не підтверджено');const storage=await db.storage.from(BUCKET).remove([d.file_path]);if(storage.error)toast('Запис видалено, але файл у Storage залишився: '+storage.error.message,true);else toast('Документ видалено');await load(id)}catch(e){fail(e)}}
+ // Document staging for the add/edit equipment form. Upload only after equipment has a persistent ID.
+ const pending=[];
+ const fileInput=document.getElementById('equipmentDocFiles');
+ const pendingBox=document.getElementById('equipmentDocPending');
+ const addBtn=document.getElementById('equipmentDocAdd');
+ function renderPending(){if(!pendingBox)return;pendingBox.replaceChildren();pending.forEach((entry,i)=>{
+  const row=document.createElement('div');row.className='equipment-doc-pending-row';
+  const title=document.createElement('input');title.value=entry.title;title.placeholder='Назва документа';title.maxLength=150;title.setAttribute('aria-label','Назва документа');title.addEventListener('input',()=>entry.title=title.value);
+  const type=document.createElement('select');type.setAttribute('aria-label','Тип документа');['Технічний паспорт','Інструкція','Сертифікат','Гарантія','Інший'].forEach(v=>{const o=document.createElement('option');o.textContent=v;type.append(o)});type.value=entry.type;type.addEventListener('change',()=>entry.type=type.value);
+  const name=document.createElement('small');name.textContent=entry.file.name+' · '+(entry.file.size/1048576).toFixed(2)+' МБ';
+  const del=document.createElement('button');del.type='button';del.textContent='Видалити';del.addEventListener('click',()=>{pending.splice(i,1);renderPending()});
+  row.append(title,type,name,del);pendingBox.append(row);
+ });}
+ if(addBtn&&fileInput){addBtn.addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',()=>{
+  for(const file of fileInput.files){if(file.size>MAX||!allowed.has(file.type)){fail(new Error('Недопустимий файл: '+file.name+' (максимум 20 МБ)'));continue}pending.push({file,title:file.name.replace(/\.[^.]+$/,''),type:'Інший'})}
+  fileInput.value='';renderPending();
+ });}
+ window.harazdDocsResetPending=()=>{pending.length=0;if(fileInput)fileInput.value='';renderPending()};
+ window.harazdDocsUploadPending=()=>pending.length>0;
+ window.harazdDocsSavePending=async id=>{
+  let ok=0,failed=0,error='';
+  for(const entry of pending){let path=null;try{
+   if(!entry.title.trim())throw Error('Заповніть назву документа: '+entry.file.name);
+   const ext=(entry.file.name.split('.').pop()||'bin').toLowerCase();path=`${id}/${crypto.randomUUID()}.${ext}`;
+   const up=await db.storage.from(BUCKET).upload(path,entry.file,{contentType:entry.file.type,upsert:false});if(up.error)throw up.error;
+   const result=await db.from('equipment_documents').insert({equipment_id:id,title:entry.title.trim(),document_type:entry.type,file_name:entry.file.name,file_path:path,file_size:entry.file.size,mime_type:entry.file.type}).select('id');if(result.error)throw result.error;
+   if(!result.data?.length)throw Error('Збереження документа не підтверджено');ok++;
+  }catch(e){failed++;error=e.message||String(e);if(path)await db.storage.from(BUCKET).remove([path]).catch(()=>{});}}
+  return {ok,failed,error};
+ };
 })();

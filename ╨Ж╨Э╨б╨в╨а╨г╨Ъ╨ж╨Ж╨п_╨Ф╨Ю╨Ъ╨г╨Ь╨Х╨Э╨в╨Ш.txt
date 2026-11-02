@@ -1,0 +1,13 @@
+HARAZD WAREHOUSE — Документи обладнання
+
+1. У Supabase відкрийте SQL Editor і виконайте SETUP_EQUIPMENT_DOCUMENTS.sql.
+2. Завантажте файли з цього архіву до кореня GitHub репозиторію harazd-warehouse-scanner (заміна файлів із тими самими назвами).
+3. Дочекайтесь GitHub Pages, оновіть сайт Ctrl+F5.
+4. Склад → картка обладнання → Документи → Додати документ.
+
+Файли зберігаються у приватному Supabase Storage bucket equipment-documents.
+Доступ через політики warehouse_can: equipment_view для перегляду та equipment_edit для додавання/видалення.
+Ліміт одного файла 20 МБ. Підтримуються PDF, JPG, PNG, WEBP, TXT, DOC, DOCX, XLS, XLSX.
+
+Інші модулі сайту залишено без функціональних змін.
+ВАЖЛИВО: перед оновленням збережіть резервну копію поточної версії.
