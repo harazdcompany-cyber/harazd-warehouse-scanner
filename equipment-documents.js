@@ -1,0 +1,40 @@
+'use strict';
+// Equipment documents: private Supabase Storage bucket + RLS-protected metadata.
+(()=>{
+ const BUCKET='equipment-documents', MAX=20*1024*1024;
+ let activeId=null, loading=false;
+ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const allowed=new Set(['application/pdf','image/jpeg','image/png','image/webp','text/plain','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+ const panel=()=>document.getElementById('equipmentDocsPanel');
+ function fail(e){toast('Документи: '+(e?.message||String(e)),true)}
+ window.harazdDocsOpen=x=>{
+  activeId=x.id;
+  const b=document.getElementById('equipmentDocsToggle'),p=panel();
+  if(!b||!p)return;
+  p.hidden=true;b.textContent='Документи ▾';
+  b.onclick=()=>{p.hidden=!p.hidden;b.textContent=p.hidden?'Документи ▾':'Документи ▴';if(!p.hidden)load(x.id)};
+ };
+ async function load(id){
+  if(loading||id!==activeId)return;loading=true;const p=panel();p.innerHTML='<p class="muted">Завантаження документів…</p>';
+  try{
+   const {data,error}=await db.from('equipment_documents').select('id,equipment_id,title,document_type,file_name,file_path,file_size,created_at').eq('equipment_id',id).order('created_at',{ascending:false});if(error)throw error;
+   if(id!==activeId)return;
+   p.innerHTML=`<div class="equipment-docs-list">${data.length?data.map(d=>`<div class="equipment-doc-row"><div><strong>${escape(d.title)}</strong><small>${escape(d.document_type||'Інший')} · ${escape(d.file_name)} · ${(d.file_size/1048576).toFixed(2)} МБ</small></div><div class="equipment-doc-actions"><button type="button" data-doc-open="${escape(d.id)}">Переглянути</button><button type="button" data-doc-download="${escape(d.id)}">Завантажити</button><button type="button" class="equipment-doc-danger" data-doc-delete="${escape(d.id)}">Видалити</button></div></div>`).join(''):'<p class="muted">Документів поки немає.</p>'}</div><form id="equipmentDocForm" class="equipment-doc-form"><h4>Додати документ</h4><div class="equipment-doc-fields"><label>Назва документа<input name="title" maxlength="150" required placeholder="Наприклад: Технічний паспорт"></label><label>Тип документа<select name="document_type"><option>Технічний паспорт</option><option>Інструкція</option><option>Сертифікат</option><option>Гарантія</option><option>Інший</option></select></label><label class="equipment-doc-file">Файл (до 20 МБ)<input name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx,.xls,.xlsx" required></label></div><button type="submit" class="primary">＋ Додати документ</button></form>`;
+   p.querySelector('form').onsubmit=e=>upload(e,id);
+   p.onclick=e=>{const b=e.target.closest('[data-doc-open],[data-doc-download],[data-doc-delete]');if(!b)return;const d=data.find(x=>x.id===(b.dataset.docOpen||b.dataset.docDownload||b.dataset.docDelete));if(!d)return;if(b.dataset.docDelete)remove(d,id);else open(d,!!b.dataset.docDownload)};
+  }catch(e){p.innerHTML='<p class="muted">Не вдалося завантажити документи. Перевірте SQL-налаштування.</p>';fail(e)}finally{loading=false}
+ }
+ async function upload(e,id){e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]'),fd=new FormData(form),file=fd.get('file');if(!(file instanceof File)||!file.size)return;
+  if(file.size>MAX||!allowed.has(file.type)){toast('Дозволені PDF, зображення, TXT, Word та Excel до 20 МБ',true);return}
+  button.disabled=true;let path=null;
+  try{
+   const ext=(file.name.split('.').pop()||'bin').toLowerCase();path=`${id}/${crypto.randomUUID()}.${ext}`;
+   const up=await db.storage.from(BUCKET).upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
+   const result=await db.from('equipment_documents').insert({equipment_id:id,title:String(fd.get('title')).trim(),document_type:String(fd.get('document_type')),file_name:file.name,file_path:path,file_size:file.size,mime_type:file.type}).select('id');if(result.error)throw result.error;
+   if(!result.data?.length)throw Error('Збереження документа не підтверджено');
+   toast('Документ додано');await load(id);
+  }catch(err){if(path)await db.storage.from(BUCKET).remove([path]).catch(()=>{});fail(err)}finally{button.disabled=false}
+ }
+ async function open(d,download){try{const {data,error}=await db.storage.from(BUCKET).createSignedUrl(d.file_path,60,{download:download?d.file_name:undefined});if(error)throw error;const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener noreferrer';if(download)a.download=d.file_name;document.body.append(a);a.click();a.remove()}catch(e){fail(e)}}
+ async function remove(d,id){if(!confirm(`Видалити документ «${d.title}»?`))return;try{const {data,error}=await db.from('equipment_documents').delete().eq('id',d.id).select('id');if(error)throw error;if(data?.length!==1)throw Error('Видалення не підтверджено');const storage=await db.storage.from(BUCKET).remove([d.file_path]);if(storage.error)toast('Запис видалено, але файл у Storage залишився: '+storage.error.message,true);else toast('Документ видалено');await load(id)}catch(e){fail(e)}}
+})();

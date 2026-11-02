@@ -241,8 +241,10 @@ function details(x){
  <div class="detail-section"><h3>Основна інформація</h3><div class="detail-grid">${row('Категорія',cat)}${row('Підкатегорія',sub)}${row('Тип обліку',x.accounting_type==='personal'?'Персональний':'Загальний')}${row('Одиниця виміру',x.unit)}${row('Вага / кг',x.weight)}${row('Опис',x.description)}</div></div>
  ${Array.isArray(x.custom_fields)&&x.custom_fields.length?`<div class="detail-section"><h3>Додаткові характеристики</h3><div class="detail-grid">${x.custom_fields.map(f=>row(f.name,f.value)).join('')}</div></div>`:''}<div class="detail-section"><h3>Розміщення</h3><div class="detail-grid">${row('Склад',wh)}${row('Місце з довідника',x.location_id?locationLabel(x.location_id):'Не прив’язано')}${row('Зона',x.zone)}${row('Стелаж',x.rack)}${row('Полиця',x.shelf)}${row('Пакування',x.packaging)}</div></div>
  <div class="detail-section"><h3>Ідентифікація та вартість</h3><div class="detail-grid">${row('EQ-ID',x.eq_id)}${row('Серійний ID',x.serial)}${row('Barcode',x.barcode)}${row('QR',x.qr)}${row('Ціна / грн',Number(x.price||0).toLocaleString('uk-UA'))}${row('Оренда / доба',Number(x.rental_price||0).toLocaleString('uk-UA'))}</div></div>
+ <div class="detail-section equipment-docs-section"><div class="equipment-docs-heading"><h3>Документи обладнання</h3><button type="button" id="equipmentDocsToggle">Документи ▾</button></div><div id="equipmentDocsPanel" hidden><p class="muted">Завантаження документів…</p></div></div>
  <div class="detail-foot">Оновлено: ${x.updated_at?esc(new Date(x.updated_at).toLocaleString('uk-UA')):'—'}</div>`;
  $('#itemDialog').showModal();
+ window.harazdDocsOpen?.(x);
 }
 function askDeleteEquipment(){
  if(!selected)return;
