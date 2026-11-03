@@ -607,3 +607,9 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 .harazd-group-field>input,.harazd-group-field>textarea,.harazd-group-field>select{width:100%;box-sizing:border-box;background:#0d1622;color:#fff;border:1px solid #304156;border-radius:9px;padding:11px;min-height:42px;font:inherit}
 .harazd-group-field>textarea{resize:vertical}
 @media(max-width:600px){.harazd-group-fields{grid-template-columns:1fr}.harazd-group-dialog{padding:17px}}
+
+/* Group editor: sections aligned with add-equipment form */
+.harazd-group-section{grid-column:1/-1;margin:18px 0 2px;padding-bottom:10px;border-bottom:1px solid #293647;font-size:17px}
+.harazd-group-individual{margin:16px 0;padding:12px 16px;border:1px solid #293647;border-radius:12px}
+.harazd-group-individual h3{margin:0 0 8px}
+.harazd-group-individual p{margin:0}
