@@ -58,13 +58,13 @@
  window.harazdDocsUploadPending=()=>pending.length>0;
  window.harazdDocsSavePending=async id=>{
   let ok=0,failed=0,error='';
-  for(const entry of pending){let path=null;try{
+  for(const entry of [...pending]){let path=null;try{
    if(!entry.title.trim())throw Error('Заповніть назву документа: '+entry.file.name);
    const ext=(entry.file.name.split('.').pop()||'bin').toLowerCase();path=`${id}/${crypto.randomUUID()}.${ext}`;
    const up=await db.storage.from(BUCKET).upload(path,entry.file,{contentType:entry.file.type,upsert:false});if(up.error)throw up.error;
    const result=await db.from('equipment_documents').insert({equipment_id:id,title:entry.title.trim(),document_type:entry.type,file_name:entry.file.name,file_path:path,file_size:entry.file.size,mime_type:entry.file.type}).select('id');if(result.error)throw result.error;
-   if(!result.data?.length)throw Error('Збереження документа не підтверджено');ok++;
+   if(!result.data?.length)throw Error('Збереження документа не підтверджено');ok++;const index=pending.indexOf(entry);if(index!==-1)pending.splice(index,1);
   }catch(e){failed++;error=e.message||String(e);if(path)await db.storage.from(BUCKET).remove([path]).catch(()=>{});}}
-  return {ok,failed,error};
+  renderPending();return {ok,failed,error};
  };
 })();
