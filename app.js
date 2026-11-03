@@ -202,9 +202,36 @@ function groupedInventory(visible){
 }
 function renderItems(){
  const q=$('#search').value.trim().toLowerCase(),cat=$('#categoryFilter').value,wh=$('#warehouseFilter').value,status=$('#statusFilter').value,sort=$('#sortFilter').value;
- let visible=items.filter(x=>(!cat||x.category_id===cat)&&(!wh||x.warehouse_id===wh)&&(!status||(status==='repair'?x.repair_quantity>0:x.quantity>x.repair_quantity))&&(!q||[x.name,x.eq_id,x.model,x.manufacturer,x.serial,x.barcode,x.qr].some(v=>String(v||'').toLowerCase().includes(q))));
- visible.sort((a,b)=>sort==='qty'?Number(b.quantity)-Number(a.quantity):sort==='newest'?String(b.created_at||'').localeCompare(String(a.created_at||'')):sort==='availability'?(Number(b.quantity||0)-Number(b.repair_quantity||0))-(Number(a.quantity||0)-Number(a.repair_quantity||0)):sort==='model'?String(a.model||'').localeCompare(String(b.model||''),'uk'):String(a.name||'').localeCompare(String(b.name||''),'uk'));
+ const normalized=v=>String(v??'').trim().toLocaleLowerCase('uk');
+ const categoryLabels=new Map(categories.map(c=>[c.id,c.name||'']));
+ const subcategoryLabels=new Map(subcategories.map(c=>[c.id,c.name||'']));
+ const warehouseLabels=new Map(warehouses.map(w=>[w.id,w.name||'']));
+ const matchesSearch=x=>!q||[
+  x.name,x.description,x.eq_id,x.model,x.manufacturer,x.serial,x.barcode,x.qr,
+  categoryLabels.get(x.category_id),subcategoryLabels.get(x.subcategory_id),warehouseLabels.get(x.warehouse_id)
+ ].some(v=>normalized(v).includes(q));
+ let visible=items.filter(x=>{
+  const qty=Number(x.quantity||0),repair=Number(x.repair_quantity||0);
+  const matchesStatus=!status||(status==='repair'?repair>0:qty>repair);
+  return (!cat||x.category_id===cat)&&(!wh||x.warehouse_id===wh)&&matchesStatus&&matchesSearch(x);
+ });
+ const compareNames=(a,b)=>String(a.name||'').localeCompare(String(b.name||''),'uk');
+ const compareItems=(a,b)=>sort==='qty'?Number(b.quantity||0)-Number(a.quantity||0)||compareNames(a,b)
+  :sort==='newest'?String(b.created_at||'').localeCompare(String(a.created_at||''))||compareNames(a,b)
+  :sort==='availability'?(Number(b.quantity||0)-Number(b.repair_quantity||0))-(Number(a.quantity||0)-Number(a.repair_quantity||0))||compareNames(a,b)
+  :sort==='model'?String(a.model||'').localeCompare(String(b.model||''),'uk')||compareNames(a,b)
+  :compareNames(a,b);
+ visible.sort(compareItems);
  const entries=groupedInventory(visible);
+ // Compare grouped inventory by the aggregate values of all its members.
+ const groupSum=(entry,field)=>entry.items.reduce((n,x)=>n+Number(x[field]||0),0);
+ entries.sort((a,b)=>{
+  const ax=a.items[0],bx=b.items[0];
+  if(sort==='qty')return groupSum(b,'quantity')-groupSum(a,'quantity')||compareNames(ax,bx);
+  if(sort==='availability')return (groupSum(b,'quantity')-groupSum(b,'repair_quantity'))-(groupSum(a,'quantity')-groupSum(a,'repair_quantity'))||compareNames(ax,bx);
+  if(sort==='newest')return Math.max(...b.items.map(x=>Date.parse(x.created_at)||0))-Math.max(...a.items.map(x=>Date.parse(x.created_at)||0))||compareNames(ax,bx);
+  return compareItems(ax,bx);
+ });
  $('#statItems').textContent=items.length;$('#statTotal').textContent=items.reduce((s,x)=>s+Number(x.quantity||0),0);$('#statAvailable').textContent=items.reduce((s,x)=>s+Math.max(0,Number(x.quantity||0)-Number(x.repair_quantity||0)),0);$('#statRepair').textContent=items.reduce((s,x)=>s+Number(x.repair_quantity||0),0);
  const catName=x=>categories.find(c=>c.id===x.category_id)?.name||'Без категорії';
  const whName=x=>warehouses.find(w=>w.id===x.warehouse_id)?.name||'Не вказано';
