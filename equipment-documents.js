@@ -36,7 +36,14 @@
   }catch(err){if(path&&!metadataSaved){const cleanup=await db.storage.from(BUCKET).remove([path]);if(cleanup.error)toast('Не вдалося прибрати незбережений файл: '+cleanup.error.message,true)}fail(err)}finally{button.disabled=false}
  }
  async function open(d,download){try{const {data,error}=await db.storage.from(BUCKET).createSignedUrl(d.file_path,60,{download:download?d.file_name:undefined});if(error)throw error;const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener noreferrer';if(download)a.download=d.file_name;document.body.append(a);a.click();a.remove()}catch(e){fail(e)}}
- async function remove(d,id){if(!confirm(`Видалити документ «${d.title}»?`))return;try{const storage=await db.storage.from(BUCKET).remove([d.file_path]);if(storage.error)throw Error('Файл не видалено зі Storage: '+storage.error.message);const {data,error}=await db.from('equipment_documents').delete().eq('id',d.id).select('id');if(error)throw Error('Файл видалено, але запис залишився. Перевірте права видалення: '+error.message);if(data?.length!==1)throw Error('Файл видалено, але видалення запису не підтверджено');toast('Документ видалено');await load(id)}catch(e){fail(e)}}
+ async function remove(d,id){if(!confirm(`Видалити документ «${d.title}»?`))return;try{
+  const result=await db.from('equipment_documents').delete().eq('id',d.id).select('id');
+  if(result.error)throw result.error;
+  if(result.data?.length!==1)throw Error('Видалення запису не підтверджено');
+  const refs=await db.from('equipment_documents').select('id').eq('file_path',d.file_path).limit(1);
+  if(!refs.error&&!(refs.data||[]).length){const storage=await db.storage.from(BUCKET).remove([d.file_path]);if(storage.error)console.warn('Не вдалося прибрати файл без посилань:',storage.error);}
+  toast('Документ видалено');await load(id);
+ }catch(e){fail(e)}}
  // Document staging for the add/edit equipment form. Upload only after equipment has a persistent ID.
  const pending=[];
  const fileInput=document.getElementById('equipmentDocFiles');
@@ -56,15 +63,30 @@
  });}
  window.harazdDocsResetPending=()=>{pending.length=0;if(fileInput)fileInput.value='';renderPending()};
  window.harazdDocsUploadPending=()=>pending.length>0;
- window.harazdDocsSavePending=async id=>{
+ window.harazdDocsSavePending=async ids=>{
+  const targets=[...new Set((Array.isArray(ids)?ids:[ids]).filter(Boolean))];
   let ok=0,failed=0,error='';
-  for(const entry of [...pending]){let path=null;try{
-   if(!entry.title.trim())throw Error('Заповніть назву документа: '+entry.file.name);
-   const ext=(entry.file.name.split('.').pop()||'bin').toLowerCase();path=`${id}/${crypto.randomUUID()}.${ext}`;
-   const up=await db.storage.from(BUCKET).upload(path,entry.file,{contentType:entry.file.type,upsert:false});if(up.error)throw up.error;
-   const result=await db.from('equipment_documents').insert({equipment_id:id,title:entry.title.trim(),document_type:entry.type,file_name:entry.file.name,file_path:path,file_size:entry.file.size,mime_type:entry.file.type}).select('id');if(result.error)throw result.error;
-   if(!result.data?.length)throw Error('Збереження документа не підтверджено');ok++;const index=pending.indexOf(entry);if(index!==-1)pending.splice(index,1);
-  }catch(e){failed++;error=e.message||String(e);if(path)await db.storage.from(BUCKET).remove([path]).catch(()=>{});}}
+  if(!targets.length)return {ok,failed:pending.length,error:'Не знайдено одиниць обладнання'};
+  for(const entry of [...pending]){
+   let path=null;
+   try{
+    if(!entry.title.trim())throw Error('Заповніть назву документа: '+entry.file.name);
+    const ext=(entry.file.name.split('.').pop()||'bin').toLowerCase();
+    path=`${targets[0]}/${crypto.randomUUID()}.${ext}`;
+    const up=await db.storage.from(BUCKET).upload(path,entry.file,{contentType:entry.file.type,upsert:false});
+    if(up.error)throw up.error;
+    const rows=targets.map(id=>({equipment_id:id,title:entry.title.trim(),document_type:entry.type,file_name:entry.file.name,file_path:path,file_size:entry.file.size,mime_type:entry.file.type}));
+    const inserted=await db.from('equipment_documents').insert(rows).select('id,equipment_id');
+    if(inserted.error)throw inserted.error;
+    if((inserted.data||[]).length!==targets.length)throw Error('Не підтверджено зв’язок з усіма одиницями');
+    ok+=targets.length;
+    const index=pending.indexOf(entry);if(index!==-1)pending.splice(index,1);
+   }catch(e){
+    failed++;error=e.message||String(e);
+    if(path){const refs=await db.from('equipment_documents').select('id').eq('file_path',path).limit(1);
+     if(!refs.error&&!(refs.data||[]).length)await db.storage.from(BUCKET).remove([path]).catch(()=>{});}
+   }
+  }
   renderPending();return {ok,failed,error};
  };
 })();

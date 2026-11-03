@@ -323,14 +323,30 @@ async function saveEquipment(e){e.preventDefault();const f=e.currentTarget, fd=n
  for(const field of ['weight','price','rental_price']){if(!Number.isFinite(data[field])||data[field]<0){toast('Перевірте значення поля: '+({weight:'Вага',price:'Ціна',rental_price:'Оренда'}[field]),true);return}}
  if(data.subcategory_id&&!subcategories.some(x=>x.id===data.subcategory_id&&x.category_id===data.category_id)){toast('Підкатегорія не відповідає обраній категорії',true);return}
  const names=new Set();for(const field of customFields){const key=field.name.trim().toLocaleLowerCase('uk');if(names.has(key)){toast('Повторюється назва характеристики: '+field.name,true);return}names.add(key)}const btn=$('#saveButton');btn.disabled=true;let uploadedPhoto=null, equipmentSaved=false;try{if(equipmentPhotoFile){uploadedPhoto=await equipmentPhotoUpload(equipmentPhotoFile);data.photo_url=uploadedPhoto.url;}else if(equipmentPhotoRemove){data.photo_url=null;}let result;if(editing){result=await db.from('equipment').update(data).eq('id',editing.id).select('id');if(!result.error&&result.data.length!==1)throw Error('Запис не оновлено. Перевірте права доступу.');if(!result.error){const check=await db.from('equipment').select('id,name,updated_at').eq('id',editing.id).single();if(check.error||!check.data||check.data.name!==data.name)throw Error('Не вдалося підтвердити збереження у Supabase.')}}else{result=await db.rpc('create_equipment',{payload:data});}if(result.error)throw result.error;equipmentSaved=true;
+  let createdIds=[];
+  if(!editing){
+   const eqIds=result.data?.ids||[];
+   if(!Array.isArray(eqIds)||!eqIds.length)throw Error('Сервер не повернув EQ-ID створених одиниць');
+   const lookup=await db.from('equipment').select('id,eq_id').in('eq_id',eqIds);
+   if(lookup.error)throw lookup.error;
+   createdIds=(lookup.data||[]).map(row=>row.id);
+   if(createdIds.length!==eqIds.length)throw Error('Не знайдено всі одиниці групи');
+   const patch=await db.from('equipment').update({custom_fields:customFields}).in('id',createdIds).select('id');
+   if(patch.error)throw patch.error;
+   if((patch.data||[]).length!==createdIds.length)throw Error('Характеристики не застосовано до всіх одиниць');
+  }
   if(window.harazdDocsUploadPending?.()){
-   let docId=editing?.id;
-   if(!docId){const eqIds=result.data?.ids||[];if(!eqIds.length)throw Error('Обладнання збережено, але сервер не повернув його ID для документів');const found=await db.from('equipment').select('id').eq('eq_id',eqIds[0]).single();if(found.error||!found.data?.id)throw Error('Обладнання збережено, але не вдалося визначити ID для документів');docId=found.data.id;}
-   const docsResult=await window.harazdDocsSavePending(docId);
+   const docIds=editing?[editing.id]:createdIds;
+   const docsResult=await window.harazdDocsSavePending(docIds);
    if(docsResult.failed){
-    // Keep failed files in the form; never repeat successful uploads.
-    if(!editing){const {data:savedRow,error:lookupError}=await db.from('equipment').select('*').eq('id',docId).single();editing=(!lookupError&&savedRow)?savedRow:{...data,id:docId};$('#formTitle').textContent='Редагування '+(editing.eq_id||'обладнання');$('#saveButton').textContent='Зберегти зміни';}
-    toast('Обладнання збережено, але '+docsResult.failed+' документ(ів) не завантажено. Повторіть збереження: '+docsResult.error,true);
+    if(!editing){
+     const docId=createdIds[0];
+     const {data:savedRow,error:lookupError}=await db.from('equipment').select('*').eq('id',docId).single();
+     editing=(!lookupError&&savedRow)?savedRow:{...data,id:docId};
+     $('#formTitle').textContent='Редагування '+(editing.eq_id||'обладнання');
+     $('#saveButton').textContent='Зберегти зміни';
+    }
+    toast('Обладнання збережено, але '+docsResult.failed+' документ(ів) не додано: '+docsResult.error,true);
     await loadItems();return;
    }
    toast('Документи додано: '+docsResult.ok);
