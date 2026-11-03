@@ -628,3 +628,34 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 .personal-group-card{transition:background-color .2s ease}
 .personal-group-card:hover{background-color:#1a2838}
 .personal-group-card:hover>.personal-group-toggle{background:transparent}
+
+/* Inventory toolbar: align all controls to the Clear filters button (44px). */
+#warehouse .warehouse-filterbar { align-items:center; }
+#warehouse .warehouse-filter-selects { align-items:center; }
+#warehouse .warehouse-filter-selects select {
+  height:44px !important;
+  min-height:44px !important;
+  max-height:44px !important;
+  box-sizing:border-box;
+  line-height:normal;
+}
+#warehouse .warehouse-filter-actions { align-items:center; }
+#warehouse .clear-filter-btn {
+  height:44px !important;
+  min-height:44px !important;
+  max-height:44px !important;
+  box-sizing:border-box;
+}
+#warehouse .view-switch {
+  height:44px !important;
+  min-height:44px !important;
+  max-height:44px !important;
+  box-sizing:border-box;
+  align-items:center;
+}
+#warehouse .view-switch button {
+  height:36px !important;
+  min-height:36px !important;
+  max-height:36px !important;
+  box-sizing:border-box;
+}
