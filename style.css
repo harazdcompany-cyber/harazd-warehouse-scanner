@@ -659,3 +659,15 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
   max-height:36px !important;
   box-sizing:border-box;
 }
+
+/* Inventory filter row: fixed equal outer heights (2026-11-03). */
+#warehouse .warehouse-filterbar .warehouse-filter-selects select,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .clear-filter-btn,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {
+ height:44px !important; min-height:44px !important; max-height:44px !important;
+ box-sizing:border-box !important; margin-top:0 !important; margin-bottom:0 !important;
+}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {padding:3px !important;align-items:center !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch button {height:36px !important;min-height:36px !important;max-height:36px !important;padding-top:0 !important;padding-bottom:0 !important;box-sizing:border-box !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-selects,
+#warehouse .warehouse-filterbar .warehouse-filter-actions {align-items:center !important;}
