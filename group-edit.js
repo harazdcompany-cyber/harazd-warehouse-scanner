@@ -41,7 +41,7 @@
     $('[data-field="category_id"]').addEventListener('change',e=>{
       const sub = $('[data-field="subcategory_id"]');
       sub.innerHTML = fillOptions('subcategory','',e.target.value);
-      $('[data-use="subcategory_id"]').checked = true;
+      // Changing the selection must not silently mark a second field for bulk update.
     });
     dialog.showModal();
   }
@@ -67,10 +67,18 @@
     if('category_id' in patch && !patch.category_id) return toast('Оберіть категорію',true);
     if('category_id' in patch && !('subcategory_id' in patch)) {
       const first = items.find(x=>x.id===groupIds[0]);
-      if(first?.category_id!==patch.category_id) return toast('При зміні категорії також виберіть підкатегорію',true);
+      if(first?.category_id!==patch.category_id) return toast('Для зміни категорії окремо позначте поле «Підкатегорія» та виберіть відповідне значення',true);
     }
     if('photo_url' in patch && patch.photo_url && !/^https:\/\/[^\s<>"']+$/i.test(patch.photo_url)) return toast('Фото: вкажіть HTTPS-посилання',true);
-    if(!confirm(`Застосувати вибрані зміни до всіх ${groupIds.length} одиниць групи?`)) return;
+    const changed = Object.entries(patch).filter(([field,value]) => groupIds.some(id => {
+      const current=items.find(x=>x.id===id)?.[field] ?? null;
+      return JSON.stringify(current)!==JSON.stringify(value);
+    }));
+    if(!changed.length)return toast('У вибраних полях змін немає');
+    const labels=changed.map(([field])=>FIELDS.find(x=>x[0]===field)?.[1]||field);
+    const differing=changed.filter(([field])=>new Set(groupIds.map(id=>JSON.stringify(items.find(x=>x.id===id)?.[field]??null))).size>1).map(([field])=>FIELDS.find(x=>x[0]===field)?.[1]||field);
+    const message=`Застосувати зміни до всіх ${groupIds.length} одиниць групи?\n\nПоля: ${labels.join(', ')}${differing.length?'\n\nУвага: ці поля зараз відрізняються між одиницями: '+differing.join(', '):''}\n\nІндивідуальні поля не змінюються.`;
+    if(!confirm(message))return;
     const save=$('#harazdGroupSave');save.disabled=true;
     try {
       // Update each UUID explicitly; only checked fields are included.
