@@ -623,3 +623,8 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 /* Group edit action at the end of table summary rows only. */
 .personal-summary-row .group-table-end{display:flex;align-items:center;justify-content:space-between;gap:12px;white-space:nowrap}
 .personal-summary-row .group-table-end .group-edit-trigger{margin:0;flex-shrink:0}
+
+/* Group card: highlight the entire surface, including edit action footer. */
+.personal-group-card{transition:background-color .2s ease}
+.personal-group-card:hover{background-color:#1a2838}
+.personal-group-card:hover>.personal-group-toggle{background:transparent}
