@@ -2,7 +2,7 @@
    Individual fields (IDs, serial, barcode, QR, location, repair/status, documents) are untouched. */
 (() => {
   const FIELDS = [
-    ['photo_url','Фото (HTTPS URL)','text'],['name','Найменування','text'],['description','Опис','textarea'],
+    ['photo_url','Фото','photo'],['name','Найменування','text'],['description','Опис','textarea'],
     ['manufacturer','Виробник','text'],['model','Модель','text'],
     ['category_id','Категорія','category'],['subcategory_id','Підкатегорія','subcategory'],['accounting_type','Тип обліку','accounting'],
     ['unit','Одиниця виміру','text'],['weight','Вага / кг','number'],
@@ -11,6 +11,22 @@
     ['custom_fields','Додаткові характеристики (назва: значення, кожен рядок)','textarea']
   ];
   let groupIds = [];
+  let selectedPhoto = null;
+  let previewUrl = null;
+  const PHOTO_BUCKET = 'equipment-photos';
+  function clearPhotoSelection() {
+    if(previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    selectedPhoto = null;
+  }
+  function showPhotoPreview(url) {
+    const image = $('[data-group-photo-preview]');
+    if(!image) return;
+    image.hidden = !url;
+    if(url) image.src = url;
+    else image.removeAttribute('src');
+  }
+
   const sectionFor = f => ['photo_url','name','description','manufacturer','model','category_id','subcategory_id','accounting_type','unit','weight'].includes(f)?'Основна інформація':f==='custom_fields'?'Додаткові характеристики':['warehouse_id','location_id','packaging'].includes(f)?'Розміщення та пакування':'Вартість';
   const safe = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dialog = document.createElement('dialog');
@@ -18,7 +34,7 @@
   dialog.innerHTML = `<form id="harazdGroupForm"><div class="harazd-group-head"><h2>Редагування всієї групи</h2><button type="button" id="harazdGroupClose">✕</button></div><p id="harazdGroupCount" class="muted"></p><p class="muted">Позначте тільки ті поля, які потрібно змінити для всіх одиниць. Непозначені поля не змінюються.</p><div id="harazdGroupFields" class="harazd-group-fields"></div><section class="harazd-group-individual"><h3>Індивідуальні поля</h3><p class="muted">Серійний ID, EQ-ID, штрихкод, QR і кількість кожної одиниці не перезаписуються однаковим значенням. Для них використовуйте індивідуальне редагування.</p></section><div class="actions"><button type="button" id="harazdGroupCancel">Скасувати</button><button type="submit" class="primary" id="harazdGroupSave">Зберегти для всієї групи</button></div></form>`;
   document.body.append(dialog);
   const $ = sel => dialog.querySelector(sel);
-  const close = () => dialog.close();
+  const close = () => { clearPhotoSelection(); dialog.close(); };
   $('#harazdGroupClose').onclick = close;
   $('#harazdGroupCancel').onclick = close;
   function fillOptions(kind, value, category) {
@@ -28,6 +44,7 @@
   function openGroup(key) {
     const members = items.filter(x => x.accounting_type === 'personal' && personalKey(x) === key);
     if (members.length < 2) return toast('Групу не знайдено',true);
+    clearPhotoSelection();
     groupIds = members.map(x=>x.id);
     const first = members[0];
     $('#harazdGroupCount').textContent = `${first.name} · ${members.length} одиниць обладнання`;
@@ -36,13 +53,33 @@
       const section=sectionFor(field);const header=section!==lastSection?`<h3 class="harazd-group-section">${section}</h3>`:'';lastSection=section;
       const v = field === 'custom_fields' ? (Array.isArray(first.custom_fields) ? first.custom_fields.map(x=>`${x.name}: ${x.value}`).join('\n') : '') : first[field] ?? '';
       let control;
-      if(type === 'category' || type === 'subcategory' || type==='warehouse') control = `<select data-field="${field}">${fillOptions(type,v,first.category_id)}</select>`;
+      if(type === 'photo') control = `<div class="harazd-group-photo-control"><input type="file" data-field="photo_url" accept="image/jpeg,image/png,image/webp"><img data-group-photo-preview alt="Попередній перегляд фото" hidden><p class="muted">JPG, PNG або WebP, до 10 МБ. Одне фото для всієї групи.</p></div>`;
+      else if(type === 'category' || type === 'subcategory' || type==='warehouse') control = `<select data-field="${field}">${fillOptions(type,v,first.category_id)}</select>`;
       else if(type==='accounting') control=`<select data-field="${field}"><option value="personal" ${v==='personal'?'selected':''}>Персональний</option><option value="general" ${v==='general'?'selected':''}>Загальний</option></select>`;
       else if(type==='location') control=`<select data-field="${field}"><option value="">Без місця</option></select>`;
       else if(type === 'textarea') control = `<textarea data-field="${field}" rows="${field==='custom_fields'?3:2}">${safe(v)}</textarea>`;
       else control = `<input data-field="${field}" type="${type}" ${type==='number'?'step="any" min="0"':''} value="${safe(v)}">`;
       return `${header}<div class="harazd-group-field"><label class="harazd-group-check"><input type="checkbox" data-use="${field}"> <span>${safe(label)}</span></label>${control}</div>`;
     }).join('');
+    const photoInput = $('[data-field="photo_url"]');
+    photoInput.addEventListener('change', () => {
+      clearPhotoSelection();
+      const file = photoInput.files?.[0];
+      if(!file) { showPhotoPreview(first.photo_url || ''); return; }
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+        photoInput.value=''; showPhotoPreview(first.photo_url || '');
+        return toast('Фото: дозволені JPG, PNG або WebP', true);
+      }
+      if(file.size > 10*1024*1024) {
+        photoInput.value=''; showPhotoPreview(first.photo_url || '');
+        return toast('Фото: максимальний розмір 10 МБ', true);
+      }
+      selectedPhoto = file;
+      previewUrl = URL.createObjectURL(file);
+      showPhotoPreview(previewUrl);
+      $('[data-use="photo_url"]').checked = true;
+    });
+    showPhotoPreview(first.photo_url || '');
     $('[data-field="category_id"]').addEventListener('change',e=>{
       const sub = $('[data-field="subcategory_id"]');
       sub.innerHTML = fillOptions('subcategory','',e.target.value);
@@ -68,6 +105,12 @@
     const patch = {};
     for(const [field,,type] of FIELDS) {
       if(!$(`[data-use="${field}"]`).checked) continue;
+      if(type === 'photo') {
+        if(!selectedPhoto) return toast('Виберіть файл фотографії для всієї групи', true);
+        // The public URL is assigned only after successful Storage upload.
+        patch[field] = '__GROUP_PHOTO_PENDING__';
+        continue;
+      }
       const raw = $(`[data-field="${field}"]`).value.trim();
       if(field === 'custom_fields') {
         const rows = raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -94,7 +137,7 @@
       if(first?.category_id!==patch.category_id) return toast('Для зміни категорії окремо позначте поле «Підкатегорія» та виберіть відповідне значення',true);
     }
     if('subcategory_id' in patch && patch.subcategory_id && !subcategories.some(x=>x.id===patch.subcategory_id&&x.category_id===(patch.category_id||items.find(x=>x.id===groupIds[0])?.category_id)))return toast('Підкатегорія не відповідає категорії',true);
-    if('photo_url' in patch && patch.photo_url && !/^https:\/\/[^\s<>"']+$/i.test(patch.photo_url)) return toast('Фото: вкажіть HTTPS-посилання',true);
+
     const changed = Object.entries(patch).filter(([field,value]) => groupIds.some(id => {
       const current=items.find(x=>x.id===id)?.[field] ?? null;
       return JSON.stringify(current)!==JSON.stringify(value);
@@ -106,6 +149,17 @@
     if(!confirm(message))return;
     const save=$('#harazdGroupSave');save.disabled=true;
     try {
+      if('photo_url' in patch) {
+        const file = selectedPhoto;
+        if(!file) throw Error('Не вибрано фотографію');
+        const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        const path = crypto.randomUUID()+'.'+ext;
+        const {error:uploadError} = await db.storage.from(PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+        if(uploadError) throw Error('Завантаження фото: '+uploadError.message);
+        const {data:urlData} = db.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+        if(!urlData?.publicUrl) throw Error('Не вдалося отримати адресу фотографії');
+        patch.photo_url = urlData.publicUrl;
+      }
       // Update each UUID explicitly; only checked fields are included.
       const {data,error} = await db.from('equipment').update(patch).in('id',groupIds).select('id');
       if(error) throw error;
