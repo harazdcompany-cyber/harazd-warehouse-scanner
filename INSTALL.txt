@@ -1,0 +1,13 @@
+HARAZD WAREHOUSE — кількісне обладнання у пакуванні
+
+1. Зробіть резервну копію бази Supabase.
+2. Supabase -> SQL Editor -> виконайте SETUP_PACKAGING_QUANTITY_MOVE.sql.
+3. Файли GitHub НЕ потрібно замінювати: поточний packaging.js уже викликає
+   packaging_move_with_contents, і SQL оновлює цю функцію.
+4. Перемістіть тестове пакування та перевірте view
+   public.packaging_equipment_location_balances.
+
+ВАЖЛИВО: view показує розділені кількості за місцями, але основний складський
+інтерфейс поки що НЕ використовує цей view. Поки не інтегруємо залишки за
+місцями у СКЛАД, поле location_id основного equipment для частково
+упакованих позицій означає місце НЕУПАКОВАНОГО залишку.
