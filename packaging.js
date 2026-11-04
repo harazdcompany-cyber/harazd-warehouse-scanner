@@ -18,7 +18,7 @@ function eqLabel(id){const e=equipment.find(x=>x.id===id);return e?`${esc(e.name
 function equipmentThumb(id){
  const e=equipment.find(x=>x.id===id);
  const url=String(e?.photo_url||'');
- if(/^https:\/\/[^\\s"'<>]+$/i.test(url)){
+ if(/^https:\/\/[^\s"'<>]+$/i.test(url)){
   return `<img class="pkg-equipment-photo" src="${esc(url)}" alt="${esc(e.name||'Фото обладнання')}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.hidden=false"><span class="pkg-equipment-placeholder" hidden aria-hidden="true">◇</span>`;
  }
  return '<span class="pkg-equipment-placeholder" aria-hidden="true">◇</span>';

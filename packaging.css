@@ -8,9 +8,13 @@ body{background:#080d13;color:#eaf0f6}.pkg-grid{display:grid;grid-template-colum
 .pkg-equipment-thumb{width:64px;height:64px;flex:0 0 64px;display:grid;place-items:center;background:#0c1622;border:1px solid #304052;border-radius:10px;overflow:hidden}
 .pkg-equipment-photo{width:100%;height:100%;object-fit:contain}
 .pkg-equipment-placeholder{font-size:28px;color:#8ca1b8}
-#details{scrollbar-width:thin;scrollbar-color:#35485c #111b27;scrollbar-gutter:stable}
-#details::-webkit-scrollbar{width:8px}
-#details::-webkit-scrollbar-track{background:#111b27;border-radius:12px}
-#details::-webkit-scrollbar-thumb{background:#35485c;border:2px solid #111b27;border-radius:12px}
-#details::-webkit-scrollbar-thumb:hover{background:#536b82}
 @media(max-width:650px){.pkg-equipment-thumb{width:52px;height:52px;flex-basis:52px}.pkg-equipment-info{gap:9px}}
+
+/* Inset scrollbar inside the detail dialog */
+#details[open]{display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;max-height:min(90vh,calc(100dvh - 32px));padding-right:14px}
+#details .pkg-head{flex:0 0 auto;padding-right:10px}
+#detailBody{min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:10px;scrollbar-width:thin;scrollbar-color:#35485c #111b27}
+#detailBody::-webkit-scrollbar{width:7px}
+#detailBody::-webkit-scrollbar-track{background:#111b27;border-radius:12px}
+#detailBody::-webkit-scrollbar-thumb{background:#35485c;border-radius:12px}
+#detailBody::-webkit-scrollbar-thumb:hover{background:#536b82}
