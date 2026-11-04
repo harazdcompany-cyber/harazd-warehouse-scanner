@@ -219,6 +219,7 @@ function syncLabelPreviewSize(){
  const preview=$('pkgLabelPreview'), label=preview.querySelector('.pkg-label');
  if(!label)return;
  const [w,h]=labelSize();
+ label.classList.toggle('pkg-label-vertical',h>w);
  const qr=label.querySelector('.pkg-label-qr canvas');
  if(!qr)return;
  const copy=label.cloneNode(true), slot=copy.querySelector('.pkg-label-qr');
@@ -247,6 +248,7 @@ function printPkgLabel(){
  if(!preview||!qr){msg('QR-код ще не готовий',true);return}
  const qrData=qr.toDataURL('image/png');
  const label=preview.cloneNode(true);
+ label.classList.toggle('pkg-label-vertical',h>w);
  const qrSlot=label.querySelector('.pkg-label-qr');
  qrSlot.replaceChildren();
  const img=document.createElement('img');img.src=qrData;img.alt='QR';qrSlot.appendChild(img);
