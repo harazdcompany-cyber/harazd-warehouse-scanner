@@ -708,3 +708,11 @@ body *::-webkit-scrollbar {
 #scanner .scanner-frame video{object-fit:contain;touch-action:manipulation}
 #scanner .scanner-frame.scanner-focus-pulse::before{content:'';position:absolute;left:50%;top:50%;width:62px;height:62px;border:2px solid #e6fa00;border-radius:13px;transform:translate(-50%,-50%);pointer-events:none;z-index:5;animation:scanFocusPulse .75s ease-out both}
 @keyframes scanFocusPulse{from{opacity:1;scale:.7}to{opacity:0;scale:1.3}}
+
+/* Scanner: optional long-distance QR mode and rear/telephoto camera selector. */
+#scanner .scanner-distance-mode{display:inline-flex;align-items:center;justify-content:center;min-height:40px;border:1px solid #35485b;border-radius:9px;background:#101c2a;color:#d6e2ef;padding:8px 13px;font-size:13px;font-weight:750;cursor:pointer}
+#scanner .scanner-distance-mode.active{color:#ecff1c;border-color:#9ab800;background:#202b18}
+#scanner .scanner-distance-mode:hover{border-color:#e6fa00}
+#scanner .scanner-camera-select:not([hidden]){display:flex;align-items:center;gap:9px;color:#c3d2df;font-size:13px;font-weight:600}
+#scanner .scanner-camera-select[hidden]{display:none!important}
+#scanner .scanner-camera-select select{min-width:0;max-width:min(310px,70vw);padding:8px 11px;background:#101b29;color:#e9f1f8;border:1px solid #35485b;border-radius:8px}
