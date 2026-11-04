@@ -18,9 +18,61 @@ function allWeight(id,seen=new Set()){if(seen.has(id))return 0;seen.add(id);cons
 function pkgCardPhoto(p){const url=String(p.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<div class="pkg-card-photo"><img src="${esc(url)}" alt="Фото ${esc(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></div>`:'';}
 function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${contents.filter(x=>x.packaging_id===p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
 async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,weight,quantity,accounting_type,photo_url').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
-function edit(p){selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';if(p)for(const [k,v] of Object.entries(p)){const input=f.elements.namedItem(k);if(input&&v!=null)input.value=v}pkgPhotoReset();$('pkgPhotoUrl').value=p?.photo_url||'';pkgPhotoPreview();$('editor').showModal()}
+async function edit(p){
+ selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';
+ if(p)for(const [k,v] of Object.entries(p)){const input=f.elements.namedItem(k);if(input&&v!=null)input.value=v}
+ pkgPhotoReset();$('pkgPhotoUrl').value=p?.photo_url||'';pkgPhotoPreview();
+ try{
+  await pkgLoadLocations();
+  const chain=pkgLocChain(p?.location_id),wh=p?.warehouse_id||chain[0]?.warehouse_id||'';
+  pkgOptions('pkgEditWarehouse',pkgWarehouses,'Оберіть склад',wh);
+  pkgEditRefresh('warehouse',chain.find(n=>n.kind==='zone')?.id||'');
+  const rack=chain.find(n=>n.kind==='rack');if(rack){$('pkgEditRack').value=rack.id;pkgEditRefresh('rack')}
+  const shelf=chain.find(n=>n.kind==='shelf');if(shelf){$('pkgEditShelf').value=shelf.id;pkgEditRefresh('shelf')}
+  const place=chain.find(n=>n.kind==='place');if(place)$('pkgEditPlace').value=place.id;
+  $('editor').showModal();
+ }catch(e){msg('Не вдалося завантажити місця зберігання: '+e.message,true)}
+}
+function pkgEditRefresh(level,initial=''){
+ const wh=$('pkgEditWarehouse').value;
+ if(level==='warehouse')pkgOptions('pkgEditZone',pkgLocationNodes.filter(n=>n.kind==='zone'&&n.warehouse_id===wh),wh?'Оберіть зону':'Спочатку оберіть склад',initial);
+ if(['warehouse','zone'].includes(level))pkgOptions('pkgEditRack',pkgLocationNodes.filter(n=>n.kind==='rack'&&n.parent_id===$('pkgEditZone').value),'Без стелажа');
+ if(['warehouse','zone','rack'].includes(level))pkgOptions('pkgEditShelf',pkgLocationNodes.filter(n=>n.kind==='shelf'&&n.parent_id===$('pkgEditRack').value),'Без полиці');
+ const parent=$('pkgEditShelf').value||$('pkgEditRack').value||$('pkgEditZone').value;
+ pkgOptions('pkgEditPlace',pkgLocationNodes.filter(n=>n.kind==='place'&&n.parent_id===parent),parent?'Оберіть місце':'Спочатку оберіть зону');
+ $('pkgEditHint').textContent=parent?'Оберіть кінцеве місце зберігання.':'Спочатку оберіть зону.';
+}
+for(const [id,level] of [['pkgEditWarehouse','warehouse'],['pkgEditZone','zone'],['pkgEditRack','rack'],['pkgEditShelf','shelf']])$(id).onchange=()=>pkgEditRefresh(level);
+
 function num(f,key){const s=f.elements.namedItem(key).value;return s===''?null:Number(s)}
-async function save(e){e.preventDefault();const f=e.target;const row={name:f.elements.name.value.trim(),kind:f.elements.kind.value,mode:f.elements.mode.value,manufacturer:f.elements.manufacturer.value.trim()||null,model:f.elements.model.value.trim()||null,location:f.elements.location.value.trim()||null,description:f.elements.description.value.trim()||null};for(const k of ['length_mm','width_mm','height_mm','empty_weight_kg','max_payload_kg','rack_u','rack_depth_mm'])row[k]=num(f,k);try{const photoUrl=$('pkgPhotoUrl').value.trim();if(photoUrl&&!/^https:\/\/[^\s"'<>]+$/i.test(photoUrl))throw Error('Вкажіть коректне HTTPS-посилання на фото');if(pkgPhotoFile)row.photo_url=await pkgPhotoUpload(pkgPhotoFile);else if(pkgPhotoRemoved)row.photo_url=null;else if(photoUrl)row.photo_url=photoUrl;else if(!selected)row.photo_url=null;if(selected)check(await db.from('packaging').update(row).eq('id',selected.id).select());else check(await db.from('packaging').insert(row).select());$('editor').close();pkgPhotoReset();msg('Пакування збережено');await load()}catch(e){msg(e.message,true)}}
+async function save(e){
+ e.preventDefault();const f=e.target;
+ const warehouse_id=$('pkgEditWarehouse').value,location_id=$('pkgEditPlace').value;
+ const place=pkgLocationNodes.find(n=>n.id===location_id);
+ if(!place||place.kind!=='place'||place.warehouse_id!==warehouse_id)return msg('Оберіть місце зберігання у вибраному складі',true);
+ const chain=pkgLocChain(location_id);
+ const location=chain.map(n=>n.name).join(' / ');
+ const row={name:f.elements.name.value.trim(),kind:f.elements.kind.value,mode:f.elements.mode.value,manufacturer:f.elements.manufacturer.value.trim()||null,model:f.elements.model.value.trim()||null,description:f.elements.description.value.trim()||null};
+ for(const k of ['length_mm','width_mm','height_mm','empty_weight_kg','max_payload_kg','rack_u','rack_depth_mm'])row[k]=num(f,k);
+ const saveBtn=f.querySelector('button[type="submit"]');saveBtn.disabled=true;
+ try{
+  const photoUrl=$('pkgPhotoUrl').value.trim();if(photoUrl&&!/^https:\/\/[^\s"'<>]+$/i.test(photoUrl))throw Error('Вкажіть коректне HTTPS-посилання на фото');
+  if(pkgPhotoFile)row.photo_url=await pkgPhotoUpload(pkgPhotoFile);else if(pkgPhotoRemoved)row.photo_url=null;else if(photoUrl)row.photo_url=photoUrl;else if(!selected)row.photo_url=null;
+  if(selected){
+   if(selected.warehouse_id!==warehouse_id||selected.location_id!==location_id){
+    // The RPC moves nested packaging and contents atomically, and logs the move.
+    check(await db.rpc('packaging_move_with_contents',{p_packaging_id:selected.id,p_location_id:location_id}));
+   }
+   check(await db.from('packaging').update(row).eq('id',selected.id).select());
+  }else{
+   row.warehouse_id=warehouse_id;row.location_id=location_id;row.location=location;
+   check(await db.from('packaging').insert(row).select());
+  }
+  $('editor').close();pkgPhotoReset();msg('Пакування збережено');await load();
+ }catch(err){msg('Не вдалося зберегти пакування: '+err.message,true)}
+ finally{saveBtn.disabled=false}
+}
+
 function eqLabel(id){const e=equipment.find(x=>x.id===id);return e?`${esc(e.name)} · ${esc(e.eq_id||'')}`:esc(id)}
 function equipmentThumb(id){
  const e=equipment.find(x=>x.id===id);
@@ -71,6 +123,12 @@ async function startQr(){
 async function addPlan(){const name=prompt('Назва обладнання за планом:');if(!name?.trim())return;const q=prompt('Кількість:','1');if(q===null)return;const count=Number(q);if(!Number.isFinite(count)||count<=0)return msg('Некоректна кількість',true);try{check(await db.from('packaging_plan').insert({packaging_id:selected.id,item_name:name.trim(),quantity:count}));await reloadDetail()}catch(e){msg(e.message,true)}}
 async function addChild(){const id=prompt('Введіть PK-ID пакування, яке потрібно вкласти:');if(!id)return;const child=items.find(x=>x.pk_id?.toLowerCase()===id.trim().toLowerCase());if(!child)return msg('PK-ID не знайдено',true);if(child.id===selected.id||descendants(child.id).includes(selected.id))return msg('Циклічне вкладення заборонено',true);if(child.parent_id)return msg('Пакування вже вкладено в інше. Спочатку вилучіть його.',true);try{check(await db.from('packaging').update({parent_id:selected.id}).eq('id',child.id).select());await reloadDetail()}catch(e){msg(e.message,true)}}
 let pkgLocationNodes=[],pkgWarehouses=[];
+async function pkgLoadLocations(){
+ const r=await Promise.all([db.from('warehouses').select('id,name').order('name'),db.from('storage_locations').select('id,warehouse_id,parent_id,kind,name').order('name')]);
+ pkgWarehouses=check(r[0]);pkgLocationNodes=check(r[1]);
+ if(!pkgWarehouses.length)throw Error('У довіднику немає складів');
+}
+
 function pkgOptions(id,nodes,placeholder,value=''){
  const el=$(id);el.replaceChildren(new Option(placeholder,''),...nodes.map(n=>new Option(n.name,n.id)));
  if(value&&nodes.some(n=>n.id===value))el.value=value;

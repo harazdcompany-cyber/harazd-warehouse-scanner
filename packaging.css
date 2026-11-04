@@ -40,3 +40,8 @@ body{background:#080d13;color:#eaf0f6}.pkg-grid{display:grid;grid-template-colum
 .pkg-move-box h3{margin:0 0 6px}.pkg-move-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
 .pkg-move-grid label{display:grid;gap:8px}
 @media(max-width:650px){.pkg-move-grid{grid-template-columns:1fr}}
+
+/* Warehouse location selector in create/edit packaging form */
+.pkg-editor-location{display:grid;gap:16px;margin:8px 0 16px;min-width:0}
+.pkg-editor-location .pkg-move-warehouse{max-width:420px}
+.pkg-editor-location .pkg-move-box{width:100%;box-sizing:border-box}
