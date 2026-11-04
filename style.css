@@ -671,3 +671,15 @@ dialog#equipmentPhotoLightbox #equipmentPhotoLarge {
 #warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch button {height:36px !important;min-height:36px !important;max-height:36px !important;padding-top:0 !important;padding-bottom:0 !important;box-sizing:border-box !important;}
 #warehouse .warehouse-filterbar .warehouse-filter-selects,
 #warehouse .warehouse-filterbar .warehouse-filter-actions {align-items:center !important;}
+
+/* HARAZD: hide visible scrollbars everywhere, preserve scrolling. */
+html, body, body *, body *::before, body *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+body *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

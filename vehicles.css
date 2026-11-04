@@ -29,3 +29,15 @@ body{font-size:14px;line-height:normal;background:#090e14}
 @media(max-width:950px){.shell{grid-template-columns:175px minmax(0,1fr)}.side{width:175px}}
 @media(max-width:850px){.shell{grid-template-columns:175px minmax(0,1fr)}.side{width:175px;position:sticky;border-right:1px solid #242c38;border-bottom:0;padding:18px 12px}.side nav{display:grid;overflow:visible}.side nav a{white-space:normal}.vehicle-content{padding:24px 18px}.toolbar{grid-template-columns:1fr}}
 @media(max-width:650px){.shell{display:block}.side{position:static;width:100%;height:auto;padding:10px;border-right:0;border-bottom:1px solid #242c38}.side .brand{padding-bottom:8px}.side nav{display:flex;overflow-x:auto}.side nav a{white-space:nowrap;font-size:11px}.side nav small,.sidebar-bottom{display:none}.vehicle-topbar{height:48px;padding:0 12px}.vehicle-content{padding:14px}.vehicle-content .heading h1{font-size:23px}}
+
+/* HARAZD: hide visible scrollbars everywhere, preserve scrolling. */
+html, body, body *, body *::before, body *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+body *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
