@@ -83,7 +83,45 @@
  font-size:6.4cqw;
 }
 
-/* Approved final layouts: equal clearance on either side of the QR code.
-   Applies to both the isolated preview and the actual print document. */
-.pkg-label:not(.pkg-label-vertical) .pkg-label-qr{padding-left:7%;padding-right:7%}
-.pkg-label.pkg-label-vertical .pkg-label-qr{padding-top:4%;padding-bottom:4%;padding-left:4%;padding-right:4%}
+/* QR alignment, approved layouts (100x50 / 50x100).
+   Physical-mm geometry makes all four clearances equal, including at print size.
+   Shared sheet for the isolated iframe preview and the print window. */
+.pkg-label{border:0.28mm solid #fff}
+/* The supplied logo raster has a dark rectangle. Blend away that rectangle
+   without changing the logo artwork or the print/preview markup. */
+.pkg-label .pkg-label-brand img{filter:grayscale(1) contrast(4);mix-blend-mode:screen}
+/* Landscape 100x50: QR-to-frame and QR-to-divider = 5 mm measured
+   inside the 0.28mm outer border (plus the QR image's own white quiet zone). */
+.pkg-label:not(.pkg-label-vertical){grid-template-columns:46.94mm minmax(0,1fr)}
+.pkg-label:not(.pkg-label-vertical) .pkg-label-qr{
+ padding:0 2.3mm 0 0;
+ border-right:0.2mm solid #fff;
+}
+.pkg-label:not(.pkg-label-vertical) .pkg-label-qr img,
+.pkg-label:not(.pkg-label-vertical) .pkg-label-qr canvas{
+ width:calc(100% - 5mm);
+ height:auto;
+ max-width:100%;
+ max-height:100%;
+ aspect-ratio:1;
+ object-fit:contain;
+}
+/* Portrait 50x100: 3.5 mm from the outer frame and from the lower divider;
+   symmetrical left/right margins. QR remains full-size and scannable. */
+.pkg-label.pkg-label-vertical .pkg-label-qr{
+ flex:0 0 47.44mm;
+ padding:1.5mm 1.5mm 3.3mm;
+ border-right:0;
+ border-bottom:0.2mm solid #fff;
+}
+.pkg-label.pkg-label-vertical .pkg-label-qr img,
+.pkg-label.pkg-label-vertical .pkg-label-qr canvas{
+ display:block;
+ flex:none;
+ width:100%;
+ height:auto;
+ max-width:100%;
+ max-height:100%;
+ aspect-ratio:1;
+ object-fit:contain;
+}
