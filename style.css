@@ -697,3 +697,14 @@ body *::-webkit-scrollbar {
 #scanPackageDialog>.actions{position:sticky;bottom:-24px;z-index:1;background:#111b27;border-top:1px solid #2c394b;margin-top:20px;padding:14px 0 0;justify-content:flex-end;align-items:center}
 #scanPackageDialog .scan-package-open{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:11px 16px;font-weight:800}
 @media(max-width:650px){#scanPackageDialog{padding:16px}#scanPackageDialog .scan-package-hero{grid-template-columns:1fr}#scanPackageDialog .scan-package-hero .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#scanPackageDialog>.actions{bottom:-16px}#scanPackageDialog .scan-package-open{flex:1}}
+
+/* Scanner autofocus and automatic QR capture: scoped to scanner page only. */
+#scanner .scanner-camera-status{margin:7px 0 12px;padding:0 3px;color:#b5c7d8;font-size:13px;line-height:1.5;min-height:20px}
+#scanner .scanner-camera-controls{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:0 0 12px}
+#scanner .scanner-zoom:not([hidden]){display:flex;align-items:center;gap:11px;color:#c3d2df;font-size:13px;font-weight:600}
+#scanner .scanner-zoom[hidden]{display:none!important}
+#scanner .scanner-zoom input{width:clamp(120px,27vw,230px);accent-color:#e6fa00;cursor:pointer}
+#scanner .scanner-zoom output{min-width:3.3em;color:#e6fa00;font-variant-numeric:tabular-nums}
+#scanner .scanner-frame video{object-fit:contain;touch-action:manipulation}
+#scanner .scanner-frame.scanner-focus-pulse::before{content:'';position:absolute;left:50%;top:50%;width:62px;height:62px;border:2px solid #e6fa00;border-radius:13px;transform:translate(-50%,-50%);pointer-events:none;z-index:5;animation:scanFocusPulse .75s ease-out both}
+@keyframes scanFocusPulse{from{opacity:1;scale:.7}to{opacity:0;scale:1.3}}
