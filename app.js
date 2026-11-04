@@ -273,6 +273,94 @@ function details(x){
  $('#itemDialog').showModal();
  window.harazdDocsOpen?.(x);
 }
+// EQ-ID QR labels: short payload intentionally matches the existing warehouse and packaging scanners.
+// Preview and print are composed from the exact same markup and equipment-label.css.
+let equipmentQrItem=null, equipmentQrImage='', equipmentQrObserver=null;
+const EQUIPMENT_QR_CSS='equipment-label.css?v=1';
+const EQUIPMENT_QR_LOGO='harazd-warehouse-label-logo-transparent.png';
+function equipmentQrSize(){
+ const raw=$('#equipmentQrSize').value;
+ return raw==='50x100'?[50,100]:[100,50];
+}
+function equipmentQrWeight(value){
+ if(value===null||value===undefined||String(value).trim()==='')return '—';
+ const n=Number(value);
+ return Number.isFinite(n)?n.toLocaleString('uk-UA',{maximumFractionDigits:2})+' кг':'—';
+}
+function equipmentQrLabelHtml(item,qrImage,portrait){
+ const serial=String(item.serial||'').trim(),subtitle=serial||String(item.model||'').trim()||'—';
+ const subtitleTitle=serial?'СЕРІЙНИЙ №':'МОДЕЛЬ';
+ const name=String(item.name||'Обладнання');
+ const compact=name.length>28?' eqr-name-small':name.length>17?' eqr-name-medium':'';
+ return `<div class="eqr-label${portrait?' eqr-portrait':''}">
+ <div class="eqr-qr-zone"><img class="eqr-qr-image" src="${qrImage}" alt="QR ${esc(item.eq_id)}"></div>
+ <div class="eqr-information"><div class="eqr-brand"><img src="${new URL(EQUIPMENT_QR_LOGO,location.href).href}" alt="HARAZD WAREHOUSE"></div>
+ <div class="eqr-identity"><div class="eqr-equipment-name${compact}">${esc(name)}</div><div class="eqr-equipment-code">${esc(item.eq_id)}</div></div>
+ <div class="eqr-meta"><div class="eqr-meta-cell"><svg class="eqr-weight-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg><span class="eqr-meta-text"><small>ВАГА</small><strong>${esc(equipmentQrWeight(item.weight))}</strong></span></div>
+ <div class="eqr-meta-cell eqr-meta-secondary"><span class="eqr-meta-text"><small>${subtitleTitle}</small><strong>${esc(subtitle)}</strong></span></div></div></div></div>`;
+}
+function equipmentQrDocument(item, qrImage, copies=1, printing=false){
+ const [w,h]=equipmentQrSize();
+ const portrait=h>w;
+ const pages=Array.from({length:copies},()=>`<div class="eqr-print-page">${equipmentQrLabelHtml(item,qrImage,portrait)}</div>`).join('');
+ const cssUrl=new URL(EQUIPMENT_QR_CSS,location.href).href;
+ const printStyle=printing?`@page{size:${w}mm ${h}mm;margin:0}`:'';
+ const printScript=printing?`<script>window.addEventListener('load',async()=>{await Promise.all([...document.images].map(img=>img.decode().catch(()=>{})));await document.fonts.ready;setTimeout(()=>window.print(),150)});<\/script>`:'';
+ return `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QR ${esc(item.eq_id)}</title><link rel="stylesheet" href="${cssUrl}"><style>${printStyle}html,body{margin:0;padding:0;overflow:hidden;background:${printing?'#fff':'#050505'};-webkit-print-color-adjust:exact;print-color-adjust:exact}.eqr-print-page{width:${w}mm;height:${h}mm;page-break-after:always;break-after:page}.eqr-print-page:last-child{page-break-after:auto;break-after:auto}</style></head><body>${pages}${printScript}</body></html>`;
+}
+function equipmentQrPreviewRender(){
+ if(!equipmentQrItem||!equipmentQrImage)return;
+ const stage=$('#equipmentQrPreview');
+ const [w,h]=equipmentQrSize(),pxW=w*96/25.4,pxH=h*96/25.4;
+ stage.classList.toggle('eqr-preview-portrait',h>w);
+ const holder=document.createElement('div');holder.className='eqr-preview-holder';
+ const frame=document.createElement('iframe');frame.title='Точний попередній перегляд QR-наклейки';frame.className='eqr-preview-frame';frame.setAttribute('scrolling','no');
+ frame.style.width=pxW+'px';frame.style.height=pxH+'px';
+ frame.srcdoc=equipmentQrDocument(equipmentQrItem,equipmentQrImage,1,false);
+ holder.appendChild(frame);stage.replaceChildren(holder);
+ if(equipmentQrObserver){equipmentQrObserver.disconnect();equipmentQrObserver=null}
+ const fit=()=>{
+  if(!stage.isConnected)return;
+  const maxW=Math.max(1,stage.clientWidth-24),maxH=Math.max(1,stage.clientHeight-24);
+  const factor=Math.min(2.1,maxW/pxW,maxH/pxH);
+  holder.style.width=(pxW*factor)+'px';holder.style.height=(pxH*factor)+'px';
+  frame.style.transform=`scale(${factor})`;
+ };
+ fit();
+ if(window.ResizeObserver){equipmentQrObserver=new ResizeObserver(fit);equipmentQrObserver.observe(stage)}
+}
+function equipmentQrOpen(){
+ const item=selected;
+ if(!item?.eq_id){toast('У приладу немає EQ-ID для генерації QR-коду',true);return}
+ if(typeof window.QRCode==='undefined'){toast('Бібліотека генерації QR не завантажилась. Перевірте підключення до інтернету.',true);return}
+ equipmentQrItem=item;equipmentQrImage='';
+ $('#equipmentQrInfo').textContent=`${item.eq_id} · ${item.name}`;
+ $('#equipmentQrPreview').replaceChildren();
+ $('#equipmentQrSize').value='100x50';$('#equipmentQrCopies').value='1';
+ $('#equipmentQrDialog').showModal();
+ const mount=$('#equipmentQrGenerator');mount.replaceChildren();
+ try{
+  new window.QRCode(mount,{text:String(item.eq_id).trim(),width:512,height:512,correctLevel:window.QRCode.CorrectLevel.M});
+  requestAnimationFrame(()=>{
+   if(!$('#equipmentQrDialog').open||equipmentQrItem!==item)return;
+   const canvas=mount.querySelector('canvas'),img=mount.querySelector('img');
+   try{equipmentQrImage=canvas?.toDataURL('image/png')||img?.src||''}catch(e){console.error('QR image:',e)}
+   if(equipmentQrImage)equipmentQrPreviewRender();else toast('Не вдалося побудувати QR-код',true);
+  });
+ }catch(e){toast('Помилка генерації QR: '+(e.message||String(e)),true)}
+}
+function equipmentQrPrint(){
+ if(!equipmentQrItem||!equipmentQrImage){toast('QR-код ще не готовий',true);return}
+ const qty=Number($('#equipmentQrCopies').value),copies=Number.isFinite(qty)?Math.min(100,Math.max(1,Math.floor(qty))):1;
+ $('#equipmentQrCopies').value=String(copies);
+ const popup=window.open('','_blank');
+ if(!popup){toast('Дозвольте спливні вікна для друку',true);return}
+ popup.document.open();popup.document.write(equipmentQrDocument(equipmentQrItem,equipmentQrImage,copies,true));popup.document.close();
+}
+function equipmentQrClose(){
+ $('#equipmentQrDialog').close();
+ if(equipmentQrObserver){equipmentQrObserver.disconnect();equipmentQrObserver=null}
+}
 function askDeleteEquipment(){
  if(!selected)return;
  const x=selected;
@@ -625,7 +713,7 @@ async function applySession(){
  try{await loadReference();await loadItems();await staffLoadSelf();show(savedPage())}
  catch(e){toast('Помилка підключення: '+e.message,true)}
 }
-$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#formWarehouse').onchange=()=>refreshEquipmentLocations('');$('#equipmentZone').onchange=()=>refreshEquipmentRack();$('#equipmentRack').onchange=()=>refreshEquipmentShelf();$('#equipmentShelf').onchange=()=>refreshEquipmentPlace();$('#equipmentLocation').onchange=applyEquipmentLocation;$('#equipmentForm').onsubmit=saveEquipment;$('#equipmentExtraAdd').onclick=()=>extraAdd();$('#equipmentPhotoPick').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#equipmentPhotoFile').click();}});$('#equipmentPhotoFile').onchange=e=>equipmentPhotoChoose(e.target.files?.[0]);$('#equipmentPhotoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const url=e.currentTarget.value.trim();if(!/^https:\/\/[^\s<>"']+$/i.test(url)){toast('Вкажіть коректне HTTPS-посилання',true);return;}equipmentPhotoReset();$('#equipmentPhotoUrl').value=url;equipmentPhotoPreview();}});$('#equipmentPhotoUrl').addEventListener('input',()=>{if(equipmentPhotoFile){equipmentPhotoReset();}equipmentPhotoRemove=false;});$('#equipmentPhotoUrl').addEventListener('change',()=>{const url=$('#equipmentPhotoUrl').value.trim();if(/^https:\/\/[^\s<>"']+$/i.test(url))equipmentPhotoPreview();});$('#equipmentPhotoDeleteNo').onclick=()=>$('#equipmentPhotoDeleteDialog').close();$('#equipmentPhotoDeleteYes').onclick=()=>{equipmentPhotoReset();$('#equipmentPhotoUrl').value='';equipmentPhotoRemove=true;$('#equipmentPhotoDeleteDialog').close();};$('#equipmentPhotoLightboxClose').onclick=()=>$('#equipmentPhotoLightbox').close();$('#cancelEdit').onclick=()=>{if(editing){resetForm();show('warehouse');}else{resetForm();show('warehouse');}};$('#equipmentRows').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#scanPackageClose').onclick=()=>$('#scanPackageDialog').close();$('#deleteItem').onclick=askDeleteEquipment;$('#cancelDelete').onclick=()=>$('#deleteConfirmDialog').close();$('#confirmDelete').onclick=deleteEquipmentConfirmed;$('#editItem').onclick=()=>selected&&edit(selected);$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#torchCamera').onclick=toggleScannerTorch;$('#scanDistanceMode').onclick=scannerToggleDistanceMode;$('#scanCameraChoice').onchange=scannerChooseCamera;$('#focusCamera').onclick=()=>scannerRefocus();$('#scanZoom').addEventListener('change',scannerSetZoom);$('#scanZoom').addEventListener('input',e=>{$('#scanZoomValue').textContent=Number(e.target.value).toFixed(1)+'×'});$('#reader').addEventListener('click',e=>{if(scanner?.isScanning&&!e.target.closest('button,input'))scannerRefocus(e)});$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
+$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#formWarehouse').onchange=()=>refreshEquipmentLocations('');$('#equipmentZone').onchange=()=>refreshEquipmentRack();$('#equipmentRack').onchange=()=>refreshEquipmentShelf();$('#equipmentShelf').onchange=()=>refreshEquipmentPlace();$('#equipmentLocation').onchange=applyEquipmentLocation;$('#equipmentForm').onsubmit=saveEquipment;$('#equipmentExtraAdd').onclick=()=>extraAdd();$('#equipmentPhotoPick').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#equipmentPhotoFile').click();}});$('#equipmentPhotoFile').onchange=e=>equipmentPhotoChoose(e.target.files?.[0]);$('#equipmentPhotoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const url=e.currentTarget.value.trim();if(!/^https:\/\/[^\s<>"']+$/i.test(url)){toast('Вкажіть коректне HTTPS-посилання',true);return;}equipmentPhotoReset();$('#equipmentPhotoUrl').value=url;equipmentPhotoPreview();}});$('#equipmentPhotoUrl').addEventListener('input',()=>{if(equipmentPhotoFile){equipmentPhotoReset();}equipmentPhotoRemove=false;});$('#equipmentPhotoUrl').addEventListener('change',()=>{const url=$('#equipmentPhotoUrl').value.trim();if(/^https:\/\/[^\s<>"']+$/i.test(url))equipmentPhotoPreview();});$('#equipmentPhotoDeleteNo').onclick=()=>$('#equipmentPhotoDeleteDialog').close();$('#equipmentPhotoDeleteYes').onclick=()=>{equipmentPhotoReset();$('#equipmentPhotoUrl').value='';equipmentPhotoRemove=true;$('#equipmentPhotoDeleteDialog').close();};$('#equipmentPhotoLightboxClose').onclick=()=>$('#equipmentPhotoLightbox').close();$('#cancelEdit').onclick=()=>{if(editing){resetForm();show('warehouse');}else{resetForm();show('warehouse');}};$('#equipmentRows').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#scanPackageClose').onclick=()=>$('#scanPackageDialog').close();$('#deleteItem').onclick=askDeleteEquipment;$('#cancelDelete').onclick=()=>$('#deleteConfirmDialog').close();$('#confirmDelete').onclick=deleteEquipmentConfirmed;$('#editItem').onclick=()=>selected&&edit(selected);$('#printEquipmentQr').onclick=equipmentQrOpen;$('#equipmentQrPrint').onclick=equipmentQrPrint;$('#equipmentQrClose').onclick=equipmentQrClose;$('#equipmentQrSize').onchange=equipmentQrPreviewRender;$('#equipmentQrDialog').addEventListener('close',()=>{if(equipmentQrObserver){equipmentQrObserver.disconnect();equipmentQrObserver=null}});$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#torchCamera').onclick=toggleScannerTorch;$('#scanDistanceMode').onclick=scannerToggleDistanceMode;$('#scanCameraChoice').onchange=scannerChooseCamera;$('#focusCamera').onclick=()=>scannerRefocus();$('#scanZoom').addEventListener('change',scannerSetZoom);$('#scanZoom').addEventListener('input',e=>{$('#scanZoomValue').textContent=Number(e.target.value).toFixed(1)+'×'});$('#reader').addEventListener('click',e=>{if(scanner?.isScanning&&!e.target.closest('button,input'))scannerRefocus(e)});$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
 
 // V48.1 — Personnel and permissions. Authorization is enforced in Supabase SQL.
 const STAFF_PERMISSIONS=[['equipment_view','Перегляд обладнання','Склад'],['equipment_add','Додавання обладнання','Склад'],['equipment_edit','Редагування обладнання','Склад'],['directory_manage','Категорії, склади та місця','Склад'],['events_create','Створення подій','Івенти'],['events_edit','Редагування подій','Івенти'],['packing_create','Створення листа пакування','Івенти'],['packing_dispatch','Видача за листом пакування','Івенти'],['packing_return','Повернення за листом пакування','Івенти'],['repairs_manage','Оформлення ремонтів','Ремонти'],['personnel_manage','Керування працівниками та доступами','Адміністрування']];
