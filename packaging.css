@@ -182,3 +182,16 @@ body *::-webkit-scrollbar {
 #pkgLabelPreview .pkg-label-weights strong{font-size:clamp(11px,2.5vw,27px);white-space:nowrap}
 #pkgLabelPreview .pkg-label-total .pkg-weight-icon{color:#e3ff00}
 @media(max-width:520px){#pkgLabelPreview .pkg-label{aspect-ratio:2.08}#pkgLabelPreview .pkg-label-name{font-size:clamp(18px,6vw,30px)}#pkgLabelPreview .pkg-label-weights strong{font-size:clamp(8px,2.5vw,13px)}#pkgLabelPreview .pkg-label-weights small{font-size:clamp(5px,1.5vw,8px)}#pkgLabelPreview .pkg-weight-icon{font-size:14px}}
+
+/* QR label final fidelity: print-like preview, exact weight icons and compact spacing. */
+#pkgLabelPreview .pkg-label{aspect-ratio:2.08;grid-template-columns:43% 57%;padding:2.5%}
+#pkgLabelPreview .pkg-label-brand img{width:62%;height:76%;max-height:76%;object-fit:contain}
+#pkgLabelPreview .pkg-label-name{font-size:clamp(25px,7vw,88px);font-weight:800}
+#pkgLabelPreview .pkg-label-weights{align-items:center;justify-content:space-between}
+#pkgLabelPreview .pkg-label-weight{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6%;height:82%}
+#pkgLabelPreview .pkg-label-weight>span:last-child{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:2px}
+#pkgLabelPreview .pkg-weight-icon{display:block;width:clamp(22px,3vw,42px);height:clamp(22px,3vw,42px);flex:none}
+#pkgLabelPreview .pkg-weight-icon svg{display:block;width:100%;height:100%}
+#pkgLabelPreview .pkg-label-weights small{font-size:clamp(9px,1.25vw,16px)}
+#pkgLabelPreview .pkg-label-weights strong{font-size:clamp(16px,2.6vw,36px)}
+@media(max-width:520px){#pkgLabelPreview .pkg-weight-icon{width:18px;height:18px}#pkgLabelPreview .pkg-label-weights small{font-size:7px}#pkgLabelPreview .pkg-label-weights strong{font-size:11px}}
