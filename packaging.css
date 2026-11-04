@@ -45,3 +45,99 @@ body{background:#080d13;color:#eaf0f6}.pkg-grid{display:grid;grid-template-colum
 .pkg-editor-location{display:grid;gap:16px;margin:8px 0 16px;min-width:0}
 .pkg-editor-location .pkg-move-warehouse{max-width:420px}
 .pkg-editor-location .pkg-move-box{width:100%;box-sizing:border-box}
+
+
+/* Compact packaging create/edit dialog — visual layout only; all JS IDs intact. */
+#editor[open]{
+  display:block;
+  width:min(920px,calc(100vw - 32px));
+  max-width:calc(100vw - 32px);
+  max-height:min(90vh,calc(100dvh - 28px));
+  padding:0;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+#editor #form{
+  display:flex;
+  flex-direction:column;
+  max-height:min(90vh,calc(100dvh - 28px));
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:#35485c #111b27;
+  scrollbar-gutter:stable;
+}
+#editor #form::-webkit-scrollbar{width:7px}
+#editor #form::-webkit-scrollbar-track{background:#111b27;border-radius:12px}
+#editor #form::-webkit-scrollbar-thumb{background:#35485c;border-radius:12px}
+#editor #form::-webkit-scrollbar-thumb:hover{background:#536b82}
+#editor .pkg-head{
+  position:sticky;top:0;z-index:3;
+  background:#111b27;
+  margin:0;padding:17px 22px 13px;
+  border-bottom:1px solid #29394a;
+  flex-shrink:0;
+}
+#editor .pkg-head h2{margin:0;font-size:24px}
+#editor .pkg-photo-field{
+  margin:16px 22px 14px;padding:13px 15px;
+  display:grid;
+  grid-template-columns:132px minmax(0,1fr);
+  grid-template-areas:
+    'title title'
+    'preview actions'
+    'preview url'
+    'preview note';
+  gap:7px 15px;
+  align-items:start;
+}
+#editor .pkg-photo-label{grid-area:title;margin:0 0 2px}
+#editor .pkg-photo-preview{
+  grid-area:preview;width:132px;height:122px;
+  border:1px solid #35465b;border-radius:10px;
+  background:#0a131e;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;
+}
+#editor .pkg-photo-preview:empty::before{content:'Фото пакування';color:#7f96ad;font-size:12px;text-align:center;padding:8px}
+#editor .pkg-photo-preview img{width:100%;height:100%;margin:0;border:0;border-radius:0;object-fit:contain}
+#editor .pkg-photo-actions{grid-area:actions;margin:0;gap:7px}
+#editor .pkg-photo-actions button{padding:8px 10px;font-size:13px}
+#editor .pkg-photo-url-label{grid-area:url;gap:5px}
+#editor .pkg-photo-url-label input{padding:9px 10px}
+#editor .pkg-photo-field>.pkg-note{grid-area:note;margin:0;font-size:11px;line-height:1.35}
+#editor .pkg-fields{padding:0 22px;gap:11px 15px;flex-shrink:0}
+#editor .pkg-fields label{gap:5px}
+#editor .pkg-fields input,#editor .pkg-fields select,#editor .pkg-fields textarea{padding:9px 11px;min-height:41px}
+#editor .pkg-editor-location{
+  gap:9px;margin:4px 0 5px;
+  border:1px solid #29394a;border-radius:13px;
+  padding:14px;background:#0b1420;
+  grid-template-columns:1fr;
+}
+#editor .pkg-editor-location .pkg-move-warehouse{max-width:none;margin:0;gap:5px}
+#editor .pkg-editor-location .pkg-move-box{border:0;padding:0;background:transparent}
+#editor .pkg-editor-location .pkg-move-box h3{font-size:16px;margin:3px 0 0}
+#editor .pkg-editor-location .pkg-move-box>.pkg-note{margin:3px 0 0}
+#editor .pkg-editor-location .pkg-move-grid{gap:10px 14px;margin:10px 0 6px}
+#editor .pkg-editor-location .pkg-move-grid label{gap:5px}
+#editor .pkg-editor-location select{min-height:41px;padding:9px 11px}
+#editor .pkg-actions{
+  position:sticky;bottom:0;z-index:3;
+  margin:14px 0 0;padding:12px 22px;
+  background:#111b27;border-top:1px solid #29394a;
+  flex-shrink:0;
+}
+@media(max-width:650px){
+  #editor .pkg-head{padding:14px 15px 11px}
+  #editor .pkg-photo-field{margin:12px 15px;padding:11px;grid-template-columns:95px minmax(0,1fr);gap:7px 10px}
+  #editor .pkg-photo-preview{width:95px;height:105px}
+  #editor .pkg-photo-actions button{padding:7px 9px}
+  #editor .pkg-fields{padding:0 15px;gap:11px}
+  #editor .pkg-editor-location{padding:12px}
+  #editor .pkg-actions{padding:12px 15px}
+}
+@media(max-width:400px){
+  #editor .pkg-photo-field{grid-template-columns:1fr;grid-template-areas:'title' 'preview' 'actions' 'url' 'note'}
+  #editor .pkg-photo-preview{width:100%;height:110px}
+}
