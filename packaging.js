@@ -70,7 +70,51 @@ async function startQr(){
 
 async function addPlan(){const name=prompt('Назва обладнання за планом:');if(!name?.trim())return;const q=prompt('Кількість:','1');if(q===null)return;const count=Number(q);if(!Number.isFinite(count)||count<=0)return msg('Некоректна кількість',true);try{check(await db.from('packaging_plan').insert({packaging_id:selected.id,item_name:name.trim(),quantity:count}));await reloadDetail()}catch(e){msg(e.message,true)}}
 async function addChild(){const id=prompt('Введіть PK-ID пакування, яке потрібно вкласти:');if(!id)return;const child=items.find(x=>x.pk_id?.toLowerCase()===id.trim().toLowerCase());if(!child)return msg('PK-ID не знайдено',true);if(child.id===selected.id||descendants(child.id).includes(selected.id))return msg('Циклічне вкладення заборонено',true);if(child.parent_id)return msg('Пакування вже вкладено в інше. Спочатку вилучіть його.',true);try{check(await db.from('packaging').update({parent_id:selected.id}).eq('id',child.id).select());await reloadDetail()}catch(e){msg(e.message,true)}}
-async function moveItem(){const target=prompt('PK-ID нового батьківського пакування (залиште порожнім, щоб вилучити з вкладення):', '');if(target===null)return;const p=items.find(x=>x.pk_id?.toLowerCase()===target.trim().toLowerCase());if(target.trim()&&!p)return msg('PK-ID не знайдено',true);if(p&&(p.id===selected.id||descendants(selected.id).includes(p.id)))return msg('Циклічне вкладення заборонено',true);try{check(await db.from('packaging').update({parent_id:p?.id||null}).eq('id',selected.id).select());await reloadDetail()}catch(e){msg(e.message,true)}}
+let pkgLocationNodes=[],pkgWarehouses=[];
+function pkgOptions(id,nodes,placeholder,value=''){
+ const el=$(id);el.replaceChildren(new Option(placeholder,''),...nodes.map(n=>new Option(n.name,n.id)));
+ if(value&&nodes.some(n=>n.id===value))el.value=value;
+ el.disabled=!nodes.length;
+}
+function pkgLocChain(id){const result=[],seen=new Set();let n=pkgLocationNodes.find(x=>x.id===id);while(n&&!seen.has(n.id)){seen.add(n.id);result.unshift(n);n=pkgLocationNodes.find(x=>x.id===n.parent_id)}return result}
+function pkgMoveRefresh(level,initial=''){
+ if(level==='warehouse')pkgOptions('pkgMoveZone',pkgLocationNodes.filter(n=>n.kind==='zone'&&n.warehouse_id===$('pkgMoveWarehouse').value),'Оберіть зону',initial);
+ if(['warehouse','zone'].includes(level))pkgOptions('pkgMoveRack',pkgLocationNodes.filter(n=>n.kind==='rack'&&n.parent_id===$('pkgMoveZone').value),'Без стелажа');
+ if(['warehouse','zone','rack'].includes(level))pkgOptions('pkgMoveShelf',pkgLocationNodes.filter(n=>n.kind==='shelf'&&n.parent_id===$('pkgMoveRack').value),'Без полиці');
+ const parent=$('pkgMoveShelf').value||$('pkgMoveRack').value||$('pkgMoveZone').value;
+ pkgOptions('pkgMovePlace',pkgLocationNodes.filter(n=>n.kind==='place'&&n.parent_id===parent),parent?'Оберіть місце':'Спочатку оберіть зону');
+ $('pkgMoveHint').textContent=parent?'Виберіть кінцеве місце зберігання.':'Спочатку оберіть зону.';
+}
+async function moveItem(){
+ try{
+  const r=await Promise.all([db.from('warehouses').select('id,name').order('name'),db.from('storage_locations').select('id,warehouse_id,parent_id,kind,name').order('name')]);
+  pkgWarehouses=check(r[0]);pkgLocationNodes=check(r[1]);
+  if(!pkgWarehouses.length)throw Error('У довіднику немає складів');
+  $('pkgMoveDescription').textContent=selected.pk_id+' · '+selected.name;
+  const chain=pkgLocChain(selected.location_id),wh=selected.warehouse_id||chain[0]?.warehouse_id||'';
+  pkgOptions('pkgMoveWarehouse',pkgWarehouses,'Оберіть склад',wh);
+  pkgMoveRefresh('warehouse',chain.find(n=>n.kind==='zone')?.id||'');
+  const rack=chain.find(n=>n.kind==='rack');if(rack){$('pkgMoveRack').value=rack.id;pkgMoveRefresh('rack')}
+  const shelf=chain.find(n=>n.kind==='shelf');if(shelf){$('pkgMoveShelf').value=shelf.id;pkgMoveRefresh('shelf')}
+  const place=chain.find(n=>n.kind==='place');if(place)$('pkgMovePlace').value=place.id;
+  $('pkgMoveDialog').showModal();
+ }catch(e){msg('Не вдалося відкрити переміщення: '+e.message,true)}
+}
+$('pkgMoveWarehouse').onchange=()=>pkgMoveRefresh('warehouse');
+$('pkgMoveZone').onchange=()=>pkgMoveRefresh('zone');
+$('pkgMoveRack').onchange=()=>pkgMoveRefresh('rack');
+$('pkgMoveShelf').onchange=()=>pkgMoveRefresh('shelf');
+$('pkgMoveClose').onclick=$('pkgMoveCancel').onclick=()=>$('pkgMoveDialog').close();
+$('pkgMoveForm').onsubmit=async event=>{
+ event.preventDefault();const warehouse_id=$('pkgMoveWarehouse').value,location_id=$('pkgMovePlace').value;
+ const node=pkgLocationNodes.find(n=>n.id===location_id);
+ if(!node||node.kind!=='place'||node.warehouse_id!==warehouse_id)return msg('Оберіть місце у вибраному складі',true);
+ if(!confirm('Перемістити пакування разом із усім фактичним вмістом та вкладеними пакуваннями?'))return;
+ const button=$('pkgMoveSave');button.disabled=true;
+ try{check(await db.rpc('packaging_move_with_contents',{p_packaging_id:selected.id,p_location_id:location_id}));$('pkgMoveDialog').close();await reloadDetail();msg('Розташування пакування та його вмісту оновлено')}
+ catch(e){msg('Переміщення скасовано: '+e.message,true)}finally{button.disabled=false}
+};
+
 async function reloadDetail(){const id=selected.id;await load();const p=items.find(x=>x.id===id);if(p)details(p)}
 $('pkgManual').onclick=()=>{$('pkgManualPanel').hidden=false;$('pkgEqId').focus()};
 $('pkgEqConfirm').onclick=addById;
