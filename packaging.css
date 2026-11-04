@@ -141,3 +141,7 @@ body{background:#080d13;color:#eaf0f6}.pkg-grid{display:grid;grid-template-colum
   #editor .pkg-photo-field{grid-template-columns:1fr;grid-template-areas:'title' 'preview' 'actions' 'url' 'note'}
   #editor .pkg-photo-preview{width:100%;height:110px}
 }
+
+/* Hide only the packaging editor scrollbar; keep wheel/touch scrolling. */
+#editor{scrollbar-width:none!important;-ms-overflow-style:none!important;}
+#editor::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;}
