@@ -207,16 +207,36 @@ function labelHtml(p){
  return `<div class="pkg-label"><div class="pkg-label-qr" id="pkgLabelQr"></div><div class="pkg-label-right"><div class="pkg-label-brand"><img src="harazd-warehouse-label-logo.png" alt="HARAZD WAREHOUSE"></div><div class="pkg-label-identity"><div class="pkg-label-name">${esc(p.name)}</div><div class="pkg-label-id">${esc(p.pk_id)}</div></div><div class="pkg-label-weights"><div class="pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>КЕЙС</small><strong>${esc(own)}</strong></span></div>${p.mode==='fixed'?`<div class="pkg-label-total pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>ЗАГАЛЬНА</small><strong>${esc(labelWeight(p))}</strong></span></div>`:''}</div></div></div>`;
 }
 function labelUrl(p){const url=new URL('packaging.html',location.href);url.searchParams.set('pk',p.pk_id);return url.href}
-function openPkgLabel(p){if(!p)return;labelPackage=p;const dialog=$('pkgLabelDialog');$('pkgLabelName').textContent=p.pk_id+' · '+p.name;$('pkgLabelPreview').innerHTML=labelHtml(p);$('pkgLabelQr').replaceChildren();if(typeof QRCode==='undefined'){msg('Не завантажено бібліотеку QR. Перевірте підключення до інтернету.',true);return}new QRCode($('pkgLabelQr'),{text:labelUrl(p),width:256,height:256,correctLevel:QRCode.CorrectLevel.M});dialog.showModal();syncLabelPreviewSize()}
+function openPkgLabel(p){if(!p)return;labelPackage=p;const dialog=$('pkgLabelDialog');$('pkgLabelName').textContent=p.pk_id+' · '+p.name;$('pkgLabelPreview').innerHTML=labelHtml(p);$('pkgLabelQr').replaceChildren();if(typeof QRCode==='undefined'){msg('Не завантажено бібліотеку QR. Перевірте підключення до інтернету.',true);return}new QRCode($('pkgLabelQr'),{text:labelUrl(p),width:256,height:256,correctLevel:QRCode.CorrectLevel.M});dialog.showModal();requestAnimationFrame(syncLabelPreviewSize)}
 // Preview and print use the SAME markup and the SAME packaging-label.css stylesheet.
 function labelSize(){
  const [w,h]=$('pkgLabelSize').value.split('x').map(Number);
  return [w,h];
 }
+// Render the preview in an isolated print-sized document. The site's screen
+// styles can no longer shift icons, labels, or alignment relative to printing.
 function syncLabelPreviewSize(){
+ const preview=$('pkgLabelPreview'), label=preview.querySelector('.pkg-label');
+ if(!label)return;
  const [w,h]=labelSize();
- const label=$('pkgLabelPreview').querySelector('.pkg-label');
- if(label)label.style.aspectRatio=`${w} / ${h}`;
+ const qr=label.querySelector('.pkg-label-qr canvas');
+ if(!qr)return;
+ const copy=label.cloneNode(true), slot=copy.querySelector('.pkg-label-qr');
+ const qrImg=document.createElement('img');qrImg.src=qr.toDataURL('image/png');qrImg.alt='QR';slot.replaceChildren(qrImg);
+ const logo=copy.querySelector('.pkg-label-brand img');
+ if(logo)logo.src=new URL(logo.getAttribute('src'),location.href).href;
+ copy.removeAttribute('style');
+ const frame=document.createElement('iframe');frame.className='pkg-label-preview-frame';frame.title='Точний попередній перегляд наклейки';
+ const pxW=w*96/25.4,pxH=h*96/25.4;
+ frame.style.width=pxW+'px';frame.style.height=pxH+'px';
+ const cssUrl=new URL('packaging-label.css',location.href).href;
+ frame.srcdoc=`<!doctype html><html lang="uk"><head><meta charset="utf-8"><link rel="stylesheet" href="${cssUrl}"><style>html,body{margin:0;padding:0;overflow:hidden;background:#050505}.pkg-print-page{width:${w}mm;height:${h}mm}.pkg-print-page .pkg-label{width:100%;height:100%;aspect-ratio:auto!important}</style></head><body><div class="pkg-print-page">${copy.outerHTML}</div></body></html>`;
+ let holder=preview.querySelector('.pkg-label-preview-holder');
+ if(!holder){holder=document.createElement('div');holder.className='pkg-label-preview-holder';preview.appendChild(holder)}
+ holder.replaceChildren(frame);
+ const fit=()=>{const width=preview.clientWidth-32;const height=Math.max(0,preview.clientHeight-32);const scale=Math.min(1,width/pxW,height/pxH);holder.style.width=(pxW*scale)+'px';holder.style.height=(pxH*scale)+'px';frame.style.transform=`scale(${scale})`;};
+ fit();
+ if(window.ResizeObserver){if(window.pkgLabelPreviewObserver)window.pkgLabelPreviewObserver.disconnect();window.pkgLabelPreviewObserver=new ResizeObserver(fit);window.pkgLabelPreviewObserver.observe(preview)}
 }
 $('pkgLabelSize').addEventListener('change',syncLabelPreviewSize);
 function printPkgLabel(){

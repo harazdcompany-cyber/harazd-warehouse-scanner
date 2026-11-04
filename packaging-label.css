@@ -27,3 +27,9 @@
  .pkg-print-page .pkg-label{width:100%;height:100%;aspect-ratio:auto!important}
 }
 @media screen{.pkg-print-page .pkg-label{width:100%;height:100%;aspect-ratio:auto}}
+
+/* Print-sized isolated preview: the actual printed layout is rendered in an iframe. */
+#pkgLabelPreview{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#pkgLabelPreview>.pkg-label{position:absolute!important;visibility:hidden!important;pointer-events:none!important}
+#pkgLabelPreview .pkg-label-preview-holder{position:relative;flex:none;overflow:visible}
+#pkgLabelPreview .pkg-label-preview-frame{position:absolute;left:0;top:0;display:block;border:0;transform-origin:top left;background:#050505;pointer-events:none}
