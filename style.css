@@ -1018,3 +1018,29 @@ body *::-webkit-scrollbar {
 @media (max-width:650px) {
   #nav > button small, #nav > button.vehicle-nav-link small { display:none!important; }
 }
+
+/* V49.26 — matching outer height for every warehouse gallery filter control.
+   The two view buttons stay inset within a same-height segmented control. */
+#warehouse .warehouse-filterbar .warehouse-filter-selects select,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .clear-filter-btn,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {
+  height:52px !important;
+  min-height:52px !important;
+  max-height:52px !important;
+  box-sizing:border-box !important;
+  margin-block:0 !important;
+}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {
+  padding:3px !important;
+  align-items:stretch !important;
+}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch button {
+  height:44px !important;
+  min-height:44px !important;
+  max-height:44px !important;
+  box-sizing:border-box !important;
+}
+#warehouse .warehouse-filterbar .warehouse-filter-selects,
+#warehouse .warehouse-filterbar .warehouse-filter-actions {
+  align-items:stretch !important;
+}
