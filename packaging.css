@@ -195,3 +195,7 @@ body *::-webkit-scrollbar {
 #pkgLabelPreview .pkg-label-weights small{font-size:clamp(9px,1.25vw,16px)}
 #pkgLabelPreview .pkg-label-weights strong{font-size:clamp(16px,2.6vw,36px)}
 @media(max-width:520px){#pkgLabelPreview .pkg-weight-icon{width:18px;height:18px}#pkgLabelPreview .pkg-label-weights small{font-size:7px}#pkgLabelPreview .pkg-label-weights strong{font-size:11px}}
+
+/* Delete packaging: danger state only on the detail-card action. */
+.pkg-tools .pkg-danger{border-color:#864453;color:#ffbdc7}
+.pkg-tools .pkg-danger:hover{background:#3b222b;border-color:#c66b7b}
