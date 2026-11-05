@@ -1,4 +1,4 @@
-/* HARAZD equipment QR labels. Isolated, shared print/preview layout. */
+/* HARAZD equipment QR labels. Simplified label: QR + EQ-ID only. */
 #itemDialog > .actions #printEquipmentQr{order:2;min-height:44px;height:44px;padding:0 18px;border-radius:10px;background:#142132;color:#f5f7fc;border:1px solid #41536a;font-size:14px;font-weight:750}
 #itemDialog > .actions #printEquipmentQr:hover{border-color:#e5ff00}
 #itemDialog > .actions #closeDialog{order:3}
@@ -20,43 +20,40 @@
 .eqr-dialog-actions button{min-height:46px;padding:0 25px}
 @media(max-width:650px){#equipmentQrDialog{padding:15px;border-radius:13px}.eqr-dialog-head h2{font-size:20px}.eqr-dialog-fields{grid-template-columns:1fr;gap:10px}.eqr-preview-stage{height:285px;min-height:285px}.eqr-preview-stage.eqr-preview-portrait{height:450px;min-height:450px}}
 
-/* The following label rules are the ONLY layout used by the print window and iframe. */
+/* Exact proportions for both EQ-ID label sizes (25 x 30 and 50 x 60 mm).
+   The QR block is square, with equal black margins; the lower strip contains only EQ-ID.
+   This SAME stylesheet is loaded inside preview iframe and printing window. */
 .eqr-label,.eqr-label *{box-sizing:border-box}
-.eqr-label{--label-white:#fff;--label-accent:#e5ff00;container-type:inline-size;width:100%;height:100%;margin:0;padding:0;display:grid;grid-template-columns:50% 50%;background:#050505;color:var(--label-white);border:0.48mm solid #fff;overflow:hidden;border-radius:0;font-family:Arial,Helvetica,sans-serif;line-height:1.08;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.eqr-qr-zone{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;border-right:0.3mm solid #fff}
-/* 74%: equal QR clearance to outer border and divider, and to upper/lower edge. */
-.eqr-qr-image{width:74%;height:auto;max-height:94%;aspect-ratio:1;object-fit:contain;display:block;background:#fff;image-rendering:auto}
-.eqr-information{display:flex;flex-direction:column;min-width:0;min-height:0;padding:0 4%}
-.eqr-brand{flex:0 0 26%;min-height:0;display:flex;align-items:center;justify-content:center;border-bottom:0.28mm solid #fff}
-.eqr-brand img{width:65%;height:81%;object-fit:contain;display:block}
-.eqr-identity{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;border-bottom:0.28mm solid #fff;text-align:center}
-.eqr-equipment-name{font-size:7.9cqw;font-weight:800;line-height:1.02;max-height:75%;max-width:100%;overflow:hidden;overflow-wrap:anywhere}
-.eqr-equipment-name.eqr-name-medium{font-size:6cqw}
-.eqr-equipment-name.eqr-name-small{font-size:4.4cqw}
-.eqr-equipment-code{font-size:3.1cqw;margin-top:1.1%;white-space:nowrap}
-.eqr-meta{display:flex;align-items:center;justify-content:center;flex:0 0 25%;min-height:0}
-.eqr-meta-cell{flex:1;display:flex;align-items:center;justify-content:center;gap:4%;height:83%;min-width:0;overflow:hidden}
-.eqr-meta-cell+.eqr-meta-cell{border-left:0.28mm solid #fff;padding-left:3%}
-.eqr-meta-text{display:flex;flex-direction:column;gap:1.5%;min-width:0;text-align:left;overflow:hidden}
-.eqr-meta-text small{font-size:1.6cqw;font-weight:500;white-space:nowrap;letter-spacing:.02em}
-.eqr-meta-text strong{font-size:3.05cqw;font-weight:800;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.eqr-weight-icon{width:5cqw;height:5cqw;flex:none;color:#fff}
-.eqr-meta-secondary .eqr-meta-text strong{color:#e5ff00}
-/* Portrait label: a square QR area on top, each gap symmetrical, details below. */
-.eqr-label.eqr-portrait{display:grid;grid-template-columns:100%;grid-template-rows:50% 50%}
-.eqr-portrait .eqr-qr-zone{border-right:0;border-bottom:0.3mm solid #fff}
-.eqr-portrait .eqr-qr-image{width:74%;max-height:94%}
-.eqr-portrait .eqr-information{padding:0 5%}
-.eqr-portrait .eqr-brand{flex-basis:24%;border-bottom-width:0.28mm}
-.eqr-portrait .eqr-brand img{width:65%;height:75%}
-.eqr-portrait .eqr-equipment-name{font-size:13.8cqw}
-.eqr-portrait .eqr-equipment-name.eqr-name-medium{font-size:11cqw}
-.eqr-portrait .eqr-equipment-name.eqr-name-small{font-size:8cqw}
-.eqr-portrait .eqr-equipment-code{font-size:5.7cqw}
-.eqr-portrait .eqr-meta{flex-basis:25%}
-.eqr-portrait .eqr-weight-icon{width:7cqw;height:7cqw}
-.eqr-portrait .eqr-meta-text small{font-size:2.9cqw}
-.eqr-portrait .eqr-meta-text strong{font-size:5.4cqw}
+.eqr-label{
+  container-type:inline-size;width:100%;height:100%;margin:0;padding:0;
+  display:grid;grid-template-columns:100%;grid-template-rows:5fr 1fr;
+  background:#050505;color:#fff;border:0.35mm solid #fff;
+  overflow:hidden;border-radius:0;
+  font-family:Arial,Helvetica,sans-serif;line-height:1;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+.eqr-qr-zone{
+  min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;
+  border-right:0;border-bottom:0.25mm solid #fff;
+  padding:6%;
+}
+.eqr-qr-image{
+  width:100%;height:100%;max-width:100%;max-height:100%;
+  aspect-ratio:1;object-fit:contain;display:block;background:#fff;
+  padding:6%;image-rendering:auto;
+}
+.eqr-information{
+  min-width:0;min-height:0;padding:0 3%;
+  display:flex;align-items:center;justify-content:center;
+}
+.eqr-equipment-code-only{
+  display:block;width:100%;text-align:center;
+  font-size:12cqw;font-weight:800;line-height:1.05;
+  letter-spacing:0;overflow-wrap:anywhere;word-break:break-word;
+}
+/* Both labels are portrait. Keep the portrait flag for the existing JS renderer. */
+.eqr-label.eqr-portrait{grid-template-columns:100%;grid-template-rows:5fr 1fr}
+.eqr-portrait .eqr-qr-zone{border-right:0;border-bottom:0.25mm solid #fff}
 .eqr-print-page{overflow:hidden;display:block;break-inside:avoid;page-break-inside:avoid}
 .eqr-print-page .eqr-label{width:100%;height:100%}
 @media print{html,body,.eqr-print-page,.eqr-label{margin:0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.eqr-print-page{page-break-inside:avoid}}

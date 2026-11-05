@@ -276,28 +276,15 @@ function details(x){
 // EQ-ID QR labels: short payload intentionally matches the existing warehouse and packaging scanners.
 // Preview and print are composed from the exact same markup and equipment-label.css.
 let equipmentQrItem=null, equipmentQrImage='', equipmentQrObserver=null;
-const EQUIPMENT_QR_CSS='equipment-label.css?v=1';
-const EQUIPMENT_QR_LOGO='harazd-warehouse-label-logo-transparent.png';
+const EQUIPMENT_QR_CSS='equipment-label.css?v=2';
 function equipmentQrSize(){
  const raw=$('#equipmentQrSize').value;
- return raw==='50x100'?[50,100]:[100,50];
-}
-function equipmentQrWeight(value){
- if(value===null||value===undefined||String(value).trim()==='')return '—';
- const n=Number(value);
- return Number.isFinite(n)?n.toLocaleString('uk-UA',{maximumFractionDigits:2})+' кг':'—';
+ return raw==='50x60'?[50,60]:[25,30];
 }
 function equipmentQrLabelHtml(item,qrImage,portrait){
- const serial=String(item.serial||'').trim(),subtitle=serial||String(item.model||'').trim()||'—';
- const subtitleTitle=serial?'СЕРІЙНИЙ №':'МОДЕЛЬ';
- const name=String(item.name||'Обладнання');
- const compact=name.length>28?' eqr-name-small':name.length>17?' eqr-name-medium':'';
  return `<div class="eqr-label${portrait?' eqr-portrait':''}">
  <div class="eqr-qr-zone"><img class="eqr-qr-image" src="${qrImage}" alt="QR ${esc(item.eq_id)}"></div>
- <div class="eqr-information"><div class="eqr-brand"><img src="${new URL(EQUIPMENT_QR_LOGO,location.href).href}" alt="HARAZD WAREHOUSE"></div>
- <div class="eqr-identity"><div class="eqr-equipment-name${compact}">${esc(name)}</div><div class="eqr-equipment-code">${esc(item.eq_id)}</div></div>
- <div class="eqr-meta"><div class="eqr-meta-cell"><svg class="eqr-weight-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg><span class="eqr-meta-text"><small>ВАГА</small><strong>${esc(equipmentQrWeight(item.weight))}</strong></span></div>
- <div class="eqr-meta-cell eqr-meta-secondary"><span class="eqr-meta-text"><small>${subtitleTitle}</small><strong>${esc(subtitle)}</strong></span></div></div></div></div>`;
+ <div class="eqr-information"><div class="eqr-equipment-code-only">${esc(item.eq_id)}</div></div></div>`;
 }
 function equipmentQrDocument(item, qrImage, copies=1, printing=false){
  const [w,h]=equipmentQrSize();
@@ -336,7 +323,7 @@ function equipmentQrOpen(){
  equipmentQrItem=item;equipmentQrImage='';
  $('#equipmentQrInfo').textContent=`${item.eq_id} · ${item.name}`;
  $('#equipmentQrPreview').replaceChildren();
- $('#equipmentQrSize').value='100x50';$('#equipmentQrCopies').value='1';
+ $('#equipmentQrSize').value='25x30';$('#equipmentQrCopies').value='1';
  $('#equipmentQrDialog').showModal();
  const mount=$('#equipmentQrGenerator');mount.replaceChildren();
  try{
