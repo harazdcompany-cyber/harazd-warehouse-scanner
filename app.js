@@ -707,6 +707,17 @@ async function stopScan(){
  $('#reader')?.classList.remove('scanner-focus-pulse');
  if(!scanBusy)scannerStatus('Камера вимкнена. Для нового сканування увімкніть її знову.');
 }
+
+// V49.16 — mobile: show logout beside the logo, keeping desktop header unchanged.
+const mobileHeaderQuery=window.matchMedia('(max-width:650px)');
+function syncMobileAccountHeader(){
+ const panel=document.getElementById('userPanel');
+ const host=mobileHeaderQuery.matches?document.querySelector('.sidebar .brand'):document.querySelector('main > header');
+ if(panel&&host&&panel.parentElement!==host)host.appendChild(panel);
+}
+mobileHeaderQuery.addEventListener('change',syncMobileAccountHeader);
+syncMobileAccountHeader();
+
 let appliedUserId=null;
 async function init(){
  if(!db){$('#setup').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));return}
@@ -734,7 +745,8 @@ async function applySession(){
  if(appliedUserId===session.user.id)return;
  appliedUserId=session.user.id;
  $('#auth').classList.add('hidden');
- $('#userPanel').replaceChildren(document.createTextNode(session.user.email+' '));
+ const emailLabel=document.createElement('span');emailLabel.className='user-email';emailLabel.textContent=session.user.email;
+ $('#userPanel').replaceChildren(emailLabel);
  const b=document.createElement('button');b.textContent='Вийти';
  b.onclick=()=>{sessionStorage.removeItem(LAST_PAGE_KEY);db.auth.signOut()};
  $('#userPanel').append(b);

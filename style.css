@@ -788,3 +788,26 @@ body *::-webkit-scrollbar {
     justify-content:center !important;
   }
 }
+
+
+/* V49.16 — mobile account action on the same row as the logo. */
+@media (max-width:650px) {
+  .sidebar .brand {
+    display:flex;
+    align-items:center;
+    flex-wrap:nowrap;
+    gap:10px;
+    min-width:0;
+  }
+  .sidebar .brand > div:not(#userPanel) { min-width:0; }
+  .sidebar .brand #userPanel {
+    margin-left:auto;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:0;
+  }
+  .sidebar .brand #userPanel .user-email { display:none; }
+  .sidebar .brand #userPanel > button { white-space:nowrap; }
+  main > header { display:none; }
+}
