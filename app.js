@@ -344,26 +344,19 @@ function equipmentQrPrint(){
  if(!popup){toast('Дозвольте спливні вікна для друку',true);return}
  popup.document.open();popup.document.write(equipmentQrDocument(equipmentQrItem,equipmentQrImage,copies,true));popup.document.close();
 }
-// Export the EQ-ID as a high-resolution, black-on-white PNG with a full quiet zone.
-// The encoded text remains unchanged so all existing scanners keep working.
+// Save the complete, print-sized label (QR + EQ-ID), not a QR-only image.
+// The exported PNG uses the exact same markup and layout as the print preview.
 async function equipmentQrDownload(){
  if(!equipmentQrItem||!equipmentQrImage){toast('QR-код ще не готовий',true);return}
+ const frame=$('#equipmentQrPreview .eqr-preview-frame');
+ const item=equipmentQrItem;
+ const button=$('#equipmentQrDownload');
+ button.disabled=true;
  try{
-  const image=new Image();
-  if(image.decode){image.src=equipmentQrImage;await image.decode()}
-  else await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=equipmentQrImage});
-  const canvas=document.createElement('canvas');
-  const qrPixels=1024,margin=256;
-  canvas.width=canvas.height=qrPixels+2*margin;
-  const ctx=canvas.getContext('2d');
-  if(!ctx)throw new Error('Не вдалося створити зображення');
-  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(image,margin,margin,qrPixels,qrPixels);
-  const filename='HARAZD_QR_'+String(equipmentQrItem.eq_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png';
-  const link=document.createElement('a');link.download=filename;link.href=canvas.toDataURL('image/png');
-  document.body.appendChild(link);link.click();link.remove();
- }catch(e){console.error('QR export:',e);toast('Не вдалося завантажити QR: '+(e?.message||e),true)}
+  await window.harazdDownloadLabelPng(frame,'.eqr-print-page',
+   'HARAZD_LABEL_'+String(item.eq_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png');
+ }catch(e){console.error('Equipment label export:',e);toast('Не вдалося завантажити наклейку: '+(e?.message||e),true)}
+ finally{button.disabled=false}
 }
 function equipmentQrClose(){
  $('#equipmentQrDialog').close();

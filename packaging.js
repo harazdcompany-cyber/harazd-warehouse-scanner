@@ -182,7 +182,7 @@ $('pkgCamera').onclick=startQr;
 $('pkgScanClose').onclick=async()=>{await stopQr();$('pkgScan').close()};
 $('pkgScan').addEventListener('close',stopQr);
 $('addMethod').addEventListener('close',()=>{$('pkgManualPanel').hidden=true;$('pkgEqId').value='' });
-$('pkgLabelPrint').onclick=printPkgLabel;$('pkgLabelClose').onclick=()=>$('pkgLabelDialog').close();$('pkgPhotoPick').onclick=()=>$('pkgPhotoFile').click();$('pkgPhotoCamera').onclick=()=>$('pkgPhotoCapture').click();for(const id of ['pkgPhotoFile','pkgPhotoCapture'])$(id).onchange=e=>pkgPhotoChoose(e.target.files?.[0]);$('pkgPhotoUrl').addEventListener('input',()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;pkgPhotoPreview();});$('pkgPhotoRemove').onclick=()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=true;$('pkgPhotoUrl').value='';pkgPhotoPreview();};$('add').onclick=()=>edit(null);$('form').onsubmit=save;for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>el.closest('dialog').close();for(const id of ['search','kind','mode'])$(id).addEventListener(id==='search'?'input':'change',render);$('list').onclick=e=>{const b=e.target.closest('[data-id]');if(b){const p=items.find(x=>x.id===b.dataset.id);if(p)details(p)}};
+$('pkgLabelDownload').onclick=downloadPkgLabel;$('pkgLabelPrint').onclick=printPkgLabel;$('pkgLabelClose').onclick=()=>$('pkgLabelDialog').close();$('pkgPhotoPick').onclick=()=>$('pkgPhotoFile').click();$('pkgPhotoCamera').onclick=()=>$('pkgPhotoCapture').click();for(const id of ['pkgPhotoFile','pkgPhotoCapture'])$(id).onchange=e=>pkgPhotoChoose(e.target.files?.[0]);$('pkgPhotoUrl').addEventListener('input',()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;pkgPhotoPreview();});$('pkgPhotoRemove').onclick=()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=true;$('pkgPhotoUrl').value='';pkgPhotoPreview();};$('add').onclick=()=>edit(null);$('form').onsubmit=save;for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>el.closest('dialog').close();for(const id of ['search','kind','mode'])$(id).addEventListener(id==='search'?'input':'change',render);$('list').onclick=e=>{const b=e.target.closest('[data-id]');if(b){const p=items.find(x=>x.id===b.dataset.id);if(p)details(p)}};
 
 // QR labels: independent print workflow, no changes to stored package records.
 let labelPackage=null;
@@ -259,6 +259,21 @@ function printPkgLabel(){
  const cssUrl=new URL('packaging-label.css',location.href).href;
  const pages=Array.from({length:copies},()=>`<div class="pkg-print-page">${label.outerHTML}</div>`).join('');
  win.document.open();win.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>QR ${esc(p.pk_id)}</title><link rel="stylesheet" href="${cssUrl}"><style>@page{size:${w}mm ${h}mm;margin:0}html,body{margin:0;padding:0} .pkg-print-page{width:${w}mm;height:${h}mm;break-after:page;page-break-after:always}.pkg-print-page:last-child{break-after:auto;page-break-after:auto}</style></head><body>${pages}<script>window.addEventListener('load',async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));await document.fonts.ready;setTimeout(()=>window.print(),120)});<\/script></body></html>`);win.document.close();
+}
+
+// Export the entire packaging label shown in the print preview.
+async function downloadPkgLabel(){
+ const p=labelPackage;
+ if(!p)return;
+ if(!$('pkgLabelPreview').querySelector('.pkg-label-qr canvas')){msg('QR-код ще не готовий',true);return}
+ const button=$('pkgLabelDownload');
+ button.disabled=true;
+ try{
+  await window.harazdDownloadLabelPng(
+   $('pkgLabelPreview .pkg-label-preview-frame'),'.pkg-print-page',
+   'HARAZD_LABEL_'+String(p.pk_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png');
+ }catch(e){console.error('Packaging label export:',e);msg('Не вдалося завантажити наклейку: '+(e?.message||e),true)}
+ finally{button.disabled=false}
 }
 
 $('detailBody').onclick=async e=>{const b=e.target.closest('button');if(!b||!selected)return;if(b.id==='editItem'){$('details').close();edit(selected)}else if(b.id==='addEquipment')addDialog();else if(b.id==='addPlan')await addPlan();else if(b.id==='addChild')await addChild();else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove||b.dataset.planremove){if(!confirm('Підтвердити вилучення запису?'))return;const table=b.dataset.remove?'packaging_contents':'packaging_plan',id=b.dataset.remove||b.dataset.planremove;try{check(await db.from(table).delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
