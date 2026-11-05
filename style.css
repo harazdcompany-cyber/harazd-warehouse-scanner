@@ -790,24 +790,40 @@ body *::-webkit-scrollbar {
 }
 
 
-/* V49.16 — mobile account action on the same row as the logo. */
+/* V49.17 — mobile account controls align with logo without JavaScript relocation.
+   The account panel stays inside the original header for reliable iOS Safari layout. */
 @media (max-width:650px) {
+  .sidebar { position:relative; }
   .sidebar .brand {
     display:flex;
     align-items:center;
-    flex-wrap:nowrap;
-    gap:10px;
     min-width:0;
+    padding-right:90px;
   }
-  .sidebar .brand > div:not(#userPanel) { min-width:0; }
-  .sidebar .brand #userPanel {
-    margin-left:auto;
-    flex:0 0 auto;
-    display:flex;
+  .sidebar .brand > div { min-width:0; }
+  .sidebar .brand .brand-logo { flex:none; }
+  main > header {
+    position:absolute !important;
+    top:14px;
+    right:12px;
+    left:auto;
+    z-index:20;
+    display:flex !important;
     align-items:center;
-    gap:0;
+    justify-content:flex-end;
+    width:auto;
+    min-width:0;
+    height:auto;
+    margin:0;
+    padding:0;
+    border:0;
+    background:transparent;
+    box-shadow:none;
   }
-  .sidebar .brand #userPanel .user-email { display:none; }
-  .sidebar .brand #userPanel > button { white-space:nowrap; }
-  main > header { display:none; }
+  main > header > span { display:none !important; }
+  main > header #userPanel { display:flex;align-items:center;gap:0; }
+  main > header #userPanel .user-email { display:none !important; }
+  main > header #userPanel > button { white-space:nowrap; }
+  /* Keep all non-logout account text out of the mobile header. */
+  main > header #userPanel:not(:has(button)) { display:none; }
 }

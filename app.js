@@ -708,15 +708,7 @@ async function stopScan(){
  if(!scanBusy)scannerStatus('Камера вимкнена. Для нового сканування увімкніть її знову.');
 }
 
-// V49.16 — mobile: show logout beside the logo, keeping desktop header unchanged.
-const mobileHeaderQuery=window.matchMedia('(max-width:650px)');
-function syncMobileAccountHeader(){
- const panel=document.getElementById('userPanel');
- const host=mobileHeaderQuery.matches?document.querySelector('.sidebar .brand'):document.querySelector('main > header');
- if(panel&&host&&panel.parentElement!==host)host.appendChild(panel);
-}
-mobileHeaderQuery.addEventListener('change',syncMobileAccountHeader);
-syncMobileAccountHeader();
+// V49.17 — account remains in its original header; mobile placement is CSS-only.
 
 let appliedUserId=null;
 async function init(){
