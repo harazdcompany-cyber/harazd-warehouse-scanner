@@ -79,7 +79,24 @@
   const close = () => dialog.close();
   $('eventEquipmentClose').addEventListener('click', close);
   $('eventEquipmentDone').addEventListener('click', close);
-  dialog.addEventListener('close', () => { requestKey++; eventId = null; });
+  dialog.addEventListener('close', async () => {
+    requestKey++;
+    const closedId = eventId;
+    eventId = null;
+    const state = inlineState;
+    if (!state || state.id !== closedId || !state.host?.isConnected) return;
+    try {
+      const response = await db.from('warehouse_event_equipment')
+        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+        .eq('event_id',state.id).order('created_at');
+      if (response.error) throw response.error;
+      if (state !== inlineState) return;
+      state.plan = response.data || [];
+      renderInline();
+    } catch (error) {
+      if (state === inlineState) inlineMessage('Не вдалося оновити лист: ' + (error?.message || error));
+    }
+  });
 
   let inlineState = null, inlineToken = 0;
   const inlineMessage = text => {
@@ -89,56 +106,61 @@
     }
   };
 
+  // Compact loading manifest displayed inside the event details window.
   function renderInline() {
     const state = inlineState;
     if (!state || !state.host?.isConnected) return;
-    const planned = state.plan, available = state.inventory;
-    const total = planned.reduce((n,x) => n + (Number(x.quantity) || 0), 0);
-    state.host.innerHTML = `<div class="event-loading-summary"><strong>${planned.length} позицій</strong><span>${total} од.</span></div>
-      <div class="event-loading-rows">${planned.length ? planned.map((p,i) => {
-        const eq = available.find(x => x.id === p.equipment_id) || p.equipment || {};
-        return `<div class="event-loading-row"><span class="event-loading-num">${i+1}</span><div class="event-loading-name"><strong>${escapeHtml(eq.name || 'Обладнання')}</strong><small>${escapeHtml(eq.eq_id || '')}${eq.model ? ' · ' + escapeHtml(eq.model) : ''}</small></div><div class="event-loading-controls"><label>К-сть <input type="number" min="1" max="999999" step="1" value="${Number(p.quantity)||1}" data-inline-qty="${escapeHtml(p.equipment_id)}" ${canEdit() ? '' : 'disabled'}></label>${canEdit() ? `<button type="button" class="event-equip-delete" data-inline-remove="${escapeHtml(p.equipment_id)}">Видалити</button>` : ''}</div></div>`;
-      }).join('') : '<div class="event-equip-empty">Лист погрузки порожній. Додайте необхідне обладнання.</div>'}</div>
-      ${canEdit() ? `<div class="event-load-add"><label>Додати обладнання зі складу<input type="search" data-inline-search placeholder="Назва, EQ-ID або модель…" autocomplete="off"></label><div data-inline-candidates class="event-inline-candidates"></div></div>` : ''}
-      <p class="muted event-load-notice" data-inline-notice role="status"></p>`;
-  }
-
-  function showCandidates() {
-    const state = inlineState;
-    if (!state || !canEdit() || !state.host?.isConnected) return;
-    const term = state.host.querySelector('[data-inline-search]')?.value.trim().toLocaleLowerCase('uk-UA');
-    const container = state.host.querySelector('[data-inline-candidates]');
-    if (!container) return;
-    if (!term) { container.innerHTML = ''; return; }
-    const matches = state.inventory.filter(i => [i.name,i.eq_id,i.model].some(v => String(v || '').toLocaleLowerCase('uk-UA').includes(term)) && !state.plan.some(p => p.equipment_id === i.id)).slice(0,15);
-    container.innerHTML = matches.length ? matches.map(i => `<div class="event-equip-row"><div class="event-equip-name"><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.eq_id || '')} · ${escapeHtml(i.model || '')}</small></div><button type="button" data-inline-add="${escapeHtml(i.id)}">Додати</button></div>`).join('') : '<div class="event-equip-empty">Нічого не знайдено</div>';
+    const planned = state.plan;
+    const total = planned.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
+    const rows = planned.map((entry, index) => {
+      const eq = state.inventory.find(item => item.id === entry.equipment_id) || entry.equipment || {};
+      return `<tr>
+        <td class="event-manifest-seq">${index + 1}</td>
+        <td class="event-manifest-id">${escapeHtml(eq.eq_id || '—')}</td>
+        <td><strong>${escapeHtml(eq.name || 'Обладнання')}</strong>${eq.model ? `<small>${escapeHtml(eq.model)}</small>` : ''}</td>
+        <td class="event-manifest-qty"><input type="number" aria-label="Кількість: ${escapeHtml(eq.name || 'Обладнання')}" min="1" max="999999" step="1" value="${Number(entry.quantity) || 1}" data-inline-qty="${escapeHtml(entry.equipment_id)}" ${canEdit() ? '' : 'disabled'}></td>
+        <td class="event-manifest-action">${canEdit() ? `<button type="button" class="event-equip-delete" data-inline-remove="${escapeHtml(entry.equipment_id)}">Видалити</button>` : '—'}</td>
+      </tr>`;
+    }).join('');
+    state.host.innerHTML = `
+      <div class="event-manifest-toolbar">
+        <div class="event-loading-summary"><strong>${planned.length} позицій</strong><span>${total} од.</span></div>
+        ${canEdit() ? '<button type="button" class="primary" data-inline-open-picker>＋ Додати обладнання</button>' : ''}
+      </div>
+      <div class="event-manifest-scroll">
+        <table class="event-manifest-table">
+          <thead><tr><th>№</th><th>EQ-ID</th><th>Найменування / модель</th><th>Кількість</th><th></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="5" class="event-manifest-empty">Лист погрузки порожній. Додайте необхідне обладнання.</td></tr>'}</tbody>
+        </table>
+      </div>
+      <p class="muted event-load-notice" data-inline-notice role="status" aria-live="polite"></p>`;
   }
 
   function bindInlineHost(state) {
     if (state.controller) state.controller.abort();
     state.controller = new AbortController();
     const signal = state.controller.signal;
-    state.host.addEventListener('input', e => {
-      if (e.target.matches('[data-inline-search]')) showCandidates();
-    }, {signal});
     state.host.addEventListener('click', e => {
-      const add = e.target.closest('[data-inline-add]');
-      const remove = e.target.closest('[data-inline-remove]');
-      if (add) {
-        const id = add.dataset.inlineAdd;
-        updateInline(s => db.from('warehouse_event_equipment').insert({event_id:s.id,equipment_id:id,quantity:1}));
+      if (e.target.closest('[data-inline-open-picker]')) {
+        open(state.id);
+        return;
       }
-      if (remove) {
+      const remove = e.target.closest('[data-inline-remove]');
+      if (remove && !state.busy) {
         const id = remove.dataset.inlineRemove;
-        updateInline(s => db.from('warehouse_event_equipment').delete().eq('event_id',s.id).eq('equipment_id',id));
+        updateInline(current => db.from('warehouse_event_equipment').delete().eq('event_id',current.id).eq('equipment_id',id));
       }
     }, {signal});
     state.host.addEventListener('change', e => {
       const field = e.target.closest('[data-inline-qty]');
       if (!field) return;
       const id = field.dataset.inlineQty, qty = Number(field.value);
-      if (!Number.isSafeInteger(qty) || qty < 1 || qty > 999999) { inlineMessage('Вкажіть кількість від 1 до 999999'); return; }
-      updateInline(s => db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id',s.id).eq('equipment_id',id));
+      if (!Number.isSafeInteger(qty) || qty < 1 || qty > 999999) {
+        inlineMessage('Вкажіть кількість від 1 до 999999');
+        field.value = String(state.plan.find(row => row.equipment_id === id)?.quantity || 1);
+        return;
+      }
+      updateInline(current => db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id',current.id).eq('equipment_id',id));
     }, {signal});
   }
 

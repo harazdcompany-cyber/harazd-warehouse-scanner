@@ -122,3 +122,22 @@
   .event-period-cards {grid-template-columns:1fr}
   .event-period-fields {grid-template-columns:1fr}
 }
+
+/* V49.40 — loading manifest table */
+.event-manifest-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.event-manifest-toolbar .event-loading-summary{padding:0}
+.event-manifest-toolbar button{min-height:40px;height:40px;white-space:nowrap}
+.event-manifest-scroll{width:100%;overflow-x:auto;border:1px solid #304456;border-radius:12px;background:#111b27}
+.event-manifest-table{width:100%;min-width:560px;border-collapse:collapse;text-align:left;font-size:13px}
+.event-manifest-table th{font-weight:600;color:#9fb6cc;background:#182533;font-size:12px;padding:12px 14px;white-space:nowrap}
+.event-manifest-table td{padding:10px 14px;border-top:1px solid #304053;vertical-align:middle}
+.event-manifest-table td strong{font-size:13px}
+.event-manifest-table td small{display:block;color:#9fb6cc;margin-top:4px}
+.event-manifest-seq{width:30px;color:#9fb6cc}
+.event-manifest-id{white-space:nowrap;color:#dff500;font-weight:600}
+.event-manifest-qty{width:95px}
+.event-manifest-qty input{height:40px;min-height:40px;width:76px;box-sizing:border-box;text-align:center}
+.event-manifest-action{text-align:right;width:100px}
+.event-manifest-action button{min-height:40px;height:40px}
+.event-manifest-empty{text-align:center;color:#9fb6cc;padding:22px!important}
+@media(max-width:760px){.event-manifest-toolbar{align-items:stretch}.event-manifest-toolbar button{width:100%}}
