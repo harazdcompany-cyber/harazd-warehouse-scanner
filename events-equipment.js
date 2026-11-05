@@ -8,6 +8,108 @@
   const authorized = () => typeof session !== 'undefined' && !!session?.user?.id;
   const notice = msg => { $('eventEquipmentNotice').textContent = msg || ''; };
   let eventId = null, inventory = [], plan = [], loading = false, requestKey = 0;
+  const methodDialog = $('eventAddMethodDialog');
+  const scannerDialog = $('eventQrScanDialog');
+  let qrScanner = null, qrStopping = false, qrProcessing = false, methodBusy = false;
+  const methodNotice = text => { $('eventMethodNotice').textContent = text || ''; };
+  function normalizeEqId(code) {
+    const raw = String(code || '').trim();
+    const normalized = raw.match(/EQ-\d+/i);
+    return (normalized ? normalized[0] : raw).toUpperCase();
+  }
+  function findByEqId(code) {
+    const eq = normalizeEqId(code);
+    return inventory.find(item => String(item.eq_id || '').trim().toUpperCase() === eq);
+  }
+  async function stopScanner() {
+    if (!qrScanner || qrStopping) return;
+    qrStopping = true;
+    const scanner = qrScanner;
+    qrScanner = null;
+    try { await scanner.stop(); } catch (_) {}
+    try { scanner.clear(); } catch (_) {}
+    qrStopping = false;
+  }
+  async function selectEquipment(item, source = 'warehouse') {
+    if (!item || !authorized() || !canEdit() || !eventId || loading || methodBusy) return false;
+    const existing = plan.find(row => row.equipment_id === item.id);
+    const input = prompt(`${item.name} · ${item.eq_id || 'Без EQ-ID'}\n${existing ? 'У листі погрузки: ' + existing.quantity + ' шт.\n' : ''}Вкажіть кількість для додавання:`, '1');
+    if (input === null) return false;
+    const quantity = Number(input);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 999999 || (existing && Number(existing.quantity) + quantity > 999999)) {
+      const message = 'Вкажіть коректну кількість від 1 до 999999.';
+      if (source === 'manual') methodNotice(message); else notice(message);
+      return false;
+    }
+    methodBusy = true;
+    const capturedEvent = eventId;
+    const oldRow = existing;
+    try {
+      const query = oldRow
+        ? db.from('warehouse_event_equipment').update({quantity:Number(oldRow.quantity) + quantity}).eq('event_id', capturedEvent).eq('equipment_id', item.id)
+        : db.from('warehouse_event_equipment').insert({event_id:capturedEvent, equipment_id:item.id, quantity});
+      const {error} = await query;
+      if (error) throw error;
+      if (capturedEvent !== eventId) return true;
+      await loadPlan();
+      render();
+      if (inlineState && inlineState.id === capturedEvent && inlineState.host?.isConnected) {
+        inlineState.plan = [...plan];
+        renderInline();
+      }
+      notice('Обладнання додано до листа погрузки');
+      if (methodDialog.open) methodDialog.close();
+      return true;
+    } catch (error) {
+      const message = 'Не вдалося додати: ' + (error?.message || String(error));
+      if (source === 'manual') methodNotice(message); else notice(message);
+      return false;
+    } finally { methodBusy = false; }
+  }
+  function showMethod() {
+    if (!canEdit() || !eventId || !authorized()) return;
+    methodNotice('');
+    $('eventManualEq').value = '';
+    $('eventManualPanel').hidden = true;
+    if (!methodDialog.open) methodDialog.showModal();
+  }
+  async function startScanner() {
+    methodDialog.close();
+    $('eventQrNotice').textContent = 'Наведіть камеру на QR-код обладнання.';
+    scannerDialog.showModal();
+    if (typeof Html5Qrcode === 'undefined') {
+      $('eventQrNotice').textContent = 'Бібліотека сканування не завантажена.';
+      return;
+    }
+    try {
+      qrScanner = new Html5Qrcode('eventQrReader');
+      qrProcessing = false;
+      await qrScanner.start({facingMode:'environment'}, {fps:10, qrbox:230}, async code => {
+        if (qrProcessing) return;
+        const item = findByEqId(code);
+        if (!item) { $('eventQrNotice').textContent = 'EQ-ID не знайдено. Спробуйте інший QR-код.'; return; }
+        qrProcessing = true;
+        await stopScanner();
+        if (scannerDialog.open) scannerDialog.close();
+        try { await selectEquipment(item,'scan'); } finally { qrProcessing = false; }
+      }, () => {});
+    } catch (error) {
+      $('eventQrNotice').textContent = 'Не вдалося запустити камеру: ' + (error?.message || error);
+    }
+  }
+  $('eventMethodClose').addEventListener('click', () => methodDialog.close());
+  $('eventMethodManual').addEventListener('click', () => { $('eventManualPanel').hidden = false; $('eventManualEq').focus(); });
+  $('eventMethodWarehouse').addEventListener('click', () => { methodDialog.close(); if (!dialog.open) dialog.showModal(); });
+  $('eventMethodScan').addEventListener('click', startScanner);
+  $('eventManualConfirm').addEventListener('click', async () => {
+    const item = findByEqId($('eventManualEq').value);
+    if (!item) { methodNotice('EQ-ID не знайдено на складі.'); return; }
+    await selectEquipment(item,'manual');
+  });
+  $('eventManualEq').addEventListener('keydown', e => { if (e.key === 'Enter') {e.preventDefault();$('eventManualConfirm').click();} });
+  $('eventScanClose').addEventListener('click', () => scannerDialog.close());
+  scannerDialog.addEventListener('close', stopScanner);
+
 
   function render() {
     const q = $('eventEquipmentSearch').value.trim().toLocaleLowerCase('uk-UA');
@@ -40,13 +142,26 @@
     plan = data || [];
   }
   async function open(id) {
-    if (!authorized() || !id) return;
-    eventId = id; const key = ++requestKey;
-    $('eventEquipmentSearch').value = ''; plan = []; inventory = [];
-    $('eventEquipmentTitle').textContent = 'Обладнання івенту';
-    dialog.showModal(); notice('Завантаження…');
-    try { await Promise.all([loadInventory(), loadPlan()]); if (key !== requestKey) return; notice(''); render(); }
-    catch (e) { if (key === requestKey) notice('Не вдалося завантажити: ' + (e?.message || e)); }
+    if (!authorized() || !canEdit() || !id) return;
+    const switching = eventId !== id;
+    eventId = id;
+    const key = ++requestKey;
+    $('eventEquipmentSearch').value = '';
+    if (switching) { plan = []; inventory = []; }
+    $('eventEquipmentTitle').textContent = 'Вибрати зі складу';
+    methodNotice('');
+    showMethod();
+    if (switching || !inventory.length) {
+      methodNotice('Завантаження складу…');
+      try {
+        await Promise.all([loadInventory(), loadPlan()]);
+        if (key !== requestKey) return;
+        methodNotice(''); render();
+      } catch (e) {if (key === requestKey) methodNotice('Не вдалося завантажити: ' + (e?.message || e));}
+    } else {
+      try { await loadPlan(); if (key === requestKey) render(); }
+      catch (e) { if (key === requestKey) methodNotice('Не вдалося оновити лист: ' + (e?.message || e)); }
+    }
   }
   async function change(action) {
     if (loading || !canEdit() || !eventId || !authorized()) return;
@@ -60,7 +175,7 @@
     const b = e.target.closest('[data-equip-add]'); if (!b) return;
     const equipmentId = b.dataset.equipAdd;
     if (!inventory.some(x => x.id === equipmentId) || plan.some(x => x.equipment_id === equipmentId)) return;
-    change(async () => { const {error} = await db.from('warehouse_event_equipment').insert({event_id:eventId,equipment_id:equipmentId,quantity:1}); if (error) throw error; });
+    selectEquipment(inventory.find(item => item.id === equipmentId), 'warehouse');
   });
   $('eventEquipmentList').addEventListener('click', e => {
     const b = e.target.closest('[data-equip-remove]'); if (!b) return;
@@ -82,7 +197,6 @@
   dialog.addEventListener('close', async () => {
     requestKey++;
     const closedId = eventId;
-    eventId = null;
     const state = inlineState;
     if (!state || state.id !== closedId || !state.host?.isConnected) return;
     try {
