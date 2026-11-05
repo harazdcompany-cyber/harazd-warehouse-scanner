@@ -21,7 +21,31 @@ let session=null,items=[],categories=[],subcategories=[],warehouses=[],editing=n
 function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className=error?'error':'';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',5500)}
 const LAST_PAGE_KEY='harazd-last-page-v47';
 function savedPage(){const id=sessionStorage.getItem(LAST_PAGE_KEY);return $$('.page').some(p=>p.id===id)?id:'warehouse'}
-function show(id){if(!$$('.page').some(p=>p.id===id))id='warehouse';sessionStorage.setItem(LAST_PAGE_KEY,id);$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id!=='scanner')stopScan();if(id==='personnel'&&session)staffLoad();if(id==='repairs'&&session)repairLoad();}
+function show(id){
+ if(!$$('.page').some(p=>p.id===id))id='warehouse';
+ sessionStorage.setItem(LAST_PAGE_KEY,id);
+ $$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));
+ $$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+ // Each embedded module keeps its state when another section is selected.
+ if(id==='packaging'||id==='vehicles'){
+   const frame=$('#'+id+'Frame');
+   if(frame&&!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);
+ }
+ if(id!=='scanner')stopScan();
+ if(id==='personnel'&&session)staffLoad();
+ if(id==='repairs'&&session)repairLoad();
+}
+// Module pages share the current shell without navigating/reloading index.html.
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||!event.data||event.data.type!=='harazd:navigate')return;
+ const from=[...document.querySelectorAll('.embedded-module iframe')].some(frame=>frame.contentWindow===event.source);
+ if(!from||!current())return;
+ const page=event.data.page;
+ if(['warehouse','add','scanner','categories','personnel','events','repairs','packaging','vehicles'].includes(page)){
+   show(page);
+   window.scrollTo({top:0,behavior:'instant'});
+ }
+});
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function opts(el,data,placeholder,selectedValue=''){el.replaceChildren(new Option(placeholder,''),...data.map(x=>new Option(x.name,x.id)));el.value=selectedValue||''}
 function current(){return !!session}

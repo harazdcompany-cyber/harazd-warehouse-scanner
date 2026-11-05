@@ -950,3 +950,14 @@ body *::-webkit-scrollbar {
   }
   #auth > h1 { font-size: clamp(23px, 6vw, 28px); }
 }
+
+/* V49.20: keep module screens inside the same application shell. */
+#nav button.vehicle-nav-link.active{background:#242c13;border-left-color:#e6fa00;color:#e6fa00}
+.content:has(> .embedded-module:not(.hidden)){max-width:none;padding:0}
+.embedded-module{width:100%;min-width:0}
+.embedded-module iframe{display:block;width:100%;height:calc(100dvh - 65px);min-height:500px;border:0;background:#080d13}
+@media(max-width:650px){
+  .embedded-module iframe{height:calc(100dvh - 48px);min-height:600px}
+  #nav button.vehicle-nav-link{white-space:nowrap}
+  .content:has(> .embedded-module:not(.hidden)){padding:0}
+}
