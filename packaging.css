@@ -199,3 +199,21 @@ body *::-webkit-scrollbar {
 /* Delete packaging: danger state only on the detail-card action. */
 .pkg-tools .pkg-danger{border-color:#864453;color:#ffbdc7}
 .pkg-tools .pkg-danger:hover{background:#3b222b;border-color:#c66b7b}
+
+/* V49.9 — Same delete-button outline in packaging cards and editor. */
+:is(.pkg-tools .pkg-danger, .pkg-row > button[data-remove],
+    .pkg-row > button[data-planremove], #pkgPhotoRemove) {
+  background: #1b2b39 !important;
+  border: 1px solid #864453 !important;
+  color: #ffbdc7 !important;
+  border-radius: 9px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: background-color .16s, border-color .16s, color .16s;
+}
+:is(.pkg-tools .pkg-danger, .pkg-row > button[data-remove],
+    .pkg-row > button[data-planremove], #pkgPhotoRemove):hover:not(:disabled) {
+  background: #3b222b !important;
+  border-color: #c66b7b !important;
+  color: #ffd5dc !important;
+}

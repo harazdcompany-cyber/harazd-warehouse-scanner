@@ -41,3 +41,19 @@ body *::-webkit-scrollbar {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* V49.9 — Same delete-button outline for vehicles, records, and files. */
+:is(#deleteVehicle, button[data-record-delete], button[data-doc-delete]) {
+  background: #1b2b39 !important;
+  border: 1px solid #864453 !important;
+  color: #ffbdc7 !important;
+  border-radius: 9px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: background-color .16s, border-color .16s, color .16s;
+}
+:is(#deleteVehicle, button[data-record-delete], button[data-doc-delete]):hover:not(:disabled) {
+  background: #3b222b !important;
+  border-color: #c66b7b !important;
+  color: #ffd5dc !important;
+}

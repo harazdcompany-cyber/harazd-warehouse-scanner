@@ -716,3 +716,43 @@ body *::-webkit-scrollbar {
 #scanner .scanner-camera-select:not([hidden]){display:flex;align-items:center;gap:9px;color:#c3d2df;font-size:13px;font-weight:600}
 #scanner .scanner-camera-select[hidden]{display:none!important}
 #scanner .scanner-camera-select select{min-width:0;max-width:min(310px,70vw);padding:8px 11px;background:#101b29;color:#e9f1f8;border:1px solid #35485b;border-radius:8px}
+
+/* V49.9 — Unified outline appearance for destructive controls (visual only). */
+:is(
+  #itemDialog > .actions #deleteItem,
+  #deleteConfirmDialog .actions #confirmDelete,
+  #repairDelete,
+  #repairPhotoDeleteYes,
+  #repairConfirmDelete,
+  #equipmentPhotoDeleteYes,
+  .equipment-doc-actions .equipment-doc-danger,
+  .equipment-doc-pending-row > button:last-child,
+  .equipment-photo-thumb > button,
+  .repair-photo-tile > button,
+  .equipment-extra-remove
+) {
+  background: #1b2b39 !important;
+  border: 1px solid #864453 !important;
+  color: #ffbdc7 !important;
+  border-radius: 9px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: background-color .16s, border-color .16s, color .16s;
+}
+:is(
+  #itemDialog > .actions #deleteItem,
+  #deleteConfirmDialog .actions #confirmDelete,
+  #repairDelete,
+  #repairPhotoDeleteYes,
+  #repairConfirmDelete,
+  #equipmentPhotoDeleteYes,
+  .equipment-doc-actions .equipment-doc-danger,
+  .equipment-doc-pending-row > button:last-child,
+  .equipment-photo-thumb > button,
+  .repair-photo-tile > button,
+  .equipment-extra-remove
+):hover:not(:disabled) {
+  background: #3b222b !important;
+  border-color: #c66b7b !important;
+  color: #ffd5dc !important;
+}
