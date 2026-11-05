@@ -1,4 +1,4 @@
-/* V49.20 — Runs only when module is hosted inside index.html. */
+/* V49.21 — embedded module alignment with main warehouse content. */
 (() => {
   const params = new URLSearchParams(location.search);
   if(params.get('embedded')!=='1' || window.parent===window) return;
@@ -8,9 +8,10 @@
     html.harazd-embedded .shell {display:block;min-height:100%;}
     html.harazd-embedded .shell > .side {display:none!important;}
     html.harazd-embedded .vehicle-topbar {display:none!important;}
-    html.harazd-embedded .main {min-width:0;min-height:100dvh;padding:26px clamp(14px,2.6vw,44px)!important;}
+    html.harazd-embedded .main {min-width:0;min-height:100dvh;padding:0!important;}
+    html.harazd-embedded .vehicle-content {max-width:none;margin:0;padding:0!important;}
     html.harazd-embedded {scrollbar-gutter:stable;}
-    @media(max-width:650px){html.harazd-embedded .main{padding:14px!important}}
+    @media(max-width:650px){html.harazd-embedded .main,html.harazd-embedded .vehicle-content{padding:0!important}}
   `;
   document.head.appendChild(style);
   // Delegate navigation back to the application's existing tab controller.

@@ -961,3 +961,20 @@ body *::-webkit-scrollbar {
   #nav button.vehicle-nav-link{white-space:nowrap}
   .content:has(> .embedded-module:not(.hidden)){padding:0}
 }
+
+/* V49.21: embedded sections use the same content geometry as the warehouse.
+   Apply the outer spacing once, in index.html, not again inside the iframe. */
+.content:has(> .embedded-module:not(.hidden)) {
+  max-width: 1660px;
+  margin: 0 auto;
+  padding: 32px clamp(18px,3.5vw,55px);
+}
+.embedded-module iframe {
+  width: 100%;
+  height: calc(100dvh - 65px - 64px);
+  min-height: 500px;
+}
+@media (max-width:650px) {
+  .content:has(> .embedded-module:not(.hidden)) { padding:14px; }
+  .embedded-module iframe { height:calc(100dvh - 48px - 28px); min-height:500px; }
+}
