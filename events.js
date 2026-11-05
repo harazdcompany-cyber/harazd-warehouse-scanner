@@ -12,7 +12,31 @@
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
   const authorized = () => typeof session !== 'undefined' && !!session?.user?.id;
   const notice = (message) => {el('eventNotice').textContent=message || '';};
-  const item = e => `<article class="event-card"><div class="event-card-head"><strong>${safe(e.name)}</strong><span class="event-state event-state-${safe(e.status)}">${safe(statusLabels[e.status]||e.status)}</span></div><div class="event-card-meta"><span>◷ ${periodText(e.event_date,e.event_end_date)}</span><span>⌖ ${safe(e.location||'Місце не вказано')}</span></div><div class="event-client">${safe(e.client||'Замовника не вказано')}</div>${e.notes?`<p class="event-notes">${safe(e.notes)}</p>`:''}<div class="event-period-summary">${[['Складські роботи','warehouse_start_date','warehouse_end_date'],['Монтаж','setup_date','setup_end_date'],['Подія','event_date','event_end_date'],['Демонтаж','teardown_date','teardown_end_date'],['Складські роботи після події','post_warehouse_start_date','post_warehouse_end_date']].filter(([label,start])=>e[start]).map(([label,start,end])=>`<div><span>${label}</span><strong>${periodText(e[start],e[end])}</strong></div>`).join('')}</div><div class="event-card-foot"><small>${safe(e.location||'')}</small>${canEdit()?`<button type="button" data-event-edit="${safe(e.id)}">Редагувати</button>`:''}</div></article>`;
+  let expandedId = null;
+  const periods = [['Складські роботи до події','warehouse_start_date','warehouse_end_date'],['Монтаж','setup_date','setup_end_date'],['Подія','event_date','event_end_date'],['Демонтаж','teardown_date','teardown_end_date'],['Складські роботи після події','post_warehouse_start_date','post_warehouse_end_date']];
+  const details = e => `<div class="event-expanded" id="event-expanded-panel" data-expanded-event="${safe(e.id)}">
+    <section class="event-expanded-section"><h3>Основна інформація</h3><div class="event-detail-grid">
+      <div><small>Назва заходу</small><strong>${safe(e.name)}</strong></div>
+      <div><small>Замовник</small><strong>${safe(e.client || '—')}</strong></div>
+      <div><small>Місто / локація</small><strong>${safe(e.location || '—')}</strong></div>
+      <div><small>Статус</small><strong>${safe(statusLabels[e.status] || e.status)}</strong></div>
+    </div>${e.notes ? `<div class="event-detail-notes"><small>Примітки</small><p>${safe(e.notes)}</p></div>` : ''}
+    <h4>Періоди робіт</h4><div class="event-detail-periods">${periods.map(([label,start,end])=>`<div><span>${label}</span><strong>${periodText(e[start],e[end])}</strong></div>`).join('')}</div>
+    </section>
+    <section class="event-expanded-section event-load-section"><div class="event-load-heading"><h3>Лист погрузки</h3><span class="event-load-caption">План обладнання для заходу</span></div>
+      <div class="event-loading-list" id="eventInlineEquipment" aria-live="polite">Завантаження обладнання…</div>
+    </section>
+  </div>`;
+  const item = e => {
+    const expanded = e.id === expandedId;
+    return `<article class="event-card${expanded?' event-card-expanded':''}" data-event-card="${safe(e.id)}"><div class="event-card-head"><strong>${safe(e.name)}</strong><span class="event-state event-state-${safe(e.status)}">${safe(statusLabels[e.status]||e.status)}</span></div>
+      <div class="event-card-meta"><span>◷ ${periodText(e.event_date,e.event_end_date)}</span><span>⌖ ${safe(e.location||'Місце не вказано')}</span></div>
+      <div class="event-client">${safe(e.client||'Замовника не вказано')}</div>
+      ${!expanded ? `<div class="event-period-summary">${periods.filter(([,start])=>e[start]).map(([label,start,end])=>`<div><span>${label}</span><strong>${periodText(e[start],e[end])}</strong></div>`).join('')}</div>`:''}
+      <div class="event-card-foot"><small>${safe(e.location||'')}</small><div class="event-card-actions">${canEdit()?`<button type="button" data-event-edit="${safe(e.id)}">Редагувати</button>`:''}<button type="button" aria-expanded="${expanded}" data-event-toggle="${safe(e.id)}">${expanded?'Згорнути ▲':'Розгорнути ▼'}</button></div></div>
+      ${expanded?details(e):''}
+    </article>`;
+  };
   function render() {
     el('eventAdd').hidden=!canCreate();
     const q=el('eventSearch').value.trim().toLocaleLowerCase('uk-UA');
@@ -24,6 +48,10 @@
     el('eventActiveCount').textContent=records.filter(e=>activeStatuses.has(e.status)).length;
     el('eventDoneCount').textContent=records.filter(e=>e.status==='done').length;
     el('eventCards').innerHTML=filtered.length?filtered.map(item).join(''):'<div class="panel event-empty">Івентів не знайдено. Створіть перший захід або змініть фільтри.</div>';
+    if (expandedId && filtered.some(e => e.id === expandedId)) {
+      const host = el('eventInlineEquipment');
+      if(host) window.harazdEventEquipment?.mountInline(expandedId,host);
+    }
   }
   async function load() {
     if (!authorized() || !db) return;
@@ -105,8 +133,16 @@
   el('eventForm').addEventListener('submit',save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id=>el(id).addEventListener(id==='eventSearch'?'input':'change',render));
   el('eventCards').addEventListener('click',event=>{
-    const btn=event.target.closest('[data-event-edit]');
-    if(btn) {const record=records.find(x=>x.id===btn.dataset.eventEdit);if(record)open(record);}
+    const edit = event.target.closest('[data-event-edit]');
+    if(edit) {const record=records.find(x=>x.id===edit.dataset.eventEdit);if(record)open(record);return;}
+    // Loading-list interactions must not collapse the card.
+    if(event.target.closest('.event-expanded'))return;
+    const card = event.target.closest('[data-event-card]');
+    if(!card)return;
+    const id=card.dataset.eventCard;
+    expandedId=expandedId===id ? null : id;
+    window.harazdEventEquipment?.unmountInline();
+    render();
   });
   window.harazdEvents={load};
 })();
