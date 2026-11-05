@@ -204,7 +204,7 @@
   }
   async function loadPlan() {
     const {data, error} = await db.from('warehouse_event_equipment')
-      .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+      .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model,photo_url)')
       .eq('event_id', eventId)
       .order('created_at');
     if (error) throw error;
@@ -430,7 +430,7 @@
     if (!state || state.id !== closedId || !state.host?.isConnected) return;
     try {
       const response = await db.from('warehouse_event_equipment')
-        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model,photo_url)')
         .eq('event_id', state.id)
         .order('created_at');
       if (response.error) throw response.error;
@@ -458,9 +458,14 @@
     const total = planned.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
     const rows = planned.map((entry, index) => {
       const eq = state.inventory.find(item => item.id === entry.equipment_id) || entry.equipment || {};
+      const photoUrl = String(eq.photo_url || '');
+      const photo = /^https:\/\/[^\s"'<>]+$/i.test(photoUrl)
+        ? `<img src="${escapeHtml(photoUrl)}" alt="Фото: ${escapeHtml(eq.name || 'Обладнання')}" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="event-manifest-photo-empty" hidden aria-hidden="true">◇</span>`
+        : '<span class="event-manifest-photo-empty" aria-hidden="true">◇</span>';
       return `<tr>
         <td class="event-manifest-seq">${index + 1}</td>
         <td class="event-manifest-id">${escapeHtml(eq.eq_id || '—')}</td>
+        <td class="event-manifest-photo-cell"><div class="event-manifest-photo">${photo}</div></td>
         <td><strong>${escapeHtml(eq.name || 'Обладнання')}</strong>${eq.model ? `<small>${escapeHtml(eq.model)}</small>` : ''}</td>
         <td class="event-manifest-qty"><input type="number" aria-label="Кількість: ${escapeHtml(eq.name || 'Обладнання')}" min="1" max="999999" step="1" value="${Number(entry.quantity) || 1}" data-inline-qty="${escapeHtml(entry.equipment_id)}" ${canEdit() ? '' : 'disabled'}></td>
         <td class="event-manifest-action">${canEdit() ? `<button type="button" class="event-equip-delete" data-inline-remove="${escapeHtml(entry.equipment_id)}">Видалити</button>` : '—'}</td>
@@ -473,8 +478,8 @@
       </div>
       <div class="event-manifest-scroll">
         <table class="event-manifest-table">
-          <thead><tr><th>№</th><th>EQ-ID</th><th>Найменування / модель</th><th>Кількість</th><th></th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="5" class="event-manifest-empty">Лист погрузки порожній. Додайте необхідне обладнання.</td></tr>'}</tbody>
+          <thead><tr><th>№</th><th>EQ-ID</th><th>Фото</th><th>Найменування / модель</th><th>Кількість</th><th></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="6" class="event-manifest-empty">Лист погрузки порожній. Додайте необхідне обладнання.</td></tr>'}</tbody>
         </table>
       </div>
       <p class="muted event-load-notice" data-inline-notice role="status" aria-live="polite"></p>`;
@@ -516,8 +521,8 @@
     host.textContent = 'Завантаження листа погрузки…';
     try {
       const [inv, planned] = await Promise.all([
-        db.from('equipment').select('id,eq_id,name,model,quantity').order('name').limit(10000),
-        db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)').eq('event_id', id).order('created_at')
+        db.from('equipment').select('id,eq_id,name,model,photo_url,quantity').order('name').limit(10000),
+        db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model,photo_url)').eq('event_id', id).order('created_at')
       ]);
       if (inv.error) throw inv.error;
       if (planned.error) throw planned.error;
@@ -543,7 +548,7 @@
       const {error} = await action(state);
       if (error) throw error;
       const response = await db.from('warehouse_event_equipment')
-        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model,photo_url)')
         .eq('event_id', state.id)
         .order('created_at');
       if (response.error) throw response.error;

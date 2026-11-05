@@ -142,17 +142,10 @@
 .event-manifest-empty{text-align:center;color:#9fb6cc;padding:22px!important}
 @media(max-width:760px){.event-manifest-toolbar{align-items:stretch}.event-manifest-toolbar button{width:100%}}
 
-/* V49.41 — Packaging-style equipment-add choices for an event */
-.event-method-dialog{width:min(560px,calc(100vw - 24px));max-height:min(90dvh,700px)}
-.event-add-methods{display:grid;gap:10px;margin:22px 0 6px}
-.event-add-methods button{width:100%;height:52px;min-height:52px;display:flex;align-items:center;text-align:left;padding:0 18px;background:#1a2b3c;border:1px solid #3c5369;border-radius:12px;color:#eef6ff;font-size:15px}
-.event-add-methods button:hover{background:#253a4e;border-color:#64809b}
-.event-manual-panel{margin-top:18px;padding-top:16px;border-top:1px solid #304456}
-.event-manual-panel label{display:block;margin-bottom:7px;font-size:13px;color:#b9cde0}
-.event-manual-row{display:flex;gap:10px;align-items:center}
-.event-manual-row input{min-width:0;flex:1}
-.event-manual-row button{height:40px;min-height:40px;white-space:nowrap}
-.event-qr-reader{min-height:230px;overflow:hidden;border:1px solid #304456;border-radius:12px}
-.event-qr-reader video{max-width:100%}
-#eventMethodNotice:empty{display:none}
-@media(max-width:550px){.event-manual-row{flex-direction:column;align-items:stretch}.event-manual-row button{width:100%}}
+/* V49.44 — photo thumbnails in the event loading list */
+.event-manifest-table{min-width:660px}
+.event-manifest-photo-cell{width:72px;padding-left:8px!important;padding-right:8px!important}
+.event-manifest-photo{display:flex;align-items:center;justify-content:center;width:64px;height:64px;overflow:hidden;border-radius:10px;border:1px solid #304456;background:#0d1622}
+.event-manifest-photo img{width:100%;height:100%;object-fit:contain}
+.event-manifest-photo-empty{font-size:28px;line-height:1;color:#7690a8}
+@media(max-width:760px){.event-manifest-photo{width:52px;height:52px}.event-manifest-photo-cell{width:60px}}
