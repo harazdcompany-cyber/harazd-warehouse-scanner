@@ -1144,3 +1144,33 @@ body *::-webkit-scrollbar {
   justify-content:center;
   align-items:center;
 }
+
+/* HARAZD V49.31 — New equipment form: consistent 40px one-line controls.
+   Scope deliberately limited to #add; description textarea keeps its own size. */
+#add #equipmentForm input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+#add #equipmentForm select,
+#add #equipmentForm .hd-trigger,
+#add #equipmentForm button:not(.equipment-photo-thumb button),
+#add #equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick {
+  box-sizing: border-box !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: normal !important;
+}
+#add #equipmentForm .hd-trigger,
+#add #equipmentForm button:not(.equipment-photo-thumb button),
+#add #equipmentForm .equipment-photo-url-row > #equipmentPhotoPick.equipment-photo-pick {
+  align-items: center;
+  justify-content: center;
+}
+#add #equipmentForm .hd-trigger { justify-content: space-between; }
+#add #equipmentForm textarea[name="description"] {
+  height: 105px;
+  min-height: 105px;
+  max-height: none;
+  resize: vertical;
+  overflow: auto;
+}
