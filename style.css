@@ -1044,3 +1044,24 @@ body *::-webkit-scrollbar {
 #warehouse .warehouse-filterbar .warehouse-filter-actions {
   align-items:stretch !important;
 }
+
+/* V49.27 — warehouse gallery: uniform 40 px search and filter controls. */
+#warehouse .warehouse-search input,
+#warehouse .warehouse-filterbar .warehouse-filter-selects select,
+#warehouse .warehouse-filterbar .warehouse-filter-selects .hd-trigger,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .clear-filter-btn,
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {
+  box-sizing: border-box !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin-block: 0 !important;
+}
+#warehouse .warehouse-search input {padding-top:0 !important;padding-bottom:0 !important;line-height:normal !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-selects .hd-trigger {padding:0 15px !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .clear-filter-btn {padding-top:0 !important;padding-bottom:0 !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch {padding:3px !important;align-items:stretch !important;}
+#warehouse .warehouse-filterbar .warehouse-filter-actions .view-switch button {
+  height:32px !important;min-height:32px !important;max-height:32px !important;
+  padding-top:0 !important;padding-bottom:0 !important;box-sizing:border-box !important;
+}
