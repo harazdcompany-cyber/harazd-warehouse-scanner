@@ -281,7 +281,10 @@ function details(x){
  <div class="detail-section"><h3>Ідентифікація та вартість</h3><div class="detail-grid">${row('EQ-ID',x.eq_id)}${row('Серійний ID',x.serial)}${row('Barcode',x.barcode)}${row('QR',x.qr)}${row('Ціна / грн',Number(x.price||0).toLocaleString('uk-UA'))}${row('Оренда / доба',Number(x.rental_price||0).toLocaleString('uk-UA'))}</div></div>
  <div class="detail-section equipment-docs-section"><div class="equipment-docs-heading"><h3>Документи обладнання</h3><button type="button" id="equipmentDocsToggle">Документи ▾</button></div><div id="equipmentDocsPanel" hidden><p class="muted">Завантаження документів…</p></div></div>
  <div class="detail-foot">Оновлено: ${x.updated_at?esc(new Date(x.updated_at).toLocaleString('uk-UA')):'—'}</div>`;
- $('#itemDialog').showModal();
+ const dialog=$('#itemDialog');
+ dialog.showModal();
+ dialog.scrollTop=0;
+ requestAnimationFrame(()=>{if(dialog.open)dialog.scrollTop=0;});
  window.harazdDocsOpen?.(x);
 }
 // EQ-ID QR labels: short payload intentionally matches the existing warehouse and packaging scanners.
