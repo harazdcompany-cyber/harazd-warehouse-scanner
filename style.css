@@ -1065,3 +1065,57 @@ body *::-webkit-scrollbar {
   height:32px !important;min-height:32px !important;max-height:32px !important;
   padding-top:0 !important;padding-bottom:0 !important;box-sizing:border-box !important;
 }
+
+
+/* HARAZD V49.28 — Directory: consistent 40px form controls and list rows. */
+#categories .directory-grid > .panel:not(.location-panel) .inline-form > input,
+#categories .directory-grid > .panel:not(.location-panel) .inline-form > select,
+#categories .directory-grid > .panel:not(.location-panel) .inline-form > button,
+#categories .directory-grid > .panel:not(.location-panel) .inline-form .hd-trigger {
+  box-sizing:border-box !important;
+  width:100%;
+  height:40px !important;
+  min-height:40px !important;
+  max-height:40px !important;
+  padding-top:0 !important;
+  padding-bottom:0 !important;
+  line-height:normal;
+}
+#categories .directory-grid > .panel:not(.location-panel) .inline-form .hd-trigger {
+  padding-left:16px !important;
+  padding-right:16px !important;
+}
+#categories #categoryList > .directory-entry,
+#categories #subcategoryList > .directory-entry,
+#categories #warehouseList > .directory-entry {
+  box-sizing:border-box;
+  height:40px !important;
+  min-height:40px !important;
+  max-height:40px !important;
+  padding:0 10px !important;
+  margin-bottom:8px;
+  overflow:hidden;
+}
+#categories #categoryList > .directory-entry > span,
+#categories #subcategoryList > .directory-entry > span,
+#categories #warehouseList > .directory-entry > span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow-wrap:normal;
+}
+#categories #categoryList .ref-edit,
+#categories #subcategoryList .ref-edit,
+#categories #warehouseList .ref-edit {
+  width:32px;
+  min-width:32px;
+  height:32px;
+  min-height:32px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+#categories #categoryList,
+#categories #subcategoryList,
+#categories #warehouseList {max-height:232px;}
