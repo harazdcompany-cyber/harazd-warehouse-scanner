@@ -128,7 +128,41 @@ async function chooseEquipment(e){
  }catch(ex){msg(ex.message,true)}
 }
 async function addById(){const code=$('pkgEqId').value.trim();const e=findEq(code);if(!e)return msg('EQ-ID не знайдено на складі',true);await chooseEquipment(e)}
-function chooseFromWarehouse(){if(!selected)return;sessionStorage.setItem('harazd-packaging-picker',JSON.stringify({id:selected.id,pk:selected.pk_id,name:selected.name}));location.href='index.html#warehouse'}
+// V49.42: select equipment inside packaging, without navigating to index.html
+// (index.html nested inside the embedded packaging iframe duplicated the site shell).
+function renderWarehousePicker(){
+ const host=$('pkgWarehouseChoices');if(!host)return;
+ const term=$('pkgWarehouseSearch').value.trim().toLocaleLowerCase('uk-UA');
+ const filtered=equipment.filter(e=>[e.name,e.eq_id,e.model].some(v=>String(v||'').toLocaleLowerCase('uk-UA').includes(term))).slice(0,120);
+ host.innerHTML=filtered.length?filtered.map(e=>{
+  const already=contents.filter(x=>x.equipment_id===e.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);
+  const available=Math.max(0,Number(e.quantity||0)-already);
+  const pic=/^https:\/\/[^\s"'<>]+$/i.test(e.photo_url||'')?`<img src="${esc(e.photo_url)}" alt="" loading="lazy">`:'<span class="pkg-warehouse-photo-empty">▤</span>';
+  return `<button type="button" class="pkg-warehouse-item" data-pkg-warehouse-id="${esc(e.id)}" ${available<=0?'disabled':''}>
+    <span class="pkg-warehouse-photo">${pic}</span><span class="pkg-warehouse-description"><strong>${esc(e.name)}</strong><small>${esc(e.eq_id||'Без EQ-ID')}${e.model?' · '+esc(e.model):''}</small></span><span class="pkg-warehouse-available">${available>0?'Доступно: '+available:'Недоступно'}</span>
+  </button>`;
+ }).join(''):'<p class="pkg-note">Обладнання не знайдено.</p>';
+}
+function chooseFromWarehouse(){
+ if(!selected)return;
+ // Remove stale cross-page picker state left by the earlier implementation.
+ sessionStorage.removeItem('harazd-packaging-picker');
+ sessionStorage.removeItem('harazd-packaging-picked');
+ $('addMethod').close();
+ $('pkgWarehouseSearch').value='';
+ renderWarehousePicker();
+ $('pkgWarehousePicker').showModal();
+ $('pkgWarehouseSearch').focus({preventScroll:true});
+}
+$('pkgWarehouseSearch').addEventListener('input',renderWarehousePicker);
+$('pkgWarehousePickerClose').addEventListener('click',()=>$('pkgWarehousePicker').close());
+$('pkgWarehouseChoices').addEventListener('click',async ev=>{
+ const btn=ev.target.closest('[data-pkg-warehouse-id]');if(!btn||btn.disabled)return;
+ const item=equipment.find(e=>e.id===btn.dataset.pkgWarehouseId);if(!item)return;
+ // Keep the selection window available if the user cancels the quantity prompt.
+ $('pkgWarehousePicker').close();
+ await chooseEquipment(item);
+});
 let qrScanner=null;
 async function stopQr(){if(qrScanner){try{await qrScanner.stop()}catch(e){}try{qrScanner.clear()}catch(e){}qrScanner=null}}
 async function startQr(){
