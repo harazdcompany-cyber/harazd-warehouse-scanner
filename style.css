@@ -756,3 +756,35 @@ body *::-webkit-scrollbar {
   border-color: #c66b7b !important;
   color: #ffd5dc !important;
 }
+
+/* V49.14 — mobile warehouse gallery controls only. */
+@media (max-width:700px) {
+  #warehouse .warehouse-filter-actions {
+    display:flex;
+    flex-direction:column;
+    flex-wrap:nowrap;
+    align-items:stretch !important;
+    width:100%;
+    min-width:0;
+    gap:10px;
+  }
+  #warehouse .warehouse-filter-actions .clear-filter-btn {
+    display:flex !important;
+    width:100%;
+    flex:0 0 44px;
+    justify-content:center !important;
+  }
+  #warehouse .warehouse-filter-actions .view-switch {
+    display:flex !important;
+    width:100%;
+    min-width:0;
+    flex:0 0 44px;
+    justify-content:stretch;
+  }
+  #warehouse .warehouse-filter-actions .view-switch button {
+    flex:1 1 50%;
+    width:50%;
+    min-width:0;
+    justify-content:center !important;
+  }
+}
