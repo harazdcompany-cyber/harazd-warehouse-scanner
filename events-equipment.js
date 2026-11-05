@@ -3,15 +3,28 @@
   const $ = id => document.getElementById(id);
   const dialog = $('eventEquipmentDialog');
   if (!dialog) return;
+
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
   const authorized = () => typeof session !== 'undefined' && !!session?.user?.id;
-  const notice = msg => { $('eventEquipmentNotice').textContent = msg || ''; };
-  let eventId = null, inventory = [], plan = [], loading = false, requestKey = 0;
   const methodDialog = $('eventAddMethodDialog');
   const scannerDialog = $('eventQrScanDialog');
-  let qrScanner = null, qrStopping = false, qrProcessing = false, methodBusy = false;
+
+  const notice = msg => { $('eventEquipmentNotice').textContent = msg || ''; };
   const methodNotice = text => { $('eventMethodNotice').textContent = text || ''; };
+
+  let eventId = null;
+  let inventory = [];
+  let plan = [];
+  let refs = {categories:[], subcategories:[], warehouses:[]};
+  let loading = false;
+  let requestKey = 0;
+  let qrScanner = null;
+  let qrStopping = false;
+  let qrProcessing = false;
+  let methodBusy = false;
+  let pickerView = localStorage.getItem('harazd-event-picker-view') === 'table' ? 'table' : 'cards';
+
   function normalizeEqId(code) {
     const raw = String(code || '').trim();
     const normalized = raw.match(/EQ-\d+/i);
@@ -21,6 +34,207 @@
     const eq = normalizeEqId(code);
     return inventory.find(item => String(item.eq_id || '').trim().toUpperCase() === eq);
   }
+  function lookupName(list, id, fallback = '—') {
+    return list.find(item => item.id === id)?.name || fallback;
+  }
+  function availableCount(item) {
+    const qty = Number(item?.quantity || 0);
+    const repair = Number(item?.repair_quantity || 0);
+    return Math.max(0, qty - repair);
+  }
+  function planQuantity(equipmentId) {
+    return plan.filter(row => row.equipment_id === equipmentId).reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
+  }
+  function statusInfo(item) {
+    const qty = Number(item?.quantity || 0);
+    const repair = Number(item?.repair_quantity || 0);
+    if (qty <= 0 || repair >= qty) return {cls:'repair', label:'На ремонті'};
+    if (repair > 0) return {cls:'partial', label:'Частково доступно'};
+    return {cls:'available', label:'Доступно'};
+  }
+  function photoMarkup(item) {
+    const url = String(item?.photo_url || '');
+    return /^https:\/\/[^\s"'<>]+$/i.test(url)
+      ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(item?.name || 'Обладнання')}" loading="lazy" referrerpolicy="no-referrer">`
+      : '<span class="event-picker-photo-empty" aria-hidden="true">◇</span>';
+  }
+  function locationMarkup(item) {
+    const rows = [
+      ['Склад', lookupName(refs.warehouses, item?.warehouse_id, 'Не вказано')],
+      ['Зона', item?.zone || '—'],
+      ['Стелаж', item?.rack || '—'],
+      ['Полиця', item?.shelf || '—']
+    ];
+    return rows.map(([label, value]) => `<div><span>${escapeHtml(label)}:</span><b>${escapeHtml(value)}</b></div>`).join('');
+  }
+  function locationText(item) {
+    return [lookupName(refs.warehouses, item?.warehouse_id, 'Не вказано'), item?.zone, item?.rack, item?.shelf].filter(Boolean).join(' / ') || 'Не вказано';
+  }
+  function searchFields(item) {
+    return [
+      item?.name,
+      item?.eq_id,
+      item?.model,
+      item?.description,
+      lookupName(refs.categories, item?.category_id, ''),
+      lookupName(refs.subcategories, item?.subcategory_id, ''),
+      lookupName(refs.warehouses, item?.warehouse_id, '')
+    ].map(v => String(v || '').toLocaleLowerCase('uk-UA'));
+  }
+  function compareItems(a, b, sort) {
+    const nameA = String(a?.name || '').localeCompare(String(b?.name || ''), 'uk');
+    if (sort === 'qty') return Number(b?.quantity || 0) - Number(a?.quantity || 0) || nameA;
+    if (sort === 'availability') return availableCount(b) - availableCount(a) || nameA;
+    if (sort === 'model') return String(a?.model || '').localeCompare(String(b?.model || ''), 'uk') || nameA;
+    if (sort === 'subcategory') {
+      const sub = lookupName(refs.subcategories, a?.subcategory_id, '').localeCompare(lookupName(refs.subcategories, b?.subcategory_id, ''), 'uk');
+      if (sub) return sub;
+      const cat = lookupName(refs.categories, a?.category_id, '').localeCompare(lookupName(refs.categories, b?.category_id, ''), 'uk');
+      if (cat) return cat;
+      return nameA;
+    }
+    return nameA;
+  }
+  function fillSelect(select, rows, placeholder, value = '') {
+    if (!select) return;
+    const previous = value || select.value || '';
+    select.replaceChildren(new Option(placeholder, ''), ...rows.map(row => new Option(row.name, row.id)));
+    if (previous && rows.some(row => row.id === previous)) select.value = previous;
+  }
+  function updatePickerHeader() {
+    const title = ($('eventDetailsTitle')?.textContent || '').trim();
+    $('eventPickerContext').textContent = title
+      ? `Вибір обладнання для листа погрузки івенту «${title}». Натисніть на позицію або кнопку «Додати».`
+      : 'Вибір обладнання для листа погрузки цього івенту. Натисніть на позицію або кнопку «Додати».';
+  }
+  function updateViewState() {
+    $('eventEquipmentCandidates').classList.toggle('hidden', pickerView === 'table');
+    $('eventEquipmentTableWrap').classList.toggle('hidden', pickerView !== 'table');
+    $('eventEquipmentViewCards').setAttribute('aria-pressed', String(pickerView === 'cards'));
+    $('eventEquipmentViewTable').setAttribute('aria-pressed', String(pickerView === 'table'));
+  }
+  function render() {
+    const categoryValue = $('eventEquipmentCategory').value;
+    fillSelect($('eventEquipmentCategory'), refs.categories, 'Усі категорії', categoryValue);
+    const subcategoryRows = refs.subcategories.filter(row => !categoryValue || row.category_id === categoryValue);
+    fillSelect($('eventEquipmentSubcategory'), subcategoryRows, 'Усі підкатегорії', $('eventEquipmentSubcategory').value);
+    fillSelect($('eventEquipmentWarehouse'), refs.warehouses, 'Усі склади', $('eventEquipmentWarehouse').value);
+
+    const q = $('eventEquipmentSearch').value.trim().toLocaleLowerCase('uk-UA');
+    const category = $('eventEquipmentCategory').value;
+    const subcategory = $('eventEquipmentSubcategory').value;
+    const warehouse = $('eventEquipmentWarehouse').value;
+    const sort = $('eventEquipmentSort').value || 'subcategory';
+
+    const filtered = inventory
+      .filter(item => (!category || item.category_id === category) && (!subcategory || item.subcategory_id === subcategory) && (!warehouse || item.warehouse_id === warehouse))
+      .filter(item => !q || searchFields(item).some(value => value.includes(q)))
+      .sort((a, b) => compareItems(a, b, sort));
+
+    const totalPlanItems = plan.length;
+    const totalPlanUnits = plan.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
+    $('eventEquipmentSummary').innerHTML = `<strong>${filtered.length}</strong><span>${filtered.length === 1 ? 'позиція' : 'позицій'}</span>`;
+    $('eventEquipmentPlanSummary').textContent = `Лист погрузки: ${totalPlanItems} позицій · ${totalPlanUnits} од.`;
+
+    const cards = filtered.map(item => {
+      const status = statusInfo(item);
+      const available = availableCount(item);
+      const total = Number(item.quantity || 0);
+      const percent = total > 0 ? Math.max(0, Math.min(100, Math.round((available / total) * 100))) : 0;
+      const inPlan = planQuantity(item.id);
+      const categoryName = lookupName(refs.categories, item.category_id, 'Без категорії');
+      const description = item.description || [item.manufacturer, item.model].filter(Boolean).join(' · ') || 'Опис не вказано';
+      return `<article class="event-picker-card">
+        <div class="event-picker-photo">${photoMarkup(item)}<span class="event-picker-photo-badge">${escapeHtml(categoryName)}</span></div>
+        <div class="event-picker-body">
+          <div class="event-picker-top"><span class="event-picker-id">${escapeHtml(item.eq_id || 'Без EQ-ID')}</span><span class="event-picker-status ${status.cls}">${escapeHtml(status.label)}</span></div>
+          <h3>${escapeHtml(item.name || 'Обладнання')}</h3>
+          <p class="event-picker-description">${escapeHtml(description)}</p>
+          <div class="event-picker-info">
+            <div class="event-picker-location">${locationMarkup(item)}</div>
+            <div class="event-picker-stock">
+              <div class="event-picker-stock-head"><div><small>Доступно</small><strong>${available} <em>/ ${total}</em></strong></div><span>${percent}%</span></div>
+              <div class="event-picker-progress"><i style="width:${percent}%"></i></div>
+            </div>
+          </div>
+          <div class="event-picker-foot">
+            <div>
+              <small>${escapeHtml(lookupName(refs.subcategories, item.subcategory_id, 'Без підкатегорії'))}</small>
+              ${inPlan ? `<span class="event-picker-note">У листі погрузки: ${inPlan} од.</span>` : ''}
+            </div>
+            ${canEdit() ? `<button type="button" class="primary" data-equip-add="${escapeHtml(item.id)}">${inPlan ? 'Додати ще' : 'Додати'}</button>` : ''}
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+
+    $('eventEquipmentCandidates').innerHTML = cards || '<div class="event-picker-empty">Обладнання не знайдено. Змініть запит або фільтри.</div>';
+
+    const rows = filtered.map(item => {
+      const available = availableCount(item);
+      const inPlan = planQuantity(item.id);
+      return `<tr>
+        <td><strong>${escapeHtml(item.name || 'Обладнання')}</strong><small>${escapeHtml(item.model || item.description || '')}</small></td>
+        <td class="event-picker-cell-id">${escapeHtml(item.eq_id || '—')}</td>
+        <td>${escapeHtml(lookupName(refs.categories, item.category_id, '—'))}<small>${escapeHtml(lookupName(refs.subcategories, item.subcategory_id, '—'))}</small></td>
+        <td>${escapeHtml(locationText(item))}</td>
+        <td class="event-picker-cell-qty">${available} / ${Number(item.quantity || 0)}${inPlan ? `<small>У листі: ${inPlan}</small>` : ''}</td>
+        <td class="event-picker-cell-action">${canEdit() ? `<button type="button" class="primary" data-equip-add="${escapeHtml(item.id)}">${inPlan ? 'Додати ще' : 'Додати'}</button>` : '—'}</td>
+      </tr>`;
+    }).join('');
+    $('eventEquipmentRows').innerHTML = rows || '<tr><td colspan="6" class="event-picker-empty-row">Обладнання не знайдено.</td></tr>';
+    updateViewState();
+  }
+
+  async function loadInventory() {
+    let rows = [];
+    let from = 0;
+    while (true) {
+      const {data, error} = await db.from('equipment')
+        .select('id,eq_id,name,model,description,quantity,repair_quantity,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf')
+        .order('name')
+        .range(from, from + 999);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < 1000) break;
+      from += 1000;
+      if (from >= 10000) break;
+    }
+    inventory = rows;
+  }
+  async function loadPlan() {
+    const {data, error} = await db.from('warehouse_event_equipment')
+      .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+      .eq('event_id', eventId)
+      .order('created_at');
+    if (error) throw error;
+    plan = data || [];
+  }
+  async function loadReferences() {
+    const [categoriesResp, subcategoriesResp, warehousesResp] = await Promise.all([
+      db.from('categories').select('id,name').order('name'),
+      db.from('subcategories').select('id,name,category_id').order('name'),
+      db.from('warehouses').select('id,name').order('name')
+    ]);
+    if (categoriesResp.error) throw categoriesResp.error;
+    if (subcategoriesResp.error) throw subcategoriesResp.error;
+    if (warehousesResp.error) throw warehousesResp.error;
+    refs = {
+      categories: categoriesResp.data || [],
+      subcategories: subcategoriesResp.data || [],
+      warehouses: warehousesResp.data || []
+    };
+  }
+  async function preload(force = false) {
+    const tasks = [];
+    if (force || !inventory.length) tasks.push(loadInventory());
+    else tasks.push(Promise.resolve());
+    tasks.push(loadPlan());
+    if (force || !refs.categories.length) tasks.push(loadReferences());
+    else tasks.push(Promise.resolve());
+    await Promise.all(tasks);
+  }
+
   async function stopScanner() {
     if (!qrScanner || qrStopping) return;
     qrStopping = true;
@@ -64,7 +278,9 @@
       const message = 'Не вдалося додати: ' + (error?.message || String(error));
       if (source === 'manual') methodNotice(message); else notice(message);
       return false;
-    } finally { methodBusy = false; }
+    } finally {
+      methodBusy = false;
+    }
   }
   function showMethod() {
     if (!canEdit() || !eventId || !authorized()) return;
@@ -87,110 +303,123 @@
       await qrScanner.start({facingMode:'environment'}, {fps:10, qrbox:230}, async code => {
         if (qrProcessing) return;
         const item = findByEqId(code);
-        if (!item) { $('eventQrNotice').textContent = 'EQ-ID не знайдено. Спробуйте інший QR-код.'; return; }
+        if (!item) {
+          $('eventQrNotice').textContent = 'EQ-ID не знайдено. Спробуйте інший QR-код.';
+          return;
+        }
         qrProcessing = true;
         await stopScanner();
         if (scannerDialog.open) scannerDialog.close();
-        try { await selectEquipment(item,'scan'); } finally { qrProcessing = false; }
+        try { await selectEquipment(item, 'scan'); } finally { qrProcessing = false; }
       }, () => {});
     } catch (error) {
       $('eventQrNotice').textContent = 'Не вдалося запустити камеру: ' + (error?.message || error);
     }
   }
+
   $('eventMethodClose').addEventListener('click', () => methodDialog.close());
   $('eventMethodManual').addEventListener('click', () => { $('eventManualPanel').hidden = false; $('eventManualEq').focus(); });
-  $('eventMethodWarehouse').addEventListener('click', () => { methodDialog.close(); if (!dialog.open) dialog.showModal(); });
+  $('eventMethodWarehouse').addEventListener('click', () => {
+    methodDialog.close();
+    updatePickerHeader();
+    notice('');
+    dialog.showModal();
+    $('eventEquipmentSearch').focus({preventScroll:true});
+    render();
+  });
   $('eventMethodScan').addEventListener('click', startScanner);
   $('eventManualConfirm').addEventListener('click', async () => {
     const item = findByEqId($('eventManualEq').value);
     if (!item) { methodNotice('EQ-ID не знайдено на складі.'); return; }
-    await selectEquipment(item,'manual');
+    await selectEquipment(item, 'manual');
   });
-  $('eventManualEq').addEventListener('keydown', e => { if (e.key === 'Enter') {e.preventDefault();$('eventManualConfirm').click();} });
+  $('eventManualEq').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      $('eventManualConfirm').click();
+    }
+  });
   $('eventScanClose').addEventListener('click', () => scannerDialog.close());
   scannerDialog.addEventListener('close', stopScanner);
 
-
-  function render() {
-    const q = $('eventEquipmentSearch').value.trim().toLocaleLowerCase('uk-UA');
-    const matches = inventory.filter(i => [i.name,i.eq_id,i.model].some(v => String(v ?? '').toLocaleLowerCase('uk-UA').includes(q))).slice(0,60);
-    $('eventEquipmentCandidates').innerHTML = matches.length ? matches.map(i => {
-      const existing = plan.find(x => x.equipment_id === i.id);
-      return `<div class="event-equip-row"><div class="event-equip-name"><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.eq_id || 'Без EQ-ID')} · ${escapeHtml(i.model||'')} · На складі: ${Number(i.quantity)||0}</small></div><div class="event-equip-actions">${existing ? '<small>У списку</small>' : canEdit() ? `<button type="button" data-equip-add="${escapeHtml(i.id)}">Додати</button>` : ''}</div></div>`;
-    }).join('') : '<div class="event-equip-empty">Обладнання не знайдено</div>';
-    $('eventEquipmentList').innerHTML = plan.length ? plan.map(p => {
-      const i = inventory.find(x => x.id === p.equipment_id);
-      return `<div class="event-equip-row"><div class="event-equip-name"><strong>${escapeHtml(i?.name || p.equipment?.name || 'Обладнання')}</strong><small>${escapeHtml(i?.eq_id || p.equipment?.eq_id || '')}</small></div><div class="event-equip-actions"><label>Кількість <input type="number" min="1" step="1" max="999999" value="${Number(p.quantity)||1}" data-equip-qty="${escapeHtml(p.equipment_id)}" ${canEdit()?'':'disabled'}></label>${canEdit() ? `<button type="button" class="event-equip-delete" data-equip-remove="${escapeHtml(p.equipment_id)}">Видалити</button>` : ''}</div></div>`;
-    }).join('') : '<div class="event-equip-empty">До планової комплектації ще нічого не додано</div>';
-  }
-
-  async function loadInventory() {
-    let rows = [], from = 0;
-    while (true) {
-      const {data,error} = await db.from('equipment').select('id,eq_id,name,model,quantity').order('name').range(from, from + 999);
-      if (error) throw error;
-      rows.push(...(data || []));
-      if (!data || data.length < 1000) break;
-      from += 1000;
-      if (from >= 10000) break;
-    }
-    inventory = rows;
-  }
-  async function loadPlan() {
-    const {data,error} = await db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id)').eq('event_id',eventId).order('created_at');
-    if (error) throw error;
-    plan = data || [];
-  }
   async function open(id) {
     if (!authorized() || !canEdit() || !id) return;
     const switching = eventId !== id;
     eventId = id;
     const key = ++requestKey;
+    updatePickerHeader();
     $('eventEquipmentSearch').value = '';
-    if (switching) { plan = []; inventory = []; }
-    $('eventEquipmentTitle').textContent = 'Вибрати зі складу';
-    methodNotice('');
+    $('eventEquipmentCategory').value = '';
+    $('eventEquipmentSubcategory').value = '';
+    $('eventEquipmentWarehouse').value = '';
+    $('eventEquipmentSort').value = 'subcategory';
+    if (switching) {
+      plan = [];
+      if (!inventory.length) refs = {categories:[], subcategories:[], warehouses:[]};
+    }
     showMethod();
-    if (switching || !inventory.length) {
-      methodNotice('Завантаження складу…');
-      try {
-        await Promise.all([loadInventory(), loadPlan()]);
-        if (key !== requestKey) return;
-        methodNotice(''); render();
-      } catch (e) {if (key === requestKey) methodNotice('Не вдалося завантажити: ' + (e?.message || e));}
-    } else {
-      try { await loadPlan(); if (key === requestKey) render(); }
-      catch (e) { if (key === requestKey) methodNotice('Не вдалося оновити лист: ' + (e?.message || e)); }
+    methodNotice('Завантаження складу…');
+    notice('');
+    try {
+      await preload(switching || !inventory.length || !refs.categories.length);
+      if (key !== requestKey) return;
+      methodNotice('');
+      render();
+    } catch (error) {
+      if (key === requestKey) methodNotice('Не вдалося завантажити: ' + (error?.message || error));
     }
   }
-  async function change(action) {
-    if (loading || !canEdit() || !eventId || !authorized()) return;
-    loading = true; notice('Збереження…');
-    try { await action(); await loadPlan(); notice('Збережено'); render(); }
-    catch (e) { notice('Помилка: ' + (e?.message || e)); }
-    finally { loading = false; }
-  }
 
-  $('eventEquipmentCandidates').addEventListener('click', e => {
-    const b = e.target.closest('[data-equip-add]'); if (!b) return;
-    const equipmentId = b.dataset.equipAdd;
-    if (!inventory.some(x => x.id === equipmentId) || plan.some(x => x.equipment_id === equipmentId)) return;
-    selectEquipment(inventory.find(item => item.id === equipmentId), 'warehouse');
-  });
-  $('eventEquipmentList').addEventListener('click', e => {
-    const b = e.target.closest('[data-equip-remove]'); if (!b) return;
-    const equipmentId = b.dataset.equipRemove;
-    if (!plan.some(x => x.equipment_id === equipmentId)) return;
-    change(async () => { const {error} = await db.from('warehouse_event_equipment').delete().eq('event_id',eventId).eq('equipment_id',equipmentId); if (error) throw error; });
-  });
-  $('eventEquipmentList').addEventListener('change', e => {
-    const input = e.target.closest('[data-equip-qty]'); if (!input) return;
-    const id = input.dataset.equipQty, qty = Number(input.value);
-    if (!Number.isSafeInteger(qty) || qty < 1 || qty > 999999) { notice('Вкажіть кількість від 1 до 999999'); render(); return; }
-    change(async () => { const {error} = await db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id',eventId).eq('equipment_id',id); if (error) throw error; });
-  });
   $('eventEquipmentSearch').addEventListener('input', render);
-  $('eventEquipmentRefresh').addEventListener('click', async () => { notice('Оновлення складу…'); try { await loadInventory(); notice(''); render(); } catch (e) { notice('Помилка: ' + e.message); } });
+  $('eventEquipmentCategory').addEventListener('change', () => {
+    $('eventEquipmentSubcategory').value = '';
+    render();
+  });
+  $('eventEquipmentSubcategory').addEventListener('change', render);
+  $('eventEquipmentWarehouse').addEventListener('change', render);
+  $('eventEquipmentSort').addEventListener('change', render);
+  $('eventEquipmentClear').addEventListener('click', () => {
+    $('eventEquipmentSearch').value = '';
+    $('eventEquipmentCategory').value = '';
+    $('eventEquipmentSubcategory').value = '';
+    $('eventEquipmentWarehouse').value = '';
+    $('eventEquipmentSort').value = 'subcategory';
+    render();
+  });
+  $('eventEquipmentViewCards').addEventListener('click', () => {
+    pickerView = 'cards';
+    localStorage.setItem('harazd-event-picker-view', pickerView);
+    updateViewState();
+  });
+  $('eventEquipmentViewTable').addEventListener('click', () => {
+    pickerView = 'table';
+    localStorage.setItem('harazd-event-picker-view', pickerView);
+    updateViewState();
+  });
+  $('eventEquipmentRefresh').addEventListener('click', async () => {
+    if (!authorized() || !eventId) return;
+    notice('Оновлення даних…');
+    try {
+      await preload(true);
+      notice('');
+      render();
+    } catch (error) {
+      notice('Не вдалося оновити дані: ' + (error?.message || error));
+    }
+  });
+  $('eventEquipmentCandidates').addEventListener('click', e => {
+    const button = e.target.closest('[data-equip-add]');
+    if (!button) return;
+    const item = inventory.find(entry => entry.id === button.dataset.equipAdd);
+    if (item) selectEquipment(item, 'warehouse');
+  });
+  $('eventEquipmentRows').addEventListener('click', e => {
+    const button = e.target.closest('[data-equip-add]');
+    if (!button) return;
+    const item = inventory.find(entry => entry.id === button.dataset.equipAdd);
+    if (item) selectEquipment(item, 'warehouse');
+  });
+
   const close = () => dialog.close();
   $('eventEquipmentClose').addEventListener('click', close);
   $('eventEquipmentDone').addEventListener('click', close);
@@ -202,7 +431,8 @@
     try {
       const response = await db.from('warehouse_event_equipment')
         .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
-        .eq('event_id',state.id).order('created_at');
+        .eq('event_id', state.id)
+        .order('created_at');
       if (response.error) throw response.error;
       if (state !== inlineState) return;
       state.plan = response.data || [];
@@ -212,15 +442,15 @@
     }
   });
 
-  let inlineState = null, inlineToken = 0;
+  let inlineState = null;
+  let inlineToken = 0;
   const inlineMessage = text => {
     if (inlineState?.host) {
-      const n = inlineState.host.querySelector('[data-inline-notice]');
-      if (n) n.textContent = text || '';
+      const node = inlineState.host.querySelector('[data-inline-notice]');
+      if (node) node.textContent = text || '';
     }
   };
 
-  // Compact loading manifest displayed inside the event details window.
   function renderInline() {
     const state = inlineState;
     if (!state || !state.host?.isConnected) return;
@@ -249,7 +479,6 @@
       </div>
       <p class="muted event-load-notice" data-inline-notice role="status" aria-live="polite"></p>`;
   }
-
   function bindInlineHost(state) {
     if (state.controller) state.controller.abort();
     state.controller = new AbortController();
@@ -262,22 +491,22 @@
       const remove = e.target.closest('[data-inline-remove]');
       if (remove && !state.busy) {
         const id = remove.dataset.inlineRemove;
-        updateInline(current => db.from('warehouse_event_equipment').delete().eq('event_id',current.id).eq('equipment_id',id));
+        updateInline(current => db.from('warehouse_event_equipment').delete().eq('event_id', current.id).eq('equipment_id', id));
       }
     }, {signal});
     state.host.addEventListener('change', e => {
       const field = e.target.closest('[data-inline-qty]');
       if (!field) return;
-      const id = field.dataset.inlineQty, qty = Number(field.value);
+      const id = field.dataset.inlineQty;
+      const qty = Number(field.value);
       if (!Number.isSafeInteger(qty) || qty < 1 || qty > 999999) {
         inlineMessage('Вкажіть кількість від 1 до 999999');
         field.value = String(state.plan.find(row => row.equipment_id === id)?.quantity || 1);
         return;
       }
-      updateInline(current => db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id',current.id).eq('equipment_id',id));
+      updateInline(current => db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id', current.id).eq('equipment_id', id));
     }, {signal});
   }
-
   async function mountInline(id, host) {
     if (!authorized() || !id || !host) return;
     unmountInline();
@@ -288,7 +517,7 @@
     try {
       const [inv, planned] = await Promise.all([
         db.from('equipment').select('id,eq_id,name,model,quantity').order('name').limit(10000),
-        db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)').eq('event_id',id).order('created_at')
+        db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)').eq('event_id', id).order('created_at')
       ]);
       if (inv.error) throw inv.error;
       if (planned.error) throw planned.error;
@@ -296,32 +525,34 @@
       inlineState.inventory = inv.data || [];
       inlineState.plan = planned.data || [];
       renderInline();
-    } catch (e) {
-      if (token === inlineToken && host.isConnected) host.textContent = 'Не вдалося завантажити лист погрузки: ' + (e?.message || e);
+    } catch (error) {
+      if (token === inlineToken && host.isConnected) host.textContent = 'Не вдалося завантажити лист погрузки: ' + (error?.message || error);
     }
   }
-
   const unmountInline = () => {
     inlineToken++;
     if (inlineState?.controller) inlineState.controller.abort();
     inlineState = null;
   };
-
   async function updateInline(action) {
     const state = inlineState;
     if (!state || state.busy || !canEdit() || !authorized()) return;
-    state.busy = true; inlineMessage('Збереження…');
+    state.busy = true;
+    inlineMessage('Збереження…');
     try {
       const {error} = await action(state);
       if (error) throw error;
-      const response = await db.from('warehouse_event_equipment').select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)').eq('event_id',state.id).order('created_at');
+      const response = await db.from('warehouse_event_equipment')
+        .select('id,event_id,equipment_id,quantity,equipment:equipment_id(name,eq_id,model)')
+        .eq('event_id', state.id)
+        .order('created_at');
       if (response.error) throw response.error;
       if (inlineState !== state) return;
       state.plan = response.data || [];
       renderInline();
       inlineMessage('Збережено');
-    } catch (e) {
-      if (inlineState === state) inlineMessage('Помилка: ' + (e?.message || e));
+    } catch (error) {
+      if (inlineState === state) inlineMessage('Помилка: ' + (error?.message || error));
     } finally {
       state.busy = false;
     }

@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
-let items=[],contents=[],plans=[],equipment=[],selected=null,session=null;
+let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards';
 const PKG_PHOTO_BUCKET='packaging-photos';let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false;
 function pkgPhotoReset(){if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
 function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;if(!url)return;const img=document.createElement('img');img.alt='Фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);}
@@ -17,7 +17,7 @@ function descendants(id){const found=[];const walk=p=>{for(const c of items.filt
 function allWeight(id,seen=new Set()){if(seen.has(id))return 0;seen.add(id);const p=items.find(x=>x.id===id);if(!p)return 0;const own=Number(p.empty_weight_kg||0);const eq=contents.filter(x=>x.packaging_id===id).reduce((sum,x)=>sum+Number(equipment.find(e=>e.id===x.equipment_id)?.weight||0)*Number(x.quantity),0);return own+eq+items.filter(x=>x.parent_id===id).reduce((sum,x)=>sum+allWeight(x.id,seen),0)}
 function pkgCardPhoto(p){const url=String(p.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<div class="pkg-card-photo"><img src="${esc(url)}" alt="Фото ${esc(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></div>`:'';}
 function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${contents.filter(x=>x.packaging_id===p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
-async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,weight,quantity,accounting_type,photo_url').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
+async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,model,description,weight,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
 async function edit(p){
  selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';
  if(p)for(const [k,v] of Object.entries(p)){const input=f.elements.namedItem(k);if(input&&v!=null)input.value=v}
@@ -109,14 +109,32 @@ function addDialog(){
  $('addMethod').showModal();
 }
 function findEq(code){const raw=String(code||'').trim();const normalized=raw.match(/EQ-\d+/i)?.[0]||raw;return equipment.find(x=>String(x.eq_id||'').toLowerCase()===normalized.toLowerCase())}
+function pickerLookup(list,id,fallback='—'){return list.find(x=>x.id===id)?.name||fallback}
+function pickerAvailable(e){return Math.max(0,Number(e?.quantity||0)-Number(e?.repair_quantity||0)-contents.filter(x=>x.equipment_id===e?.id).reduce((sum,x)=>sum+Number(x.quantity||0),0))}
+function pickerCurrentQty(equipmentId){return contents.filter(x=>x.packaging_id===selected?.id&&x.equipment_id===equipmentId).reduce((sum,x)=>sum+Number(x.quantity||0),0)}
+function pickerStatus(item){const qty=Number(item?.quantity||0),repair=Number(item?.repair_quantity||0);if(qty<=0||repair>=qty)return{cls:'repair',label:'На ремонті'};if(repair>0)return{cls:'partial',label:'Частково доступно'};return{cls:'available',label:'Доступно'}}
+function pickerPhoto(item){const url=String(item?.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<img src="${esc(url)}" alt="${esc(item?.name||'Обладнання')}" loading="lazy" referrerpolicy="no-referrer">`:'<span class="pkg-picker-photo-empty" aria-hidden="true">◇</span>'}
+function pickerLocationMarkup(item){const rows=[["Склад",pickerLookup(pkgPickerRefs.warehouses,item?.warehouse_id,'Не вказано')],["Зона",item?.zone||'—'],["Стелаж",item?.rack||'—'],["Полиця",item?.shelf||'—']];return rows.map(([label,value])=>`<div><span>${esc(label)}:</span><b>${esc(value)}</b></div>`).join('')}
+function pickerLocationText(item){return [pickerLookup(pkgPickerRefs.warehouses,item?.warehouse_id,'Не вказано'),item?.zone,item?.rack,item?.shelf].filter(Boolean).join(' / ')||'Не вказано'}
+function pickerFields(item){return [item?.name,item?.eq_id,item?.model,item?.description,pickerLookup(pkgPickerRefs.categories,item?.category_id,''),pickerLookup(pkgPickerRefs.subcategories,item?.subcategory_id,''),pickerLookup(pkgPickerRefs.warehouses,item?.warehouse_id,'')].map(v=>String(v||'').toLocaleLowerCase('uk-UA'))}
+function pickerCompare(a,b,sort){const byName=String(a?.name||'').localeCompare(String(b?.name||''),'uk');if(sort==='qty')return Number(b?.quantity||0)-Number(a?.quantity||0)||byName;if(sort==='availability')return pickerAvailable(b)-pickerAvailable(a)||byName;if(sort==='model')return String(a?.model||'').localeCompare(String(b?.model||''),'uk')||byName;if(sort==='subcategory'){const sub=pickerLookup(pkgPickerRefs.subcategories,a?.subcategory_id,'').localeCompare(pickerLookup(pkgPickerRefs.subcategories,b?.subcategory_id,''),'uk');if(sub)return sub;const cat=pickerLookup(pkgPickerRefs.categories,a?.category_id,'').localeCompare(pickerLookup(pkgPickerRefs.categories,b?.category_id,''),'uk');if(cat)return cat;return byName}return byName}
+function pickerFillSelect(id,rows,placeholder,value=''){const el=$(id);if(!el)return;const prev=value||el.value||'';el.replaceChildren(new Option(placeholder,''),...rows.map(row=>new Option(row.name,row.id)));if(prev&&rows.some(row=>row.id===prev))el.value=prev}
+async function loadPickerRefs(){if(pkgPickerRefs.categories.length&&pkgPickerRefs.subcategories.length&&pkgPickerRefs.warehouses.length)return;const [cats,subs,whs]=await Promise.all([db.from('categories').select('id,name').order('name'),db.from('subcategories').select('id,name,category_id').order('name'),db.from('warehouses').select('id,name').order('name')]);pkgPickerRefs={categories:check(cats),subcategories:check(subs),warehouses:check(whs)}}
+function updatePickerViewState(){$('pkgWarehouseChoices').classList.toggle('hidden',pkgPickerView==='table');$('pkgWarehouseTableWrap').classList.toggle('hidden',pkgPickerView!=='table');$('pkgWarehouseViewCards').setAttribute('aria-pressed',String(pkgPickerView==='cards'));$('pkgWarehouseViewTable').setAttribute('aria-pressed',String(pkgPickerView==='table'))}
+function updatePickerTarget(){if(!selected){$('pkgWarehouseTarget').textContent='Виберіть обладнання для поточного пакування';return;}$('pkgWarehouseTarget').textContent=`Вибір обладнання для ${selected.pk_id} · ${selected.name}. Натисніть на позицію або кнопку «Додати».`}
+function pickerNotice(text=''){$('pkgWarehouseNotice').textContent=text}
 async function chooseEquipment(e){
  if(!e||!selected)return;
  const personal=String(e.accounting_type||'').toLowerCase().includes('personal')||String(e.accounting_type||'').toLowerCase().includes('персон');
  const already=contents.filter(x=>x.equipment_id===e.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);
- const max=Math.max(0,Number(e.quantity||1)-already);
- if(max<=0)return msg('Усі одиниці цієї позиції вже розміщені в пакуваннях',true);
+ const max=Math.max(0,Number(e.quantity||1)-Number(e.repair_quantity||0)-already);
+ if(max<=0)return msg('Усі доступні одиниці цієї позиції вже розміщені в пакуваннях',true);
  if(personal&&already)return msg('Цей EQ-ID вже знаходиться в пакуванні',true);
- const answer=prompt(`${e.name} · ${e.eq_id}\nДоступно для пакування: ${max} шт.\nВкажіть кількість:`, '1');
+ const current=pickerCurrentQty(e.id);
+ const answer=prompt(`${e.name} · ${e.eq_id}
+Доступно для пакування: ${max} шт.
+${current?`У цьому пакуванні: ${current} шт.
+`:''}Вкажіть кількість:`, '1');
  if(answer===null)return;
  const count=Number(answer);
  if(!Number.isInteger(count)||count<1||count>max||(personal&&count!==1))return msg('Некоректна кількість',true);
@@ -124,45 +142,39 @@ async function chooseEquipment(e){
   const existing=contents.find(x=>x.packaging_id===selected.id&&x.equipment_id===e.id);
   if(existing)check(await db.from('packaging_contents').update({quantity:Number(existing.quantity)+count}).eq('id',existing.id).select());
   else check(await db.from('packaging_contents').insert({packaging_id:selected.id,equipment_id:e.id,quantity:count}).select());
-  $('addMethod').close();await reloadDetail();msg('Обладнання додано до пакування');
+  $('addMethod').close();await reloadDetail();if($('pkgWarehousePicker').open){renderWarehousePicker();$('pkgWarehouseSearch').focus({preventScroll:true});}msg('Обладнання додано до пакування');
  }catch(ex){msg(ex.message,true)}
 }
 async function addById(){const code=$('pkgEqId').value.trim();const e=findEq(code);if(!e)return msg('EQ-ID не знайдено на складі',true);await chooseEquipment(e)}
-// V49.42: select equipment inside packaging, without navigating to index.html
-// (index.html nested inside the embedded packaging iframe duplicated the site shell).
 function renderWarehousePicker(){
- const host=$('pkgWarehouseChoices');if(!host)return;
- const term=$('pkgWarehouseSearch').value.trim().toLocaleLowerCase('uk-UA');
- const filtered=equipment.filter(e=>[e.name,e.eq_id,e.model].some(v=>String(v||'').toLocaleLowerCase('uk-UA').includes(term))).slice(0,120);
- host.innerHTML=filtered.length?filtered.map(e=>{
-  const already=contents.filter(x=>x.equipment_id===e.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);
-  const available=Math.max(0,Number(e.quantity||0)-already);
-  const pic=/^https:\/\/[^\s"'<>]+$/i.test(e.photo_url||'')?`<img src="${esc(e.photo_url)}" alt="" loading="lazy">`:'<span class="pkg-warehouse-photo-empty">▤</span>';
-  return `<button type="button" class="pkg-warehouse-item" data-pkg-warehouse-id="${esc(e.id)}" ${available<=0?'disabled':''}>
-    <span class="pkg-warehouse-photo">${pic}</span><span class="pkg-warehouse-description"><strong>${esc(e.name)}</strong><small>${esc(e.eq_id||'Без EQ-ID')}${e.model?' · '+esc(e.model):''}</small></span><span class="pkg-warehouse-available">${available>0?'Доступно: '+available:'Недоступно'}</span>
-  </button>`;
- }).join(''):'<p class="pkg-note">Обладнання не знайдено.</p>';
+ const categoryValue=$('pkgWarehouseCategory').value;pickerFillSelect('pkgWarehouseCategory',pkgPickerRefs.categories,'Усі категорії',categoryValue);const subRows=pkgPickerRefs.subcategories.filter(row=>!categoryValue||row.category_id===categoryValue);pickerFillSelect('pkgWarehouseSubcategory',subRows,'Усі підкатегорії',$('pkgWarehouseSubcategory').value);pickerFillSelect('pkgWarehouseWarehouse',pkgPickerRefs.warehouses,'Усі склади',$('pkgWarehouseWarehouse').value);
+ const q=$('pkgWarehouseSearch').value.trim().toLocaleLowerCase('uk-UA'),category=$('pkgWarehouseCategory').value,subcategory=$('pkgWarehouseSubcategory').value,warehouse=$('pkgWarehouseWarehouse').value,sort=$('pkgWarehouseSort').value||'subcategory';
+ const filtered=equipment.filter(item=>(!category||item.category_id===category)&&(!subcategory||item.subcategory_id===subcategory)&&(!warehouse||item.warehouse_id===warehouse)).filter(item=>!q||pickerFields(item).some(v=>v.includes(q))).sort((a,b)=>pickerCompare(a,b,sort));
+ const packedPositions=contents.filter(x=>x.packaging_id===selected?.id).length,packedUnits=contents.filter(x=>x.packaging_id===selected?.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);$('pkgWarehouseSummary').innerHTML=`<strong>${filtered.length}</strong><span>${filtered.length===1?'позиція':'позицій'}</span>`;$('pkgWarehouseSelectionSummary').textContent=`У пакуванні: ${packedPositions} позицій · ${packedUnits} од.`;
+ $('pkgWarehouseChoices').innerHTML=filtered.length?filtered.map(item=>{const available=pickerAvailable(item),status=pickerStatus(item),total=Number(item.quantity||0),percent=total>0?Math.max(0,Math.min(100,Math.round((Math.max(0,total-Number(item.repair_quantity||0))/total)*100))):0,current=pickerCurrentQty(item.id),categoryName=pickerLookup(pkgPickerRefs.categories,item.category_id,'Без категорії'),description=item.description||[item.manufacturer,item.model].filter(Boolean).join(' · ')||'Опис не вказано';return `<article class="pkg-picker-card"><div class="pkg-picker-photo">${pickerPhoto(item)}<span class="pkg-picker-photo-badge">${esc(categoryName)}</span></div><div class="pkg-picker-body"><div class="pkg-picker-top"><span class="pkg-picker-id">${esc(item.eq_id||'Без EQ-ID')}</span><span class="pkg-picker-status ${status.cls}">${esc(status.label)}</span></div><h3>${esc(item.name||'Обладнання')}</h3><p class="pkg-picker-description">${esc(description)}</p><div class="pkg-picker-info"><div class="pkg-picker-location">${pickerLocationMarkup(item)}</div><div class="pkg-picker-stock"><div class="pkg-picker-stock-head"><div><small>Доступно</small><strong>${available} <em>/ ${total}</em></strong></div><span>${percent}%</span></div><div class="pkg-picker-progress"><i style="width:${percent}%"></i></div></div></div><div class="pkg-picker-foot"><div><small>${esc(pickerLookup(pkgPickerRefs.subcategories,item.subcategory_id,'Без підкатегорії'))}</small>${current?`<span class="pkg-picker-note">У цьому пакуванні: ${current} од.</span>`:''}</div><button type="button" class="primary" data-pkg-warehouse-id="${esc(item.id)}" ${available<=0?'disabled':''}>${current?'Додати ще':'Додати'}</button></div></div></article>`}).join(''):'<div class="pkg-picker-empty">Обладнання не знайдено. Змініть запит або фільтри.</div>';
+ $('pkgWarehouseRows').innerHTML=filtered.length?filtered.map(item=>{const available=pickerAvailable(item),current=pickerCurrentQty(item.id);return `<tr><td><strong>${esc(item.name||'Обладнання')}</strong><small>${esc(item.model||item.description||'')}</small></td><td class="pkg-picker-cell-id">${esc(item.eq_id||'—')}</td><td>${esc(pickerLookup(pkgPickerRefs.categories,item.category_id,'—'))}<small>${esc(pickerLookup(pkgPickerRefs.subcategories,item.subcategory_id,'—'))}</small></td><td>${esc(pickerLocationText(item))}</td><td class="pkg-picker-cell-qty">${available} / ${Number(item.quantity||0)}${current?`<small>У пакуванні: ${current}</small>`:''}</td><td class="pkg-picker-cell-action"><button type="button" class="primary" data-pkg-warehouse-id="${esc(item.id)}" ${available<=0?'disabled':''}>${current?'Додати ще':'Додати'}</button></td></tr>`}).join(''):'<tr><td colspan="6" class="pkg-picker-empty-row">Обладнання не знайдено.</td></tr>';
+ updatePickerViewState();
 }
-function chooseFromWarehouse(){
+async function chooseFromWarehouse(){
  if(!selected)return;
- // Remove stale cross-page picker state left by the earlier implementation.
  sessionStorage.removeItem('harazd-packaging-picker');
  sessionStorage.removeItem('harazd-packaging-picked');
  $('addMethod').close();
- $('pkgWarehouseSearch').value='';
- renderWarehousePicker();
- $('pkgWarehousePicker').showModal();
- $('pkgWarehouseSearch').focus({preventScroll:true});
+ updatePickerTarget();
+ pickerNotice('');
+ $('pkgWarehouseSearch').value='';$('pkgWarehouseCategory').value='';$('pkgWarehouseSubcategory').value='';$('pkgWarehouseWarehouse').value='';$('pkgWarehouseSort').value='subcategory';
+ try{await loadPickerRefs();renderWarehousePicker();$('pkgWarehousePicker').showModal();$('pkgWarehouseSearch').focus({preventScroll:true});}catch(e){msg('Не вдалося завантажити довідники: '+e.message,true)}
 }
 $('pkgWarehouseSearch').addEventListener('input',renderWarehousePicker);
+$('pkgWarehouseCategory').addEventListener('change',()=>{$('pkgWarehouseSubcategory').value='';renderWarehousePicker()});
+$('pkgWarehouseSubcategory').addEventListener('change',renderWarehousePicker);
+$('pkgWarehouseWarehouse').addEventListener('change',renderWarehousePicker);
+$('pkgWarehouseSort').addEventListener('change',renderWarehousePicker);
+$('pkgWarehouseClear').addEventListener('click',()=>{$('pkgWarehouseSearch').value='';$('pkgWarehouseCategory').value='';$('pkgWarehouseSubcategory').value='';$('pkgWarehouseWarehouse').value='';$('pkgWarehouseSort').value='subcategory';renderWarehousePicker()});
+$('pkgWarehouseViewCards').addEventListener('click',()=>{pkgPickerView='cards';localStorage.setItem('harazd-packaging-picker-view',pkgPickerView);updatePickerViewState()});
+$('pkgWarehouseViewTable').addEventListener('click',()=>{pkgPickerView='table';localStorage.setItem('harazd-packaging-picker-view',pkgPickerView);updatePickerViewState()});
 $('pkgWarehousePickerClose').addEventListener('click',()=>$('pkgWarehousePicker').close());
-$('pkgWarehouseChoices').addEventListener('click',async ev=>{
- const btn=ev.target.closest('[data-pkg-warehouse-id]');if(!btn||btn.disabled)return;
- const item=equipment.find(e=>e.id===btn.dataset.pkgWarehouseId);if(!item)return;
- // Keep the selection window available if the user cancels the quantity prompt.
- $('pkgWarehousePicker').close();
- await chooseEquipment(item);
-});
+for(const id of ['pkgWarehouseChoices','pkgWarehouseRows'])$(id).addEventListener('click',async ev=>{const btn=ev.target.closest('[data-pkg-warehouse-id]');if(!btn||btn.disabled)return;const item=equipment.find(e=>e.id===btn.dataset.pkgWarehouseId);if(!item)return;await chooseEquipment(item)});
 let qrScanner=null;
 async function stopQr(){if(qrScanner){try{await qrScanner.stop()}catch(e){}try{qrScanner.clear()}catch(e){}qrScanner=null}}
 async function startQr(){

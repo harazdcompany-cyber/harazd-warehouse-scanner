@@ -53,28 +53,101 @@
 .hd-select > select {height:1px!important;min-height:1px!important;max-height:1px!important;padding:0!important;}
 
 </style><style id="pkg-warehouse-picker-style">
-#pkgWarehousePicker{width:min(760px,calc(100vw - 24px));max-height:88dvh;overflow:auto;box-sizing:border-box;padding:22px;background:#121c28;color:#f2f7ff;border:1px solid #344a60;border-radius:18px}
+#pkgWarehousePicker{width:min(1520px,calc(100vw - 24px));max-height:min(94dvh,980px);overflow:hidden;box-sizing:border-box;padding:0;background:#121c28;color:#f2f7ff;border:1px solid #344a60;border-radius:24px}
 #pkgWarehousePicker::backdrop{background:rgba(0,0,0,.72)}
-#pkgWarehousePicker .pkg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-#pkgWarehousePicker .pkg-head h2{margin:0;font-size:22px}
-#pkgWarehousePickerClose{width:40px;height:40px;min-height:40px}
-#pkgWarehouseSearch{width:100%;height:40px;min-height:40px;box-sizing:border-box;margin:0 0 12px}
-#pkgWarehouseChoices{display:flex;flex-direction:column;gap:8px;max-height:calc(88dvh - 170px);overflow-y:auto}
-.pkg-warehouse-item{box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:72px;width:100%;text-align:left;border:1px solid #344a60;border-radius:12px;background:#172331;color:#f5f8ff;padding:8px 12px;cursor:pointer}
-.pkg-warehouse-item:not(:disabled):hover{border-color:#dfff00;background:#223448}
-.pkg-warehouse-item:disabled{opacity:.5;cursor:not-allowed}
-.pkg-warehouse-photo{width:56px;height:54px;display:flex;justify-content:center;align-items:center;flex:0 0 56px;background:#101924;border-radius:7px;overflow:hidden}
-.pkg-warehouse-photo img{width:100%;height:100%;object-fit:contain}
-.pkg-warehouse-photo-empty{font-size:24px;color:#9ab0c7}
-.pkg-warehouse-description{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
-.pkg-warehouse-description strong{overflow-wrap:anywhere;font-size:14px}
-.pkg-warehouse-description small{color:#a8bed4;overflow-wrap:anywhere;font-size:12px}
-.pkg-warehouse-available{white-space:nowrap;color:#dfff00;font-size:12px}
-@media(max-width:520px){#pkgWarehousePicker{padding:14px}.pkg-warehouse-item{gap:8px;padding:7px}.pkg-warehouse-available{font-size:11px}}
+#pkgWarehousePicker .pkg-picker-shell{padding:24px 26px 28px;max-height:inherit;overflow-y:auto}
+#pkgWarehousePicker .pkg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+#pkgWarehousePicker .pkg-head h2{margin:0;font-size:28px;line-height:1.1}
+#pkgWarehousePickerClose{width:64px;height:64px;min-height:64px;border-radius:16px;font-size:24px}
+#pkgWarehouseTarget{margin:0 0 16px;padding:14px 18px;border:1px solid #dff500;border-radius:14px;background:#223043;color:#eef6ff;font-size:15px;line-height:1.45}
+#pkgWarehouseSearch{width:100%;height:44px;min-height:44px;box-sizing:border-box;margin:0 0 12px}
+#pkgWarehousePicker .pkg-picker-filterbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#pkgWarehousePicker .pkg-picker-selects{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:12px;flex:1 1 780px}
+#pkgWarehousePicker .pkg-picker-selects select,#pkgWarehousePicker .pkg-picker-actions button,#pkgWarehousePicker .pkg-picker-view button{height:44px;min-height:44px;box-sizing:border-box}
+#pkgWarehousePicker .pkg-picker-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#pkgWarehousePicker .pkg-picker-actions button{white-space:nowrap}
+#pkgWarehousePicker .pkg-picker-view{display:inline-flex;gap:8px;background:#111b27;border:1px solid #304456;border-radius:14px;padding:6px}
+#pkgWarehousePicker .pkg-picker-view button{display:inline-flex;align-items:center;gap:8px;padding:0 16px;border-radius:10px}
+#pkgWarehousePicker .pkg-picker-view button[aria-pressed="true"]{background:#dff500;color:#0c1218;border-color:#dff500;font-weight:700}
+#pkgWarehousePicker .pkg-picker-summary{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0 18px}
+#pkgWarehousePicker .pkg-picker-summary>div{background:#172331;border:1px solid #304456;border-radius:14px;padding:12px 16px;color:#eef5ff}
+#pkgWarehouseSummary{display:flex;align-items:baseline;gap:8px}#pkgWarehouseSummary strong{font-size:20px;line-height:1}
+#pkgWarehouseSelectionSummary{color:#cbdced;font-size:14px}
+#pkgWarehouseChoices{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+#pkgWarehouseChoices .pkg-picker-empty{grid-column:1/-1;padding:34px 18px;border:1px dashed #3b5065;border-radius:18px;background:#111b27;color:#a9c3d9;text-align:center}
+#pkgWarehouseChoices .pkg-picker-card{display:flex;flex-direction:column;min-width:0;border:1px solid #304456;border-radius:20px;overflow:hidden;background:#182433}
+#pkgWarehouseChoices .pkg-picker-photo{position:relative;height:228px;background:radial-gradient(circle at top,#23344a 0%,#182433 54%,#121c28 100%);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#pkgWarehouseChoices .pkg-picker-photo img{width:100%;height:100%;object-fit:contain}
+#pkgWarehouseChoices .pkg-picker-photo-empty{font-size:48px;color:#9cb2c7}
+#pkgWarehouseChoices .pkg-picker-photo-badge{position:absolute;left:14px;bottom:14px;padding:6px 10px;border-radius:10px;border:1px solid #3a5167;background:#172331;color:#eef6ff;font-size:12px}
+#pkgWarehouseChoices .pkg-picker-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px;flex:1}
+#pkgWarehouseChoices .pkg-picker-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+#pkgWarehouseChoices .pkg-picker-id{color:#dff500;font-weight:700;font-size:13px;letter-spacing:.02em}
+#pkgWarehouseChoices .pkg-picker-status{padding:6px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
+#pkgWarehouseChoices .pkg-picker-status.available{background:#0f6b47;color:#e6ffef}
+#pkgWarehouseChoices .pkg-picker-status.partial{background:#6b6518;color:#fffbca}
+#pkgWarehouseChoices .pkg-picker-status.repair{background:#65323a;color:#ffd0d8}
+#pkgWarehouseChoices .pkg-picker-card h3{margin:0;font-size:18px;line-height:1.25;overflow-wrap:anywhere}
+#pkgWarehouseChoices .pkg-picker-description{margin:0;color:#b9ccde;font-size:13px;line-height:1.45;min-height:38px}
+#pkgWarehouseChoices .pkg-picker-info{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(120px,.9fr);gap:16px;align-items:start}
+#pkgWarehouseChoices .pkg-picker-location{display:grid;gap:7px;color:#d7e4f2;font-size:13px}
+#pkgWarehouseChoices .pkg-picker-location div{display:flex;gap:6px;align-items:flex-start}
+#pkgWarehouseChoices .pkg-picker-location span{color:#9bb0c4;min-width:58px}
+#pkgWarehouseChoices .pkg-picker-stock{display:grid;gap:10px}
+#pkgWarehouseChoices .pkg-picker-stock-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-end}
+#pkgWarehouseChoices .pkg-picker-stock-head small{display:block;color:#9bb0c4;font-size:12px}
+#pkgWarehouseChoices .pkg-picker-stock-head strong{font-size:18px;line-height:1.1}
+#pkgWarehouseChoices .pkg-picker-stock-head strong em{font-style:normal;font-size:14px;color:#adc2d6}
+#pkgWarehouseChoices .pkg-picker-stock-head span{color:#dff500;font-weight:700;font-size:14px}
+#pkgWarehouseChoices .pkg-picker-progress{height:8px;border-radius:999px;background:#101924;overflow:hidden}
+#pkgWarehouseChoices .pkg-picker-progress i{display:block;height:100%;background:#dff500;border-radius:999px}
+#pkgWarehouseChoices .pkg-picker-foot{margin-top:auto;padding-top:14px;border-top:1px solid #304053;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+#pkgWarehouseChoices .pkg-picker-foot small{color:#a4bbd0;font-size:13px}
+#pkgWarehouseChoices .pkg-picker-foot button{height:40px;min-height:40px;white-space:nowrap}
+#pkgWarehouseChoices .pkg-picker-foot button[disabled]{opacity:.55;cursor:not-allowed}
+#pkgWarehouseChoices .pkg-picker-note{display:block;color:#9bb0c4;font-size:12px;margin-top:2px}
+#pkgWarehouseTableWrap{margin-top:0;border:1px solid #304456;border-radius:16px;background:#111b27;overflow:auto}
+#pkgWarehouseTable{width:100%;min-width:900px;border-collapse:collapse;text-align:left;font-size:13px}
+#pkgWarehouseTable th{padding:14px 16px;background:#182533;color:#9fb6cc;font-size:12px;white-space:nowrap}
+#pkgWarehouseTable td{padding:12px 16px;border-top:1px solid #304053;vertical-align:top}
+#pkgWarehouseTable td strong{display:block;font-size:14px;overflow-wrap:anywhere}
+#pkgWarehouseTable td small{display:block;color:#9fb6cc;margin-top:4px;overflow-wrap:anywhere}
+#pkgWarehouseTable .pkg-picker-cell-id{white-space:nowrap;color:#dff500;font-weight:700}
+#pkgWarehouseTable .pkg-picker-cell-qty{white-space:nowrap}
+#pkgWarehouseTable .pkg-picker-cell-action{text-align:right;white-space:nowrap}
+#pkgWarehouseTable .pkg-picker-cell-action button{height:40px;min-height:40px}
+#pkgWarehouseTable .pkg-picker-cell-action button[disabled]{opacity:.55;cursor:not-allowed}
+#pkgWarehouseTable .pkg-picker-empty-row{text-align:center;color:#9fb6cc;padding:26px 16px}
+#pkgWarehouseNotice{margin:14px 0 0;min-height:20px}
+@media(max-width:1180px){#pkgWarehousePicker .pkg-picker-selects{grid-template-columns:repeat(2,minmax(180px,1fr));flex-basis:100%}}
+@media(max-width:860px){#pkgWarehousePicker{width:min(100vw - 16px,1520px)}#pkgWarehousePicker .pkg-picker-shell{padding:18px 16px 18px}#pkgWarehousePickerClose{width:54px;height:54px;min-height:54px;border-radius:14px}#pkgWarehouseChoices{grid-template-columns:1fr}}
+@media(max-width:680px){#pkgWarehousePicker .pkg-picker-selects{grid-template-columns:1fr}#pkgWarehousePicker .pkg-picker-actions{width:100%;justify-content:space-between}#pkgWarehousePicker .pkg-picker-actions>button{flex:1 1 auto}#pkgWarehousePicker .pkg-picker-view{width:100%;justify-content:stretch}#pkgWarehousePicker .pkg-picker-view button{flex:1 1 0;justify-content:center}#pkgWarehouseChoices .pkg-picker-info{grid-template-columns:1fr}}
+.hidden{display:none!important}
 </style></head><body><div class="shell"><aside class="side"><a href="index.html" class="brand"><img src="harazd-logo-white.png" alt=""><span>HARAZD<br>WAREHOUSE</span></a><nav><a href="index.html#warehouse">СКЛАД<small>Усі одиниці обладнання</small></a><a href="index.html#add">ДОДАТИ<small>Нове обладнання</small></a><a href="index.html#scanner">СКАНЕР<small>QR / штрихкод</small></a><a href="index.html#categories">ДОВІДНИК<small>Категорії та місця</small></a><a href="index.html#personnel">ПЕРСОНАЛ<small>Працівники</small></a><a href="index.html#events">ІВЕНТИ<small>Проєкти та виїзди</small></a><a class="active" href="packaging.html">ПАКУВАННЯ<small>Реки, кейси, палети</small></a><a href="vehicles.html">АВТОМОБІЛІ<small>Транспорт і документи</small></a><a href="index.html#repairs">РЕМОНТИ<small>Сервіс обладнання</small></a></nav></aside><main class="main"><header class="vehicle-topbar">Warehouse Management System</header><div class="vehicle-content"><div class="heading"><h1>Пакування</h1><button class="primary" id="add">＋ Додати пакування</button></div><div id="notice" class="notice hidden"></div><div class="toolbar"><input id="search" placeholder="Пошук за PK-ID, назвою, моделлю..."><select id="kind"><option value="">Усі типи</option><option value="rack">Реки</option><option value="case">Кейси</option><option value="box">Ящики</option><option value="pallet">Палети</option><option value="other">Інше</option></select><select id="mode"><option value="">Усі режими</option><option value="fixed">Постійна</option><option value="flex">Змінна</option></select></div><div id="stats" class="pkg-stats"></div><div id="list" class="pkg-grid"></div></div></main></div><dialog id="editor"><form id="form"><div class="pkg-head"><h2 id="formTitle">Нове пакування</h2><button type="button" class="ghost" data-close>✕</button></div><div class="pkg-photo-field"><label class="pkg-photo-label">Фото пакування</label><div class="pkg-photo-actions"><button type="button" id="pkgPhotoPick">＋ Додати фото з пристрою</button><button type="button" id="pkgPhotoCamera">▣ Камера</button><button type="button" id="pkgPhotoRemove" hidden>Видалити фото</button></div><input type="file" id="pkgPhotoFile" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="pkgPhotoCapture" accept="image/*" capture="environment" hidden><label class="pkg-photo-url-label">Або посилання на фото<input id="pkgPhotoUrl" type="url" placeholder="https://..."></label><div id="pkgPhotoPreview" class="pkg-photo-preview"></div><p class="pkg-note">JPG, PNG або WEBP, до 10 МБ. Одне головне фото.</p></div><div class="pkg-fields"><label>Назва *<input name="name" required maxlength="160"></label><label>Тип *<select name="kind"><option value="rack">Рек</option><option value="case">Кейс</option><option value="box">Ящик</option><option value="pallet">Палета</option><option value="other">Інше</option></select></label><label>Комплектація<select name="mode"><option value="fixed">Постійна</option><option value="flex">Змінна</option></select></label><label>Виробник<input name="manufacturer"></label><label>Модель<input name="model"></label><div class="pkg-editor-location wide"><label class="pkg-move-warehouse">Склад<select id="pkgEditWarehouse" required></select></label><div class="pkg-move-box"><h3>Місце зберігання</h3><p class="pkg-note">Послідовно виберіть розташування</p><div class="pkg-move-grid"><label>Зона<select id="pkgEditZone" required></select></label><label>Стелаж (необов'язково)<select id="pkgEditRack"></select></label><label>Полиця (необов'язково)<select id="pkgEditShelf"></select></label><label>Місце<select id="pkgEditPlace" required></select></label></div><p class="pkg-note" id="pkgEditHint">Спочатку оберіть склад.</p></div></div><label>Довжина, мм<input name="length_mm" type="number" min="0" step="any"></label><label>Ширина, мм<input name="width_mm" type="number" min="0" step="any"></label><label>Висота, мм<input name="height_mm" type="number" min="0" step="any"></label><label>Власна вага, кг<input name="empty_weight_kg" type="number" min="0" step="any"></label><label>Макс. навантаження, кг<input name="max_payload_kg" type="number" min="0" step="any"></label><label>Висота река, U<input name="rack_u" type="number" min="0" step="1"></label><label>Монтажна глибина, мм<input name="rack_depth_mm" type="number" min="0" step="any"></label><label class="wide">Опис<textarea name="description" rows="2"></textarea></label></div><div class="pkg-actions"><button type="button" data-close>Скасувати</button><button class="primary" type="submit">Зберегти</button></div></form></dialog><dialog id="details"><div class="pkg-head"><h2 id="detailTitle">Пакування</h2><button type="button" class="ghost" data-close>✕</button></div><div id="detailBody"></div></dialog><dialog id="pkgMoveDialog" class="pkg-location-dialog"><div class="pkg-head"><h2>Перемістити пакування</h2><button id="pkgMoveClose" type="button" class="ghost">✕</button></div><p id="pkgMoveDescription" class="pkg-note"></p><form id="pkgMoveForm"><label class="pkg-move-warehouse">Склад<select id="pkgMoveWarehouse" required></select></label><div class="pkg-move-box"><h3>Місце зберігання</h3><p class="pkg-note">Послідовно виберіть розташування</p><div class="pkg-move-grid"><label>Зона<select id="pkgMoveZone" required></select></label><label>Стелаж (необов'язково)<select id="pkgMoveRack"></select></label><label>Полиця (необов'язково)<select id="pkgMoveShelf"></select></label><label>Місце<select id="pkgMovePlace" required></select></label></div><p id="pkgMoveHint" class="pkg-note"></p></div><p class="pkg-note">Переміщення застосовується до пакування, вкладених пакувань і фактичного вмісту. Для частини кількісної позиції потрібен окремий облік розміщення.</p><div class="pkg-actions"><button type="button" id="pkgMoveCancel">Скасувати</button><button class="primary" id="pkgMoveSave" type="submit">Зберегти розташування</button></div></form></dialog><dialog id="pkgLabelDialog" class="pkg-label-dialog"><div class="pkg-head"><h2>Друк QR-наклейки</h2><button type="button" id="pkgLabelClose" class="ghost">✕</button></div><p id="pkgLabelName" class="pkg-note"></p><div id="pkgLabelPreview"></div><div class="pkg-label-controls"><label>Розмір<select id="pkgLabelSize"><option value="100x50" selected>Горизонтальна · 100 × 50 мм</option><option value="50x100">Вертикальна · 50 × 100 мм</option></select></label><label>Копії<input id="pkgLabelCopies" type="number" min="1" max="100" value="1"></label></div><div class="pkg-actions"><button type="button" id="pkgLabelDownload">↓ Завантажити наклейку (PNG)</button><button type="button" id="pkgLabelPrint" class="primary">Друкувати</button></div></dialog><dialog id="addMethod" class="pkg-method-dialog"><div class="pkg-head"><h2>Додати обладнання</h2><button type="button" class="ghost" onclick="document.getElementById('addMethod').close()">✕</button></div><p class="pkg-note">Виберіть спосіб додавання до поточного пакування</p><div class="pkg-methods"><button id="pkgManual" type="button">⌨ &nbsp; Ввести ID обладнання</button><button id="pkgCamera" type="button">▣ &nbsp; Сканувати QR-код</button><button id="pkgWarehouse" type="button">▤ &nbsp; Вибрати зі складу</button></div><div id="pkgManualPanel" hidden><label>EQ-ID обладнання<input id="pkgEqId" placeholder="EQ-000108" autocomplete="off"></label><button class="primary" id="pkgEqConfirm" type="button">Знайти та додати</button></div></dialog><dialog id="pkgWarehousePicker" aria-label="Вибрати обладнання зі складу">
-  <div class="pkg-head"><h2>Вибрати зі складу</h2><button id="pkgWarehousePickerClose" type="button" class="ghost" aria-label="Закрити">✕</button></div>
-  <input id="pkgWarehouseSearch" type="search" placeholder="Пошук за назвою, EQ-ID або моделлю…" autocomplete="off" aria-label="Пошук обладнання">
-  <div id="pkgWarehouseChoices" aria-live="polite"></div>
+  <div class="pkg-picker-shell">
+    <div class="pkg-head"><div><div class="detail-eyebrow">ПАКУВАННЯ / ДОДАТИ ОБЛАДНАННЯ</div><h2>Вибрати зі складу</h2><p class="pkg-note">Додавання до пакування змінює його фактичний вміст.</p></div><button id="pkgWarehousePickerClose" type="button" class="ghost" aria-label="Закрити">✕</button></div>
+    <div id="pkgWarehouseTarget">Виберіть обладнання для поточного пакування</div>
+    <input id="pkgWarehouseSearch" type="search" placeholder="Пошук за назвою, EQ-ID, моделлю, Barcode..." autocomplete="off" aria-label="Пошук обладнання">
+    <div class="pkg-picker-filterbar">
+      <div class="pkg-picker-selects">
+        <select id="pkgWarehouseCategory"><option value="">Усі категорії</option></select>
+        <select id="pkgWarehouseSubcategory"><option value="">Усі підкатегорії</option></select>
+        <select id="pkgWarehouseWarehouse"><option value="">Усі склади</option></select>
+        <select id="pkgWarehouseSort"><option value="subcategory">За підкатегоріями</option><option value="name">За назвою</option><option value="qty">За кількістю</option><option value="availability">Найбільше доступних</option><option value="model">За моделлю</option></select>
+      </div>
+      <div class="pkg-picker-actions">
+        <button id="pkgWarehouseClear" type="button"><span aria-hidden="true">×</span> Очистити фільтри</button>
+        <div class="pkg-picker-view" role="group" aria-label="Режим відображення">
+          <button id="pkgWarehouseViewCards" type="button" aria-pressed="true"><span aria-hidden="true">▣</span> Картки</button>
+          <button id="pkgWarehouseViewTable" type="button" aria-pressed="false"><span aria-hidden="true">☰</span> Таблиця</button>
+        </div>
+      </div>
+    </div>
+    <div class="pkg-picker-summary"><div id="pkgWarehouseSummary"><strong>0</strong><span>позицій</span></div><div id="pkgWarehouseSelectionSummary">У пакуванні: 0 позицій · 0 од.</div></div>
+    <div id="pkgWarehouseChoices" aria-live="polite"></div>
+    <div id="pkgWarehouseTableWrap" class="hidden"><table id="pkgWarehouseTable"><thead><tr><th>Обладнання</th><th>EQ-ID</th><th>Категорія</th><th>Склад / місце</th><th>Доступно</th><th></th></tr></thead><tbody id="pkgWarehouseRows"></tbody></table></div>
+    <p id="pkgWarehouseNotice" class="pkg-note" role="status"></p>
+  </div>
 </dialog><dialog id="pkgScan" class="pkg-method-dialog"><div class="pkg-head"><h2>Сканування QR-коду</h2><button id="pkgScanClose" type="button" class="ghost">✕</button></div><div id="pkgReader"></div><p class="pkg-note">Наведіть камеру на QR-код обладнання</p></dialog><div id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script id="pkg-dropdown-standalone-v4933">
 /* HARAZD dropdowns: progressive enhancement; original <select> stays the data source. */
 (()=>{
@@ -131,4 +204,4 @@
  document.addEventListener('DOMContentLoaded',()=>{scan();new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});});
 })();
 
-</script><script src="config.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="label-download.js?v=1"></script><script src="packaging.js?v=49.42-warehouse-picker"></script><script src="module-embed.js?v=49.23" defer></script></body></html>
+</script><script src="config.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="label-download.js?v=1"></script><script src="packaging.js?v=49.43-warehouse-picker"></script><script src="module-embed.js?v=49.23" defer></script></body></html>
