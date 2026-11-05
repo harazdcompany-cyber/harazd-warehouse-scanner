@@ -989,3 +989,32 @@ body *::-webkit-scrollbar {
   padding:32px 26px;
 }
 @media(max-width:650px){.content:has(> .embedded-module:not(.hidden)){padding:14px}}
+
+
+/* V49.25 — consistent sidebar navigation typography across every section.
+   The formerly separate module links now have the same title/description styling. */
+#nav > button,
+#nav > button.vehicle-nav-link {
+  color: #f3f6fc;
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 1.35;
+}
+#nav > button small,
+#nav > button.vehicle-nav-link small {
+  color: #8daaca;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+#nav > button.active,
+#nav > button.vehicle-nav-link.active {
+  color: #e6fa00;
+}
+@media (max-width:650px) {
+  #nav > button small, #nav > button.vehicle-nav-link small { display:none!important; }
+}
