@@ -33,7 +33,7 @@ function show(id){
  }
  if(id!=='scanner')stopScan();
  if(id==='personnel'&&session)staffLoad();
- if(id==='repairs'&&session)repairLoad();
+ if(id==='repairs'&&session)repairLoad();if(id==='events'&&session)window.harazdEvents?.load();
 }
 // Module pages share the current shell without navigating/reloading index.html.
 window.addEventListener('message',event=>{

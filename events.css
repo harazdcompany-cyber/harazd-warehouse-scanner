@@ -1,0 +1,31 @@
+/* HARAZD WAREHOUSE — Events / Stage 1 */
+#events .heading {align-items:center;gap:12px}
+#events .heading .primary {min-height:40px;height:40px;white-space:nowrap}
+.events-toolbar {display:grid;grid-template-columns:minmax(0,2fr) minmax(170px,1fr) minmax(170px,1fr);gap:12px;padding:18px;margin-bottom:16px}
+.events-toolbar input,.events-toolbar select,.event-dialog input,.event-dialog select {height:40px;min-height:40px;box-sizing:border-box;width:100%}
+.events-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;max-width:440px}
+.events-stats .panel {padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.events-stats strong {font-size:22px}.events-stats small {color:#a4bfd8}
+.events-notice:empty {display:none}
+.events-cards {display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:14px}
+.event-card {background:#17212e;border:1px solid #2e4357;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:15px;min-width:0}
+.event-card-head {display:flex;justify-content:space-between;align-items:start;gap:12px}
+.event-card-head strong {font-size:18px;overflow-wrap:anywhere}
+.event-state {border-radius:99px;padding:5px 10px;font-size:12px;white-space:nowrap;background:#263447;color:#d8e6f4}
+.event-state-done {background:#123e31;color:#67e5a3}.event-state-cancelled {background:#4e252a;color:#ffb0b2}
+.event-state-preparation,.event-state-installation,.event-state-live,.event-state-dismantling {background:#3a3417;color:#edeb75}
+.event-card-meta {display:flex;flex-wrap:wrap;gap:8px 18px;color:#b6cde1;font-size:13px}
+.event-client {color:#dbe7f5;font-size:14px}.event-notes {margin:0;color:#9fb6cc;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.event-card-foot {margin-top:auto;padding-top:12px;border-top:1px solid #304053;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.event-card-foot small {color:#9fb6cc;line-height:1.5}.event-card-foot button {height:40px;min-height:40px}
+.event-empty {grid-column:1/-1;padding:30px;color:#afc0d2;text-align:center}
+.event-dialog {width:min(720px,calc(100vw - 24px));max-height:min(90vh,850px);overflow-y:auto;box-sizing:border-box;border:1px solid #304456;background:#121c28;color:#f2f7ff;border-radius:18px;padding:24px}
+.event-dialog::backdrop {background:rgba(0,0,0,.72)}
+.event-dialog-heading {display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px}
+.event-dialog-heading h2 {margin:0}.event-dialog-heading button {height:40px;min-height:40px;width:40px;padding:0}
+.event-form-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.event-form-grid label {display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600}
+.event-form-grid .event-wide {grid-column:1/-1}
+.event-form-grid textarea {min-height:100px;resize:vertical;width:100%;box-sizing:border-box}
+.event-dialog .actions button {height:40px;min-height:40px}
+@media(max-width:760px){.events-toolbar {grid-template-columns:1fr;padding:14px}.events-stats {max-width:none}.events-cards {grid-template-columns:1fr}.event-form-grid {grid-template-columns:1fr}.event-dialog {padding:18px}.event-form-grid .event-wide {grid-column:auto}#events .heading {align-items:flex-start}#events .heading .primary {font-size:12px}}
