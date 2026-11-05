@@ -1119,3 +1119,28 @@ body *::-webkit-scrollbar {
 #categories #categoryList,
 #categories #subcategoryList,
 #categories #warehouseList {max-height:232px;}
+
+/* V49.30 — storage-location creation form: all controls exactly 40px. */
+#categories .location-create input,
+#categories .location-create select,
+#categories .location-create button,
+#categories .location-create .hd-trigger {
+  box-sizing:border-box !important;
+  height:40px !important;
+  min-height:40px !important;
+  max-height:40px !important;
+  padding-top:0 !important;
+  padding-bottom:0 !important;
+  line-height:normal;
+}
+#categories .location-create .hd-trigger {
+  display:flex;
+  align-items:center;
+  padding-left:16px !important;
+  padding-right:16px !important;
+}
+#categories .location-create button[type="submit"] {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
