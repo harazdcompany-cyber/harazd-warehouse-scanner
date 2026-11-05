@@ -978,3 +978,8 @@ body *::-webkit-scrollbar {
   .content:has(> .embedded-module:not(.hidden)) { padding:14px; }
   .embedded-module iframe { height:calc(100dvh - 48px - 28px); min-height:500px; }
 }
+
+/* V49.23: embedded pages share precisely the warehouse content geometry.
+   The iframe fills the same content box; its internal padding is disabled in each document. */
+.content:has(> .embedded-module:not(.hidden)){max-width:1660px;margin:0 auto;padding:32px clamp(18px,3.5vw,55px)}
+@media(max-width:650px){.content:has(> .embedded-module:not(.hidden)){padding:14px}}
