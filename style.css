@@ -887,3 +887,66 @@ body *::-webkit-scrollbar {
     text-align:center;
   }
 }
+
+
+/* V49.19 — shared login page layout: desktop and mobile. */
+#auth.panel {
+  width: min(100%, 520px);
+  max-width: 520px;
+  margin: clamp(22px, 7vh, 76px) auto 30px;
+  padding: clamp(22px, 3vw, 32px);
+  border-radius: 18px;
+  box-sizing: border-box;
+}
+#auth > h1 {
+  margin: 0 0 12px;
+  font-size: clamp(24px, 2.5vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+#auth > p {
+  margin: 0 0 24px;
+  color: #a6b6cb;
+  font-size: 14px;
+  line-height: 1.55;
+}
+#auth .auth-form { display: flex; flex-direction: column; gap: 18px; margin: 0; }
+#auth .auth-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+#auth .auth-form > label > input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 11px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+#auth .auth-form > button[type="submit"] {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin: 4px 0 0;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+@media (max-width: 650px) {
+  #auth.panel {
+    width: 100%;
+    max-width: 480px;
+    margin: 16px auto 24px;
+    padding: 24px 20px;
+  }
+  #auth > h1 { font-size: clamp(23px, 6vw, 28px); }
+}
