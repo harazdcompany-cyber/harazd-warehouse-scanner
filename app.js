@@ -283,8 +283,21 @@ function details(x){
  <div class="detail-foot">Оновлено: ${x.updated_at?esc(new Date(x.updated_at).toLocaleString('uk-UA')):'—'}</div>`;
  const dialog=$('#itemDialog');
  dialog.showModal();
- dialog.scrollTop=0;
- requestAnimationFrame(()=>{if(dialog.open)dialog.scrollTop=0;});
+ // Mobile Safari can scroll to the action buttons at the bottom while auto-focusing a dialog.
+ // Focus the dialog itself without scrolling, then reset after mobile viewport/layout settles.
+ dialog.tabIndex=-1;
+ dialog.style.overflowAnchor='none';
+ dialog.focus({preventScroll:true});
+ const itemId=x.id;
+ const resetCardTop=()=>{
+  if(!dialog.open||selected?.id!==itemId)return;
+  dialog.scrollTop=0;
+  $('#itemDetail').scrollTop=0;
+ };
+ resetCardTop();
+ requestAnimationFrame(()=>requestAnimationFrame(resetCardTop));
+ setTimeout(resetCardTop,100);
+ setTimeout(resetCardTop,300);
  window.harazdDocsOpen?.(x);
 }
 // EQ-ID QR labels: short payload intentionally matches the existing warehouse and packaging scanners.
