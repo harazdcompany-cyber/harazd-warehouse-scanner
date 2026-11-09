@@ -21,38 +21,14 @@ let session=null,items=[],categories=[],subcategories=[],warehouses=[],editing=n
 function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className=error?'error':'';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',5500)}
 const LAST_PAGE_KEY='harazd-last-page-v47';
 function savedPage(){const id=sessionStorage.getItem(LAST_PAGE_KEY);return $$('.page').some(p=>p.id===id)?id:'warehouse'}
-function show(id){
- if(!$$('.page').some(p=>p.id===id))id='warehouse';
- sessionStorage.setItem(LAST_PAGE_KEY,id);
- $$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));
- $$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
- // Each embedded module keeps its state when another section is selected.
- if(id==='packaging'||id==='vehicles'){
-   const frame=$('#'+id+'Frame');
-   if(frame&&!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);
- }
- if(id!=='scanner')stopScan();
- if(id==='personnel'&&session)staffLoad();
- if(id==='repairs'&&session)repairLoad();if(id==='events'&&session)window.harazdEvents?.load();
-}
-// Module pages share the current shell without navigating/reloading index.html.
-window.addEventListener('message',event=>{
- if(event.origin!==location.origin||!event.data||event.data.type!=='harazd:navigate')return;
- const from=[...document.querySelectorAll('.embedded-module iframe')].some(frame=>frame.contentWindow===event.source);
- if(!from||!current())return;
- const page=event.data.page;
- if(['warehouse','add','scanner','categories','personnel','events','repairs','packaging','vehicles'].includes(page)){
-   show(page);
-   window.scrollTo({top:0,behavior:'instant'});
- }
-});
+function show(id){if(!$$('.page').some(p=>p.id===id))id='warehouse';sessionStorage.setItem(LAST_PAGE_KEY,id);$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));$$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id!=='scanner')stopScan();if(id==='personnel'&&session)staffLoad();if(id==='repairs'&&session)repairLoad();}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function opts(el,data,placeholder,selectedValue=''){el.replaceChildren(new Option(placeholder,''),...data.map(x=>new Option(x.name,x.id)));el.value=selectedValue||''}
 function current(){return !!session}
 async function query(table,order='name'){let r=await db.from(table).select('*').order(order);if(r.error)throw r.error;return r.data||[]}
 async function loadReference(){[categories,subcategories,warehouses]=await Promise.all([query('categories'),query('subcategories'),query('warehouses')]);renderReference();await loadLocationNodes();refreshEquipmentLocations()}
 function renderReference(){
- opts($('#formCategory'),categories,'Оберіть категорію');opts($('#directoryCategory'),categories,'Оберіть категорію');opts($('#formWarehouse'),warehouses,'Оберіть склад');opts($('#categoryFilter'),categories,'Усі категорії',$('#categoryFilter').value);updateGallerySubcategories();opts($('#warehouseFilter'),warehouses,'Усі склади',$('#warehouseFilter').value);updateSubcategories();
+ opts($('#formCategory'),categories,'Оберіть категорію');opts($('#directoryCategory'),categories,'Оберіть категорію');opts($('#formWarehouse'),warehouses,'Оберіть склад');opts($('#categoryFilter'),categories,'Усі категорії',$('#categoryFilter').value);opts($('#warehouseFilter'),warehouses,'Усі склади',$('#warehouseFilter').value);updateSubcategories();
  const row=(table,x,label)=>`<div class="directory-entry"><span>${esc(label)}</span><button type="button" class="ref-edit" data-ref-table="${table}" data-ref-id="${esc(x.id)}" aria-label="Редагувати ${esc(label)}" title="Редагувати">✎</button></div>`;
  $('#categoryList').innerHTML=categories.map(x=>row('categories',x,x.name)).join('');
  $('#subcategoryList').innerHTML=subcategories.map(x=>row('subcategories',x,`${categories.find(c=>c.id===x.category_id)?.name||'—'} / ${x.name}`)).join('');
@@ -155,12 +131,6 @@ async function renameLocationNode(id){
  catch(err){toast('Помилка: '+err.message,true)}
 }
 
-// Gallery: filter subcategories by the chosen category; with no category, show all.
-function updateGallerySubcategories(){
- const category=$('#categoryFilter').value,filter=$('#subcategoryFilter');
- const available=subcategories.filter(x=>!category||String(x.category_id)===String(category));
- opts(filter,available,'Усі підкатегорії',filter.value);
-}
 function updateSubcategories(value=''){opts($('#formSubcategory'),subcategories.filter(x=>x.category_id===$('#formCategory').value),'Оберіть підкатегорію',value)}
 // V47: equipment is linked to the UUID of a final storage place.
 function locationChain(id){const chain=[],seen=new Set();let node=locationNodes.find(n=>n.id===id);while(node&&!seen.has(node.id)){seen.add(node.id);chain.unshift(node);node=locationNodes.find(n=>n.id===node.parent_id)}return chain}
@@ -231,7 +201,7 @@ function groupedInventory(visible){
  return result;
 }
 function renderItems(){
- const q=$('#search').value.trim().toLowerCase(),cat=$('#categoryFilter').value,subcat=$('#subcategoryFilter').value,wh=$('#warehouseFilter').value,sort=$('#sortFilter').value;
+ const q=$('#search').value.trim().toLowerCase(),cat=$('#categoryFilter').value,wh=$('#warehouseFilter').value,status=$('#statusFilter').value,sort=$('#sortFilter').value;
  const normalized=v=>String(v??'').trim().toLocaleLowerCase('uk');
  const categoryLabels=new Map(categories.map(c=>[c.id,c.name||'']));
  const subcategoryLabels=new Map(subcategories.map(c=>[c.id,c.name||'']));
@@ -241,17 +211,12 @@ function renderItems(){
   categoryLabels.get(x.category_id),subcategoryLabels.get(x.subcategory_id),warehouseLabels.get(x.warehouse_id)
  ].some(v=>normalized(v).includes(q));
  let visible=items.filter(x=>{
-  return (!cat||String(x.category_id)===cat)&&(!subcat||String(x.subcategory_id)===subcat)&&(!wh||String(x.warehouse_id)===wh)&&matchesSearch(x);
+  const qty=Number(x.quantity||0),repair=Number(x.repair_quantity||0);
+  const matchesStatus=!status||(status==='repair'?repair>0:qty>repair);
+  return (!cat||x.category_id===cat)&&(!wh||x.warehouse_id===wh)&&matchesStatus&&matchesSearch(x);
  });
  const compareNames=(a,b)=>String(a.name||'').localeCompare(String(b.name||''),'uk');
- // Items with the same subcategory stay together in both card and table views.
- // Equipment without a subcategory is placed at the end of this sorting mode.
- const compareSubcategories=(a,b)=>{
-  const aName=subcategoryLabels.get(a.subcategory_id)||'',bName=subcategoryLabels.get(b.subcategory_id)||'';
-  return (!aName?1:0)-(!bName?1:0)||aName.localeCompare(bName,'uk')||compareNames(a,b);
- };
- const compareItems=(a,b)=>sort==='subcategory'?compareSubcategories(a,b)
-  :sort==='qty'?Number(b.quantity||0)-Number(a.quantity||0)||compareNames(a,b)
+ const compareItems=(a,b)=>sort==='qty'?Number(b.quantity||0)-Number(a.quantity||0)||compareNames(a,b)
   :sort==='newest'?String(b.created_at||'').localeCompare(String(a.created_at||''))||compareNames(a,b)
   :sort==='availability'?(Number(b.quantity||0)-Number(b.repair_quantity||0))-(Number(a.quantity||0)-Number(a.repair_quantity||0))||compareNames(a,b)
   :sort==='model'?String(a.model||'').localeCompare(String(b.model||''),'uk')||compareNames(a,b)
@@ -300,28 +265,12 @@ function details(x){
  const row=(label,value)=>`<div class="detail-field"><span>${esc(label)}</span><strong>${esc(value??'—')}</strong></div>`;
  $('#itemDetail').innerHTML=`<div class="detail-heading"><div><div class="detail-eyebrow">КАРТКА ОБЛАДНАННЯ · ${esc(x.eq_id)}</div><h2>${esc(x.name)}</h2><p>${esc([x.manufacturer,x.model].filter(Boolean).join(' · ')||'Модель не вказана')}</p></div><span class="status ${x.repair_quantity?'repair':''}">${x.repair_quantity?'На ремонті':'Доступно'}</span></div>
  <div class="detail-hero"><div class="detail-photo">${safePhoto?`<img src="${esc(safePhoto)}" alt="Фото ${esc(x.name)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'<span class="detail-photo-empty">◇<small>Фото відсутнє</small></span>'}</div><div class="detail-metrics"><div><small>Всього</small><strong>${x.quantity}</strong></div><div><small>Доступно</small><strong>${available}</strong></div><div><small>На ремонті</small><strong>${x.repair_quantity}</strong></div></div></div>
- <div class="detail-section"><h3>Основна інформація</h3><div class="detail-grid">${row('Категорія',cat)}${row('Підкатегорія',sub)}${row('Тип обліку',x.accounting_type==='personal'?'Персональний':'Загальний')}${row('Одиниця виміру',x.unit)}${row('Вага / кг',x.weight)}${row('Опис',x.description)}</div></div>
+ <div class="detail-section"><h3>Основна інформація</h3><div class="detail-grid">${row('Категорія',cat)}${row('Підкатегорія',sub)}${row('Тип обліку',x.accounting_type==='personal'?'Персональний':'Загальний')}${row('Одиниця виміру',x.unit)}${row('Вага / кг',x.weight)}${row('Висота / U',x.rack_units == null ? '—' : x.rack_units+'U')}${row('Опис',x.description)}</div></div>
  ${Array.isArray(x.custom_fields)&&x.custom_fields.length?`<div class="detail-section"><h3>Додаткові характеристики</h3><div class="detail-grid">${x.custom_fields.map(f=>row(f.name,f.value)).join('')}</div></div>`:''}<div class="detail-section"><h3>Розміщення</h3><div class="detail-grid">${row('Склад',wh)}${row('Місце з довідника',x.location_id?locationLabel(x.location_id):'Не прив’язано')}${row('Зона',x.zone)}${row('Стелаж',x.rack)}${row('Полиця',x.shelf)}${row('Пакування',x.packaging)}</div></div>
  <div class="detail-section"><h3>Ідентифікація та вартість</h3><div class="detail-grid">${row('EQ-ID',x.eq_id)}${row('Серійний ID',x.serial)}${row('Barcode',x.barcode)}${row('QR',x.qr)}${row('Ціна / грн',Number(x.price||0).toLocaleString('uk-UA'))}${row('Оренда / доба',Number(x.rental_price||0).toLocaleString('uk-UA'))}</div></div>
  <div class="detail-section equipment-docs-section"><div class="equipment-docs-heading"><h3>Документи обладнання</h3><button type="button" id="equipmentDocsToggle">Документи ▾</button></div><div id="equipmentDocsPanel" hidden><p class="muted">Завантаження документів…</p></div></div>
  <div class="detail-foot">Оновлено: ${x.updated_at?esc(new Date(x.updated_at).toLocaleString('uk-UA')):'—'}</div>`;
- const dialog=$('#itemDialog');
- dialog.showModal();
- // Mobile Safari can scroll to the action buttons at the bottom while auto-focusing a dialog.
- // Focus the dialog itself without scrolling, then reset after mobile viewport/layout settles.
- dialog.tabIndex=-1;
- dialog.style.overflowAnchor='none';
- dialog.focus({preventScroll:true});
- const itemId=x.id;
- const resetCardTop=()=>{
-  if(!dialog.open||selected?.id!==itemId)return;
-  dialog.scrollTop=0;
-  $('#itemDetail').scrollTop=0;
- };
- resetCardTop();
- requestAnimationFrame(()=>requestAnimationFrame(resetCardTop));
- setTimeout(resetCardTop,100);
- setTimeout(resetCardTop,300);
+ $('#itemDialog').showModal();
  window.harazdDocsOpen?.(x);
 }
 // EQ-ID QR labels: short payload intentionally matches the existing warehouse and packaging scanners.
@@ -395,19 +344,26 @@ function equipmentQrPrint(){
  if(!popup){toast('Дозвольте спливні вікна для друку',true);return}
  popup.document.open();popup.document.write(equipmentQrDocument(equipmentQrItem,equipmentQrImage,copies,true));popup.document.close();
 }
-// Save the complete, print-sized label (QR + EQ-ID), not a QR-only image.
-// The exported PNG uses the exact same markup and layout as the print preview.
+// Export the EQ-ID as a high-resolution, black-on-white PNG with a full quiet zone.
+// The encoded text remains unchanged so all existing scanners keep working.
 async function equipmentQrDownload(){
  if(!equipmentQrItem||!equipmentQrImage){toast('QR-код ще не готовий',true);return}
- const frame=$('#equipmentQrPreview .eqr-preview-frame');
- const item=equipmentQrItem;
- const button=$('#equipmentQrDownload');
- button.disabled=true;
  try{
-  await window.harazdDownloadLabelPng(frame,'.eqr-print-page',
-   'HARAZD_LABEL_'+String(item.eq_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png');
- }catch(e){console.error('Equipment label export:',e);toast('Не вдалося завантажити наклейку: '+(e?.message||e),true)}
- finally{button.disabled=false}
+  const image=new Image();
+  if(image.decode){image.src=equipmentQrImage;await image.decode()}
+  else await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=equipmentQrImage});
+  const canvas=document.createElement('canvas');
+  const qrPixels=1024,margin=256;
+  canvas.width=canvas.height=qrPixels+2*margin;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('Не вдалося створити зображення');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(image,margin,margin,qrPixels,qrPixels);
+  const filename='HARAZD_QR_'+String(equipmentQrItem.eq_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png';
+  const link=document.createElement('a');link.download=filename;link.href=canvas.toDataURL('image/png');
+  document.body.appendChild(link);link.click();link.remove();
+ }catch(e){console.error('QR export:',e);toast('Не вдалося завантажити QR: '+(e?.message||e),true)}
 }
 function equipmentQrClose(){
  $('#equipmentQrDialog').close();
@@ -456,10 +412,11 @@ function extraAdd(name='',value=''){
  row.append(nameLabel,valueLabel,del);wrap.append(row);
 }
 function extraLoad(values){$('#equipmentExtraFields').replaceChildren();if(Array.isArray(values))values.forEach(x=>extraAdd(String(x?.name||''),String(x?.value||'')));}
-function resetForm(){window.harazdDocsResetPending?.();extraLoad([]);equipmentPhotoReset();editing=null;$('#equipmentForm').reset();$('#formTitle').textContent='Нове обладнання';$('#saveButton').textContent='Додати обладнання';updateSubcategories();$('#equipmentForm [name="quantity"]').disabled=false;$('#equipmentForm [name="accounting_type"]').disabled=false;refreshEquipmentLocations('');}
-function edit(x){window.harazdDocsResetPending?.();extraLoad(x.custom_fields);equipmentPhotoReset();editing=x;show('add');$('#formTitle').textContent='Редагування '+x.eq_id;$('#saveButton').textContent='Зберегти зміни';const form=$('#equipmentForm');Object.keys(x).forEach(k=>{const el=form.elements.namedItem(k);if(el&&'value'in el)el.value=x[k]??''});form.elements.namedItem('category_id').value=x.category_id||'';updateSubcategories(x.subcategory_id);form.elements.namedItem('warehouse_id').value=x.warehouse_id||'';refreshEquipmentLocations(x.location_id||'');if(!x.location_id){for(const k of ['zone','rack','shelf'])form.elements.namedItem(k).value=x[k]||'';}form.elements.namedItem('quantity').disabled=x.accounting_type==='personal';form.elements.namedItem('accounting_type').disabled=true;$('#itemDialog').close();equipmentPhotoPreview()}
+function syncRackEquipmentForm(){const toggle=$('#rackEquipmentEnabled'),wrap=$('#rackEquipmentUnitsWrap'),input=$('#rackEquipmentUnits');if(!toggle||!wrap||!input)return;const enabled=toggle.checked;wrap.hidden=!enabled;input.disabled=!enabled;input.required=enabled;if(!enabled)input.value='';}
+function resetForm(){window.harazdDocsResetPending?.();extraLoad([]);equipmentPhotoReset();editing=null;$('#equipmentForm').reset();$('#rackEquipmentEnabled').checked=false;syncRackEquipmentForm();$('#formTitle').textContent='Нове обладнання';$('#saveButton').textContent='Додати обладнання';updateSubcategories();$('#equipmentForm [name="quantity"]').disabled=false;$('#equipmentForm [name="accounting_type"]').disabled=false;refreshEquipmentLocations('');}
+function edit(x){window.harazdDocsResetPending?.();extraLoad(x.custom_fields);equipmentPhotoReset();editing=x;show('add');$('#formTitle').textContent='Редагування '+x.eq_id;$('#saveButton').textContent='Зберегти зміни';const form=$('#equipmentForm');Object.keys(x).forEach(k=>{const el=form.elements.namedItem(k);if(el&&'value'in el)el.value=x[k]??''});form.elements.namedItem('category_id').value=x.category_id||'';updateSubcategories(x.subcategory_id);form.elements.namedItem('warehouse_id').value=x.warehouse_id||'';refreshEquipmentLocations(x.location_id||'');if(!x.location_id){for(const k of ['zone','rack','shelf'])form.elements.namedItem(k).value=x[k]||'';}$('#rackEquipmentEnabled').checked=Number(x.rack_units)>0;syncRackEquipmentForm();if(Number(x.rack_units)>0)$('#rackEquipmentUnits').value=x.rack_units;form.elements.namedItem('quantity').disabled=x.accounting_type==='personal';form.elements.namedItem('accounting_type').disabled=true;$('#itemDialog').close();equipmentPhotoPreview()}
 function clean(v){return String(v||'').trim()||null}
-async function saveEquipment(e){e.preventDefault();const f=e.currentTarget, fd=new FormData(f), qty=editing?.accounting_type==='personal'?1:Number(fd.get('quantity'));if(!Number.isInteger(qty)||qty<1){toast('Перевірте кількість',true);return}const locationId=clean(fd.get('location_id'));if(editing?.location_id&&!locationId){toast('Оберіть місце зберігання для цього обладнання',true);return}if(locationId){const node=locationNodes.find(n=>n.id===locationId);if(!node||node.kind!=='place'||node.warehouse_id!==clean(fd.get('warehouse_id'))){toast('Оберіть коректне місце в обраному складі',true);return}}if(editing&&!locationId&&!editing.location_id){for(const k of ['zone','rack','shelf']){const el=f.elements.namedItem(k);if(el)el.value=editing[k]||'';}}const data={name:clean(fd.get('name')),description:clean(fd.get('description')),category_id:clean(fd.get('category_id')),subcategory_id:clean(fd.get('subcategory_id')),accounting_type:editing?.accounting_type||fd.get('accounting_type'),manufacturer:clean(fd.get('manufacturer')),model:clean(fd.get('model')),unit:clean(fd.get('unit'))||'шт.',quantity:qty,weight:Number(fd.get('weight')||0),warehouse_id:clean(fd.get('warehouse_id')),location_id:locationId,zone:clean(fd.get('zone')),rack:clean(fd.get('rack')),shelf:clean(fd.get('shelf')),packaging:clean(fd.get('packaging')),price:Number(fd.get('price')||0),rental_price:Number(fd.get('rental_price')||0),serial:clean(fd.get('serial')),photo_url:clean(fd.get('photo_url'))};const customFields=extraRows();if(customFields.some(x=>!x.name||!x.value)){toast('Заповніть назву та значення кожного додаткового пункту',true);return}data.custom_fields=customFields;if(!data.name||!data.category_id){toast('Заповніть назву та категорію',true);return}
+async function saveEquipment(e){e.preventDefault();const f=e.currentTarget, fd=new FormData(f), qty=editing?.accounting_type==='personal'?1:Number(fd.get('quantity'));if(!Number.isInteger(qty)||qty<1){toast('Перевірте кількість',true);return}const locationId=clean(fd.get('location_id'));if(editing?.location_id&&!locationId){toast('Оберіть місце зберігання для цього обладнання',true);return}if(locationId){const node=locationNodes.find(n=>n.id===locationId);if(!node||node.kind!=='place'||node.warehouse_id!==clean(fd.get('warehouse_id'))){toast('Оберіть коректне місце в обраному складі',true);return}}if(editing&&!locationId&&!editing.location_id){for(const k of ['zone','rack','shelf']){const el=f.elements.namedItem(k);if(el)el.value=editing[k]||'';}}const rackEnabled=$('#rackEquipmentEnabled').checked;const rackUnitsRaw=rackEnabled?String(fd.get('rack_units')||'').trim():'';if(rackEnabled&&!rackUnitsRaw){toast('Вкажіть висоту обладнання в юнітах (U)',true);return}const rackUnits=rackUnitsRaw===''?null:Number(rackUnitsRaw);if(rackUnits!==null&&(!Number.isSafeInteger(rackUnits)||rackUnits<1||rackUnits>100)){toast('Висота обладнання має бути від 1 до 100 U',true);return}const data={rack_units:rackUnits,name:clean(fd.get('name')),description:clean(fd.get('description')),category_id:clean(fd.get('category_id')),subcategory_id:clean(fd.get('subcategory_id')),accounting_type:editing?.accounting_type||fd.get('accounting_type'),manufacturer:clean(fd.get('manufacturer')),model:clean(fd.get('model')),unit:clean(fd.get('unit'))||'шт.',quantity:qty,weight:Number(fd.get('weight')||0),warehouse_id:clean(fd.get('warehouse_id')),location_id:locationId,zone:clean(fd.get('zone')),rack:clean(fd.get('rack')),shelf:clean(fd.get('shelf')),packaging:clean(fd.get('packaging')),price:Number(fd.get('price')||0),rental_price:Number(fd.get('rental_price')||0),serial:clean(fd.get('serial')),photo_url:clean(fd.get('photo_url'))};const customFields=extraRows();if(customFields.some(x=>!x.name||!x.value)){toast('Заповніть назву та значення кожного додаткового пункту',true);return}data.custom_fields=customFields;if(!data.name||!data.category_id){toast('Заповніть назву та категорію',true);return}
  for(const field of ['weight','price','rental_price']){if(!Number.isFinite(data[field])||data[field]<0){toast('Перевірте значення поля: '+({weight:'Вага',price:'Ціна',rental_price:'Оренда'}[field]),true);return}}
  if(data.subcategory_id&&!subcategories.some(x=>x.id===data.subcategory_id&&x.category_id===data.category_id)){toast('Підкатегорія не відповідає обраній категорії',true);return}
  const names=new Set();for(const field of customFields){const key=field.name.trim().toLocaleLowerCase('uk');if(names.has(key)){toast('Повторюється назва характеристики: '+field.name,true);return}names.add(key)}const btn=$('#saveButton');btn.disabled=true;let uploadedPhoto=null, equipmentSaved=false;try{if(equipmentPhotoFile){uploadedPhoto=await equipmentPhotoUpload(equipmentPhotoFile);data.photo_url=uploadedPhoto.url;}else if(equipmentPhotoRemove){data.photo_url=null;}let result;if(editing){result=await db.from('equipment').update(data).eq('id',editing.id).select('id');if(!result.error&&result.data.length!==1)throw Error('Запис не оновлено. Перевірте права доступу.');if(!result.error){const check=await db.from('equipment').select('id,name,updated_at').eq('id',editing.id).single();if(check.error||!check.data||check.data.name!==data.name)throw Error('Не вдалося підтвердити збереження у Supabase.')}}else{result=await db.rpc('create_equipment',{payload:data});}if(result.error)throw result.error;equipmentSaved=true;
@@ -471,7 +428,7 @@ async function saveEquipment(e){e.preventDefault();const f=e.currentTarget, fd=n
    if(lookup.error)throw lookup.error;
    createdIds=(lookup.data||[]).map(row=>row.id);
    if(createdIds.length!==eqIds.length)throw Error('Не знайдено всі одиниці групи');
-   const patch=await db.from('equipment').update({custom_fields:customFields}).in('id',createdIds).select('id');
+   const patch=await db.from('equipment').update({custom_fields:customFields,rack_units:rackUnits}).in('id',createdIds).select('id');
    if(patch.error)throw patch.error;
    if((patch.data||[]).length!==createdIds.length)throw Error('Характеристики не застосовано до всіх одиниць');
   }
@@ -731,9 +688,6 @@ async function stopScan(){
  $('#reader')?.classList.remove('scanner-focus-pulse');
  if(!scanBusy)scannerStatus('Камера вимкнена. Для нового сканування увімкніть її знову.');
 }
-
-// V49.17 — account remains in its original header; mobile placement is CSS-only.
-
 let appliedUserId=null;
 async function init(){
  if(!db){$('#setup').classList.remove('hidden');$$('.page').forEach(x=>x.classList.add('hidden'));return}
@@ -761,15 +715,14 @@ async function applySession(){
  if(appliedUserId===session.user.id)return;
  appliedUserId=session.user.id;
  $('#auth').classList.add('hidden');
- const emailLabel=document.createElement('span');emailLabel.className='user-email';emailLabel.textContent=session.user.email;
- $('#userPanel').replaceChildren(emailLabel);
+ $('#userPanel').replaceChildren(document.createTextNode(session.user.email+' '));
  const b=document.createElement('button');b.textContent='Вийти';
  b.onclick=()=>{sessionStorage.removeItem(LAST_PAGE_KEY);db.auth.signOut()};
  $('#userPanel').append(b);
- try{await loadReference();await loadItems();await staffLoadSelf();show('warehouse')}
+ try{await loadReference();await loadItems();await staffLoadSelf();show(savedPage())}
  catch(e){toast('Помилка підключення: '+e.message,true)}
 }
-$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';updateGallerySubcategories();$('#subcategoryFilter').value='';$('#warehouseFilter').value='';$('#sortFilter').value='subcategory';['#categoryFilter','#subcategoryFilter','#warehouseFilter','#sortFilter'].forEach(id=>$(id).dispatchEvent(new Event('change',{bubbles:true})))};$('#search').oninput=renderItems;$('#categoryFilter').onchange=()=>{updateGallerySubcategories();renderItems()};$('#subcategoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#formWarehouse').onchange=()=>refreshEquipmentLocations('');$('#equipmentZone').onchange=()=>refreshEquipmentRack();$('#equipmentRack').onchange=()=>refreshEquipmentShelf();$('#equipmentShelf').onchange=()=>refreshEquipmentPlace();$('#equipmentLocation').onchange=applyEquipmentLocation;$('#equipmentForm').onsubmit=saveEquipment;$('#equipmentExtraAdd').onclick=()=>extraAdd();$('#equipmentPhotoPick').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#equipmentPhotoFile').click();}});$('#equipmentPhotoFile').onchange=e=>equipmentPhotoChoose(e.target.files?.[0]);$('#equipmentPhotoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const url=e.currentTarget.value.trim();if(!/^https:\/\/[^\s<>"']+$/i.test(url)){toast('Вкажіть коректне HTTPS-посилання',true);return;}equipmentPhotoReset();$('#equipmentPhotoUrl').value=url;equipmentPhotoPreview();}});$('#equipmentPhotoUrl').addEventListener('input',()=>{if(equipmentPhotoFile){equipmentPhotoReset();}equipmentPhotoRemove=false;});$('#equipmentPhotoUrl').addEventListener('change',()=>{const url=$('#equipmentPhotoUrl').value.trim();if(/^https:\/\/[^\s<>"']+$/i.test(url))equipmentPhotoPreview();});$('#equipmentPhotoDeleteNo').onclick=()=>$('#equipmentPhotoDeleteDialog').close();$('#equipmentPhotoDeleteYes').onclick=()=>{equipmentPhotoReset();$('#equipmentPhotoUrl').value='';equipmentPhotoRemove=true;$('#equipmentPhotoDeleteDialog').close();};$('#equipmentPhotoLightboxClose').onclick=()=>$('#equipmentPhotoLightbox').close();$('#cancelEdit').onclick=()=>{if(editing){resetForm();show('warehouse');}else{resetForm();show('warehouse');}};$('#equipmentRows').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#scanPackageClose').onclick=()=>$('#scanPackageDialog').close();$('#deleteItem').onclick=askDeleteEquipment;$('#cancelDelete').onclick=()=>$('#deleteConfirmDialog').close();$('#confirmDelete').onclick=deleteEquipmentConfirmed;$('#editItem').onclick=()=>selected&&edit(selected);$('#printEquipmentQr').onclick=equipmentQrOpen;$('#equipmentQrPrint').onclick=equipmentQrPrint;$('#equipmentQrDownload').onclick=equipmentQrDownload;$('#equipmentQrClose').onclick=equipmentQrClose;$('#equipmentQrSize').onchange=equipmentQrPreviewRender;$('#equipmentQrDialog').addEventListener('close',()=>{if(equipmentQrObserver){equipmentQrObserver.disconnect();equipmentQrObserver=null}});$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#torchCamera').onclick=toggleScannerTorch;$('#scanDistanceMode').onclick=scannerToggleDistanceMode;$('#scanCameraChoice').onchange=scannerChooseCamera;$('#focusCamera').onclick=()=>scannerRefocus();$('#scanZoom').addEventListener('change',scannerSetZoom);$('#scanZoom').addEventListener('input',e=>{$('#scanZoomValue').textContent=Number(e.target.value).toFixed(1)+'×'});$('#reader').addEventListener('click',e=>{if(scanner?.isScanning&&!e.target.closest('button,input'))scannerRefocus(e)});$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
+$$('#nav button').forEach(b=>b.addEventListener('click',()=>{if(current())show(b.dataset.page)}));$('#refresh').onclick=loadItems;$('#clearFilters').onclick=()=>{$('#search').value='';$('#categoryFilter').value='';$('#warehouseFilter').value='';$('#statusFilter').value='';$('#sortFilter').value='name';renderItems()};$('#search').oninput=renderItems;$('#categoryFilter').onchange=renderItems;$('#warehouseFilter').onchange=renderItems;$('#statusFilter').onchange=renderItems;$('#sortFilter').onchange=renderItems;$('#goAdd').onclick=()=>{resetForm();show('add')};$('#viewCards').onclick=()=>{warehouseView='cards';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#viewTable').onclick=()=>{warehouseView='table';localStorage.setItem('harazd-warehouse-view',warehouseView);renderItems()};$('#equipmentCards').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const card=e.target.closest('[data-id]');if(card){const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}};$('#equipmentCards').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-id]');if(card){e.preventDefault();const x=items.find(x=>x.id===card.dataset.id);if(x)details(x)}}};$('#formCategory').onchange=()=>updateSubcategories();$('#formWarehouse').onchange=()=>refreshEquipmentLocations('');$('#equipmentZone').onchange=()=>refreshEquipmentRack();$('#equipmentRack').onchange=()=>refreshEquipmentShelf();$('#equipmentShelf').onchange=()=>refreshEquipmentPlace();$('#equipmentLocation').onchange=applyEquipmentLocation;$('#equipmentForm').onsubmit=saveEquipment;$('#rackEquipmentEnabled').addEventListener('change',syncRackEquipmentForm);syncRackEquipmentForm();$('#equipmentExtraAdd').onclick=()=>extraAdd();$('#equipmentPhotoPick').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#equipmentPhotoFile').click();}});$('#equipmentPhotoFile').onchange=e=>equipmentPhotoChoose(e.target.files?.[0]);$('#equipmentPhotoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const url=e.currentTarget.value.trim();if(!/^https:\/\/[^\s<>"']+$/i.test(url)){toast('Вкажіть коректне HTTPS-посилання',true);return;}equipmentPhotoReset();$('#equipmentPhotoUrl').value=url;equipmentPhotoPreview();}});$('#equipmentPhotoUrl').addEventListener('input',()=>{if(equipmentPhotoFile){equipmentPhotoReset();}equipmentPhotoRemove=false;});$('#equipmentPhotoUrl').addEventListener('change',()=>{const url=$('#equipmentPhotoUrl').value.trim();if(/^https:\/\/[^\s<>"']+$/i.test(url))equipmentPhotoPreview();});$('#equipmentPhotoDeleteNo').onclick=()=>$('#equipmentPhotoDeleteDialog').close();$('#equipmentPhotoDeleteYes').onclick=()=>{equipmentPhotoReset();$('#equipmentPhotoUrl').value='';equipmentPhotoRemove=true;$('#equipmentPhotoDeleteDialog').close();};$('#equipmentPhotoLightboxClose').onclick=()=>$('#equipmentPhotoLightbox').close();$('#cancelEdit').onclick=()=>{if(editing){resetForm();show('warehouse');}else{resetForm();show('warehouse');}};$('#equipmentRows').onclick=e=>{const bulk=e.target.closest('[data-group-edit]');if(bulk){window.harazdGroupEdit?.(decodeURIComponent(bulk.dataset.groupEdit));return;}const toggle=e.target.closest('[data-group]');if(toggle){const key=decodeURIComponent(toggle.dataset.group);expandedPersonalGroups.has(key)?expandedPersonalGroups.delete(key):expandedPersonalGroups.add(key);renderItems();return;}const row=e.target.closest('tr[data-id]');if(row){const x=items.find(x=>x.id===row.dataset.id);if(x)details(x)}};$('#closeDialog').onclick=()=>$('#itemDialog').close();$('#scanPackageClose').onclick=()=>$('#scanPackageDialog').close();$('#deleteItem').onclick=askDeleteEquipment;$('#cancelDelete').onclick=()=>$('#deleteConfirmDialog').close();$('#confirmDelete').onclick=deleteEquipmentConfirmed;$('#editItem').onclick=()=>selected&&edit(selected);$('#printEquipmentQr').onclick=equipmentQrOpen;$('#equipmentQrPrint').onclick=equipmentQrPrint;$('#equipmentQrDownload').onclick=equipmentQrDownload;$('#equipmentQrClose').onclick=equipmentQrClose;$('#equipmentQrSize').onchange=equipmentQrPreviewRender;$('#equipmentQrDialog').addEventListener('close',()=>{if(equipmentQrObserver){equipmentQrObserver.disconnect();equipmentQrObserver=null}});$('#scanFind').onclick=()=>findCode($('#scanSearch').value);$('#scanSearch').onkeydown=e=>{if(e.key==='Enter')findCode(e.target.value)};$('#startCamera').onclick=startScan;$('#stopCamera').onclick=stopScan;$('#torchCamera').onclick=toggleScannerTorch;$('#scanDistanceMode').onclick=scannerToggleDistanceMode;$('#scanCameraChoice').onchange=scannerChooseCamera;$('#focusCamera').onclick=()=>scannerRefocus();$('#scanZoom').addEventListener('change',scannerSetZoom);$('#scanZoom').addEventListener('input',e=>{$('#scanZoomValue').textContent=Number(e.target.value).toFixed(1)+'×'});$('#reader').addEventListener('click',e=>{if(scanner?.isScanning&&!e.target.closest('button,input'))scannerRefocus(e)});$('#categoryForm').onsubmit=e=>{e.preventDefault();addReference('categories',e.target)};$('#subcategoryForm').onsubmit=e=>{e.preventDefault();addReference('subcategories',e.target)};$('#warehouseForm').onsubmit=e=>{e.preventDefault();addReference('warehouses',e.target)};$('#categories').addEventListener('click',e=>{const b=e.target.closest('button.ref-edit');if(b)openReferenceEditor(b)});$('#referenceEditForm').onsubmit=saveReferenceEdit;$('#referenceCancel').onclick=()=>$('#referenceDialog').close();$('#locationCreateForm').onsubmit=createLocation;$('#locWarehouse').onchange=refreshLocationSelectors;$('#locType').onchange=refreshLocationSelectors;$('#locZone').onchange=refreshLocationSelectors;$('#locationTree').onclick=e=>{const b=e.target.closest('[data-node-edit]');if(b)renameLocationNode(b.dataset.nodeEdit)};$('#loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)toast(error.message,true)};init();
 
 // V48.1 — Personnel and permissions. Authorization is enforced in Supabase SQL.
 const STAFF_PERMISSIONS=[['equipment_view','Перегляд обладнання','Склад'],['equipment_add','Додавання обладнання','Склад'],['equipment_edit','Редагування обладнання','Склад'],['directory_manage','Категорії, склади та місця','Склад'],['events_create','Створення подій','Івенти'],['events_edit','Редагування подій','Івенти'],['packing_create','Створення листа пакування','Івенти'],['packing_dispatch','Видача за листом пакування','Івенти'],['packing_return','Повернення за листом пакування','Івенти'],['repairs_manage','Оформлення ремонтів','Ремонти'],['personnel_manage','Керування працівниками та доступами','Адміністрування']];
