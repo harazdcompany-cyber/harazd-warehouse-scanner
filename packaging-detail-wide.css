@@ -1,0 +1,148 @@
+/* HARAZD WAREHOUSE — V49.55
+   Layout-only adjustment for packaging detail modal.
+   No selectors/logic for editor, methods, QR dialog or warehouse picker. */
+#details {
+  width: min(1120px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  border: 1px solid #33495d;
+  border-radius: 22px;
+  background: #111c29;
+  box-shadow: 0 28px 100px rgba(0,0,0,.65);
+}
+#details[open] {
+  width: min(1120px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  max-height: min(94dvh, 1120px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+#details > .pkg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex: 0 0 auto;
+  padding: 23px 30px 20px;
+  margin: 0;
+  background: #111c29;
+  border-bottom: 1px solid #304357;
+}
+#details #detailTitle {
+  margin: 0;
+  color: #eef3fa;
+  font-size: clamp(23px, 2.25vw, 30px);
+  line-height: 1.25;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
+#details > .pkg-head button {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #395066;
+  border-radius: 12px;
+  background: #1a2a3b;
+  color: #eef4fc;
+  font-size: 20px;
+  transition: background .15s ease, border-color .15s ease;
+}
+#details > .pkg-head button:hover { background: #243b50; border-color: #67819a; }
+#details #detailBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 22px 30px 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+#details .pkg-card-photo {
+  margin: 0 0 19px;
+  width: 100%;
+  height: 230px;
+  border: 1px solid #25394c;
+  border-radius: 15px;
+  background: #08121d;
+}
+#details .pkg-card-photo img { width: 100%; height: 100%; object-fit: contain; }
+#details .pkg-muted {
+  margin: 0 0 18px;
+  color: #a7bdd0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+#details .pkg-tools {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0 0 22px;
+}
+#details .pkg-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+#details .pkg-section {
+  margin: 0 0 18px;
+  padding: 20px 22px;
+  border: 1px solid #304357;
+  border-radius: 16px;
+  background: #101b27;
+}
+#details .pkg-section:last-child { margin-bottom: 0; }
+#details .pkg-section h3 {
+  margin: 0 0 14px;
+  color: #f2f6fb;
+  font-size: 19px;
+  line-height: 1.35;
+}
+#details .pkg-section .pkg-note { color: #a8bdd0; }
+#details .pkg-row {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #2d4052;
+  border-radius: 12px;
+  background: #182637;
+}
+#details .pkg-row button { min-height: 40px; }
+#details .rack-chassis {
+  width: 100%;
+  max-width: none;
+  margin: 16px 0 20px;
+  box-sizing: border-box;
+  border-radius: 14px;
+}
+#details .rack-overview { margin: 6px 0 14px; gap: 9px; }
+#details .rack-overview span { padding: 10px 14px; }
+#details .rack-unit-list { padding: 10px 8px; }
+#details .rack-unit { min-width: 0; }
+#details .rack-unit-span .rack-equipment { padding-left: 17px; }
+#details .rack-empty-text { padding: 0 17px; }
+#details .rack-unplaced { margin: 16px 0; }
+@media (max-width: 760px) {
+  #details, #details[open] {
+    width: calc(100vw - 18px);
+    max-width: calc(100vw - 18px);
+    max-height: calc(100dvh - 18px);
+    border-radius: 16px;
+  }
+  #details > .pkg-head { padding: 16px 17px; gap: 12px; }
+  #details #detailTitle { font-size: 21px; }
+  #details #detailBody { padding: 15px 15px 22px; }
+  #details .pkg-card-photo { height: 175px; margin-bottom: 15px; }
+  #details .pkg-tools { gap: 8px; }
+  #details .pkg-tools button { flex: 1 1 auto; min-height: 40px; }
+  #details .pkg-section { padding: 14px 13px; margin-bottom: 12px; }
+  #details .pkg-section h3 { font-size: 17px; }
+  #details .rack-chassis { margin: 12px 0 15px; }
+  #details .rack-unit-list { padding: 7px 4px; }
+  #details .rack-unit-span .rack-equipment { padding-left: 8px; }
+  #details .rack-empty-text { padding: 0 8px; }
+}
