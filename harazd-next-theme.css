@@ -1,0 +1,121 @@
+/* HARAZD WAREHOUSE — NEXT DESIGN PREVIEW
+   Visual-only layer. Does not modify data, navigation or JS behavior.
+   Inspired by layered modern dark SaaS dashboards.
+*/
+:root {
+  --next-bg:#090e1a;
+  --next-surface:#151e30;
+  --next-surface-2:#1d2940;
+  --next-ink:#f5f7fb;
+  --next-muted:#a9b7cb;
+  --next-line:#344158;
+  --next-lime:#baff19;
+  --next-glow:rgba(186,255,25,.15);
+  color-scheme:dark;
+}
+body {background:radial-gradient(ellipse at 68% -25%,#253752 0%,transparent 60%),var(--next-bg)!important;color:var(--next-ink)}
+body::before {content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 80% 12%,rgba(60,86,131,.11),transparent 42%)}
+button,input,select,textarea {font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif}
+button,.primary,.hd-trigger {transition:background-color .15s,border-color .15s,box-shadow .15s,transform .15s}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {outline:2px solid var(--next-lime);outline-offset:2px}
+button:hover:not(:disabled){transform:translateY(-1px)}
+.primary,button.primary,#goAdd,#add.primary,#saveButton {
+  color:#0a1020!important;background:var(--next-lime)!important;border-color:var(--next-lime)!important;
+  border-radius:13px!important;font-weight:800;box-shadow:0 6px 23px rgba(186,255,25,.12);
+}
+.primary:hover,button.primary:hover,#goAdd:hover {background:#d1ff52!important;box-shadow:0 10px 26px rgba(186,255,25,.21)}
+
+/* Main shell: calm navy framing, soft sidebar, pill-style navigation */
+body>.sidebar,body>.shell>.side {background:linear-gradient(180deg,#111a2b,#0c1321 85%)!important;border-right:1px solid #26334a!important}
+.sidebar .brand,.side .brand{padding-top:8px;padding-bottom:25px}
+.sidebar nav, .side nav {gap:7px}
+.sidebar nav button,.side nav a {border-radius:13px!important;transition:background .15s,color .15s}
+.sidebar nav button:hover,.side nav a:hover{background:#202c42!important}
+.sidebar nav button.active,.side nav a.active {
+  border:1px solid rgba(186,255,25,.3)!important;border-left:3px solid var(--next-lime)!important;
+  background:linear-gradient(95deg,rgba(186,255,25,.16),rgba(186,255,25,.055))!important;
+  color:var(--next-lime)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.sidebar nav button small,.side nav a small {color:#98aac5!important}
+.sidebar-bottom {border:1px solid #2e3e53;background:#162238!important;border-radius:15px!important}
+body>main>header,.vehicle-topbar {background:rgba(13,20,33,.78)!important;border-bottom:1px solid #27364c!important;backdrop-filter:blur(12px)}
+.content {max-width:1760px!important;padding:28px clamp(18px,2.7vw,48px)!important}
+.heading {margin-bottom:22px!important;gap:16px}
+.heading h1,.page h1,.panel h1 {font-weight:800;letter-spacing:-.048em;color:#f8f9fc}
+#warehouse .heading h1{font-size:clamp(30px,3vw,45px)!important}
+
+/* Summary and filter surface */
+.panel {background:linear-gradient(145deg,#182438,#131c2d)!important;border:1px solid var(--next-line)!important;border-radius:22px!important;box-shadow:0 14px 40px rgba(0,0,0,.11)}
+#warehouse .stats {gap:14px;margin-bottom:18px}
+#warehouse .stats .panel {background:linear-gradient(120deg,#1d2b42,#172035)!important;border:1px solid #35445d!important;border-radius:21px!important;padding:21px 24px!important}
+#warehouse .stats .panel:before {background:var(--next-lime)!important;left:20px;right:20px;top:auto;bottom:0;width:auto;height:3px;opacity:.9}
+#warehouse .stats strong{color:var(--next-ink)!important;font-weight:800}
+#warehouse .inventory-panel {background:linear-gradient(150deg,#162135,#111c2d)!important;border-radius:26px!important;border:1px solid #34435b!important;padding:24px!important}
+#warehouse .warehouse-search input,#warehouse #search,
+#warehouse input[type="search"],.toolbar input {
+  min-height:44px;border-radius:13px!important;background:#0f192a!important;
+  border:1px solid #3a4c66!important;color:#f5f8ff!important;padding-left:18px!important;
+}
+#warehouse #search:focus,.toolbar input:focus {border-color:var(--next-lime)!important;box-shadow:0 0 0 3px var(--next-glow)!important}
+#warehouse .warehouse-filterbar{gap:12px!important}
+#warehouse .warehouse-filter-selects {gap:10px!important}
+#warehouse .warehouse-filter-selects select, #warehouse .warehouse-filter-actions button,
+#warehouse .hd-select>.hd-trigger {border-radius:13px!important}
+#warehouse .warehouse-filter-actions {gap:10px!important}
+#warehouse .clear-filter-btn{background:#1c2940!important;border-color:#3c4d67!important;border-radius:13px!important;color:#e3ebf7!important}
+#warehouse .view-switch {border-radius:999px!important;background:#0e1727!important;padding:4px!important;border:1px solid #384962!important}
+#warehouse .view-switch button {border-radius:999px!important;padding:8px 15px!important}
+#warehouse .view-switch button.selected {background:var(--next-lime)!important;color:#0a1020!important;box-shadow:0 0 18px rgba(186,255,25,.13)}
+#warehouse .hd-select .hd-menu,.hd-select .hd-menu {background:#1a273c!important;border-color:#43536a!important;border-radius:15px!important;box-shadow:0 20px 44px #0009!important}
+#warehouse .hd-option.hd-selected,.hd-select .hd-option.hd-selected {background:rgba(186,255,25,.14)!important;color:var(--next-lime)!important}
+
+/* Cards: premium layered panels, keep image prominence and actual card content */
+#warehouse .equipment-cards {gap:18px!important}
+#warehouse .equipment-card,#warehouse .gallery-card {background:linear-gradient(150deg,#1d2940,#151f30)!important;border:1px solid #3a4960!important;border-radius:22px!important;overflow:hidden;box-shadow:0 10px 32px #0002}
+#warehouse .equipment-card:hover,#warehouse .gallery-card:hover{border-color:rgba(186,255,25,.65)!important;transform:translateY(-3px);box-shadow:0 20px 40px #0005}
+#warehouse .card-photo,#warehouse .gallery-photo{background:radial-gradient(ellipse at 50% 40%,#344157,#1c2a40 65%,#151e2f)!important}
+#warehouse .gallery-body,#warehouse .card-main{padding:19px!important}
+#warehouse .gallery-body h3{font-size:21px;letter-spacing:-.035em}
+#warehouse .card-id,#warehouse .gallery-open{color:var(--next-lime)!important}
+#warehouse .gallery-progress span {background:linear-gradient(90deg,#97dd15,#caff21)!important}
+#warehouse .gallery-footer{border-color:#39475b!important}
+#warehouse .status{border-radius:999px!important}
+#warehouse table th {background:#25324a!important}
+#warehouse .table-wrap {border-radius:16px;overflow:auto}
+
+/* Forms and detail dialogs */
+.page form.panel,dialog {background:#172236!important;border:1px solid #3d4e66!important;border-radius:23px!important}
+.page form.panel {padding:26px!important}
+input:not([type="checkbox"]),select,textarea {border-radius:12px}
+input[type="checkbox"] {accent-color:var(--next-lime)}
+.dialog,.modal {color:var(--next-ink)}
+dialog::backdrop {background:rgba(1,6,13,.75)!important;backdrop-filter:blur(5px)}
+
+/* Packaging embedded module: same theme inside iframe, no layout duplication */
+body .shell {background:transparent}
+body .vehicle-content {color:var(--next-ink)}
+body .vehicle-content .heading h1 {font-size:clamp(30px,3vw,42px)!important}
+body .vehicle-content .toolbar,
+body .pkg-stats>*,body .pkg-grid>* {border-color:#3a4a62!important;border-radius:19px!important;box-shadow:0 10px 32px #0002}
+body .vehicle-content .toolbar{background:linear-gradient(140deg,#18253a,#121c2e)!important;padding:18px!important}
+body .pkg-grid>*{background:linear-gradient(145deg,#1b2a41,#151f32)!important;transition:transform .15s,border-color .15s}
+body .pkg-grid>*:hover{border-color:rgba(186,255,25,.6)!important;transform:translateY(-2px)}
+body #details{background:#182337!important;border:1px solid #3e516a!important;border-radius:25px!important}
+body #details .pkg-head{background:transparent}
+body .pkg-stats>*,body .pkg-overview>* {background:#1c2940!important}
+
+@media(max-width:900px) {
+  .content{padding:22px 18px!important}
+  #warehouse .stats .panel{padding:16px!important}
+}
+@media(max-width:650px) {
+  .sidebar{background:#0e1727!important}
+  .sidebar nav button{border-radius:12px!important}
+  #warehouse .inventory-panel{padding:14px!important;border-radius:19px!important}
+  #warehouse .equipment-cards{gap:12px!important}
+  #warehouse .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #warehouse .stats strong{font-size:28px!important}
+  .page form.panel{padding:16px!important}
+  .heading h1{font-size:28px!important}
+}
+@media(prefers-reduced-motion:reduce){button,.equipment-card,.gallery-card,.pkg-grid>*{transition:none!important}}
