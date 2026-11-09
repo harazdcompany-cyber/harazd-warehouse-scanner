@@ -1,0 +1,12 @@
+/* HARAZD Rack Units */
+.rack-overview{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;color:#c5d6e6;font-size:13px}.rack-overview span{border:1px solid #344a60;background:#172433;padding:9px 12px;border-radius:9px}
+.rack-chassis{border:6px solid #35465a;border-left-width:12px;border-right-width:12px;background:#09121d;border-radius:15px;overflow:hidden;max-width:760px;margin:12px auto 18px;box-shadow:0 12px 36px #0005}
+.rack-panel-top,.rack-panel-bottom{background:linear-gradient(#27384b,#172433);min-height:20px;display:flex;align-items:center;justify-content:center;color:#adbfce;font-size:11px;font-weight:800;letter-spacing:.16em}
+.rack-unit-list{display:flex;flex-direction:column;gap:3px;padding:8px 5px}
+.rack-unit{box-sizing:border-box;width:100%;min-height:53px;border:1px solid #304557;border-radius:5px;display:grid;grid-template-columns:60px 1fr;align-items:center;text-align:left;padding:0;color:#eaf2fb;background:#101b28;overflow:hidden;font-size:13px}
+.rack-unit .rack-number{height:100%;border-right:1px solid #304557;display:flex;align-items:center;justify-content:center;color:#91a9c1;font-weight:800;font-variant-numeric:tabular-nums}
+.rack-unit.free{cursor:pointer;border-style:dashed;background:#101b26;color:#a7bed2}.rack-unit.free:hover{border-color:#dff500;background:#1a2830;color:#dff500}
+.rack-empty-text{padding:0 14px}.rack-unit.occupied{border-color:#547588;background:#1d3240}.rack-equipment{padding:5px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}.rack-equipment strong{overflow-wrap:anywhere;font-size:13px}.rack-equipment small{color:#b1c7d8}.rack-continuation{color:#738ea4}
+.rack-empty-config{padding:18px;border:1px dashed #496174;border-radius:12px;color:#adbed0}
+.rack-unplaced{border-top:1px solid #304557;margin:16px 0;padding-top:12px}.rack-unplaced h4{margin:0 0 8px}.rack-unplaced-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:9px;border:1px solid #304557;border-radius:10px;margin:7px 0;color:#dae6f2}.rack-unplaced-row button{min-height:40px}
+@media(max-width:600px){.rack-unit{grid-template-columns:45px 1fr;min-height:48px}.rack-equipment{padding:4px 8px}.rack-empty-text{padding:0 8px}.rack-chassis{border-left-width:7px;border-right-width:7px}}
