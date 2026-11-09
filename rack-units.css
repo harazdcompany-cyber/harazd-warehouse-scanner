@@ -223,3 +223,26 @@
  }
  .rack-unit-list .rack-unit.occupied.rack-swap-target .rack-equipment{padding-right:116px}
 }
+
+/* V49.60: visible swap targets and actionable errors */
+.rack-unit-list .rack-unit.occupied.rack-swap-target{cursor:pointer}
+.rack-unit-list .rack-unit.occupied.rack-swap-target:hover{outline:2px solid #dff500;outline-offset:-2px}
+.rack-swap-error{margin:10px 0;padding:12px 14px;background:#442c36;color:#ffe7eb;border:1px solid #a85a68;border-radius:10px;font-size:13px}
+
+/* V49.61: Highlight occupied swap destinations exactly like available free destinations. */
+.rack-unit-list .rack-unit.occupied.rack-swap-target:not(.rack-is-moving) {
+  background: #1d302c;
+  border-color: #dff500;
+  color: #e8ff5a;
+  box-shadow: inset 0 0 0 1px #dff500;
+  cursor: pointer;
+}
+.rack-unit-list .rack-unit.occupied.rack-swap-target:not(.rack-is-moving) .rack-equipment strong,
+.rack-unit-list .rack-unit.occupied.rack-swap-target:not(.rack-is-moving) .rack-span-numbers .rack-number {
+  color: #e8ff5a;
+}
+.rack-unit-list .rack-unit.occupied.rack-swap-target:not(.rack-is-moving):is(:hover, :focus-within, .rack-drag-hover) {
+  background: #2b3f35;
+  box-shadow: inset 0 0 0 2px #dff500;
+  outline: none;
+}
