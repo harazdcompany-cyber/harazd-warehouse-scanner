@@ -119,3 +119,95 @@ body .pkg-stats>*,body .pkg-overview>* {background:#1c2940!important}
   .heading h1{font-size:28px!important}
 }
 @media(prefers-reduced-motion:reduce){button,.equipment-card,.gallery-card,.pkg-grid>*{transition:none!important}}
+
+/* STAGE 2 — LIGHT SECTIONS
+   White islands inside the navy dashboard, modeled after the supplied reference.
+   Visual-only: all application events and data flows remain untouched. */
+:root {
+  --next-white: #f7f9fd;
+  --next-white-raised: #ffffff;
+  --next-white-ink: #172136;
+  --next-white-muted: #5a687d;
+  --next-white-line: #e3e8f0;
+}
+
+/* A white framed gallery with dark equipment cards inside. */
+#warehouse .inventory-panel {
+  background: var(--next-white)!important;
+  border: 1px solid var(--next-white-line)!important;
+  box-shadow: 0 18px 58px rgba(0,0,0,.25),inset 0 1px 0 #fff!important;
+}
+#warehouse .inventory-panel .warehouse-filterbar,
+#warehouse .inventory-panel .warehouse-search {color:var(--next-white-ink)}
+#warehouse .inventory-panel .warehouse-filterbar {margin-bottom:16px}
+#warehouse .inventory-panel .warehouse-filter-actions .clear-filter-btn {
+  background:#eef2f8!important;
+  border:1px solid #d4dce9!important;
+  color:#26364c!important;
+}
+#warehouse .inventory-panel .warehouse-filter-actions .clear-filter-btn:hover {
+  background:#e2eaf4!important;
+}
+#warehouse .inventory-panel .view-switch {
+  background:#e8eef6!important;
+  border-color:#d4dce9!important;
+}
+#warehouse .inventory-panel .view-switch button:not(.selected) {
+  color:#26364c!important;
+}
+#warehouse .inventory-panel .view-switch button.selected {
+  background:var(--next-lime)!important;
+  color:#101923!important;
+}
+/* Keep searchable controls dark for high contrast, like the dark cards. */
+#warehouse .inventory-panel .warehouse-filter-selects select,
+#warehouse .inventory-panel .warehouse-filter-selects .hd-trigger,
+#warehouse .inventory-panel #search {
+  background:#172235!important;
+  color:#f7faff!important;
+  border-color:#394b65!important;
+}
+#warehouse .inventory-panel #search::placeholder {color:#a3b0c2!important}
+#warehouse .inventory-panel .inventory-table {border-color:var(--next-white-line)!important}
+#warehouse .inventory-panel .inventory-table table {background:#172235;color:#f5f7ff}
+#warehouse .inventory-panel .inventory-table table td {border-color:#34445c}
+
+/* White summary tiles become a second section; figures remain legible. */
+#warehouse .stats .panel {
+  background:var(--next-white-raised)!important;
+  border-color:var(--next-white-line)!important;
+  color:var(--next-white-muted)!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.16)!important;
+}
+#warehouse .stats .panel strong {color:var(--next-white-ink)!important}
+
+/* Packaging: a light filtering surface and light overview cards,
+   while equipment/flight-case cards retain their deep-blue treatment. */
+body .vehicle-content .toolbar {
+  background:var(--next-white)!important;
+  border-color:var(--next-white-line)!important;
+  color:var(--next-white-ink)!important;
+  box-shadow:0 18px 48px rgba(0,0,0,.2)!important;
+}
+body .vehicle-content .toolbar input,
+body .vehicle-content .toolbar select {
+  background:#172235!important;
+  border:1px solid #394b65!important;
+  color:#f7faff!important;
+}
+body .vehicle-content .toolbar input::placeholder {color:#a9b6c8!important}
+body .pkg-stats>* {
+  background:var(--next-white-raised)!important;
+  border:1px solid var(--next-white-line)!important;
+  color:var(--next-white-muted)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.14)!important;
+}
+body .pkg-stats>* strong,
+body .pkg-stats>* b {color:var(--next-white-ink)!important}
+
+/* Mobile retains the white/dark separation without creating horizontal overflow. */
+@media(max-width:650px) {
+  #warehouse .inventory-panel {padding:14px!important;border-radius:20px!important}
+  #warehouse .stats .panel {padding:14px!important}
+  body .vehicle-content .toolbar {padding:14px!important;border-radius:18px!important}
+}
