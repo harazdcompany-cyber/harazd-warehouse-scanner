@@ -10,3 +10,36 @@
 .rack-empty-config{padding:18px;border:1px dashed #496174;border-radius:12px;color:#adbed0}
 .rack-unplaced{border-top:1px solid #304557;margin:16px 0;padding-top:12px}.rack-unplaced h4{margin:0 0 8px}.rack-unplaced-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:9px;border:1px solid #304557;border-radius:10px;margin:7px 0;color:#dae6f2}.rack-unplaced-row button{min-height:40px}
 @media(max-width:600px){.rack-unit{grid-template-columns:45px 1fr;min-height:48px}.rack-equipment{padding:4px 8px}.rack-empty-text{padding:0 8px}.rack-chassis{border-left-width:7px;border-right-width:7px}}
+
+/* V49.48 — one seamless visual block for installed equipment spanning 2U or more */
+.rack-unit-list{--rack-row-height:53px;--rack-row-gap:3px}
+.rack-unit.occupied.rack-unit-span{
+  min-height:calc(var(--rack-row-height) * var(--rack-span) + var(--rack-row-gap) * (var(--rack-span) - 1));
+  height:calc(var(--rack-row-height) * var(--rack-span) + var(--rack-row-gap) * (var(--rack-span) - 1));
+  grid-template-columns:60px minmax(0,1fr);
+  align-items:stretch;
+  border-color:#638398;
+  background:#1d3544;
+}
+.rack-span-numbers{display:grid;grid-template-rows:repeat(var(--rack-span),minmax(0,1fr));border-right:1px solid #638398;min-height:0}
+.rack-span-numbers .rack-number{height:auto;border-right:0;display:flex;justify-content:center;align-items:center}
+.rack-span-numbers .rack-number + .rack-number{border-top:1px solid #364e60}
+.rack-unit-span .rack-equipment{justify-content:center;align-self:stretch;min-width:0;padding:8px 14px}
+@media(max-width:600px){
+ .rack-unit-list{--rack-row-height:48px}
+ .rack-unit.occupied.rack-unit-span{grid-template-columns:45px minmax(0,1fr)}
+ .rack-unit-span .rack-equipment{padding:6px 8px}
+}
+
+/* V49.49 — rack module repositioning */
+.rack-unit.occupied[draggable="true"]{cursor:grab}
+.rack-unit.occupied[draggable="true"]:active{cursor:grabbing}
+.rack-unit.rack-is-moving{border-color:#dff500;background:#263f49;box-shadow:inset 0 0 0 1px #dff500}
+.rack-move-button{align-self:flex-start;margin-top:5px;min-height:32px;padding:4px 11px;border:1px solid #658298;border-radius:8px;background:#192a3c;color:#f1f7ff;font-size:12px;cursor:pointer}
+.rack-move-button:hover{border-color:#dff500;color:#dff500}
+.rack-cancel-move{min-height:38px;padding:5px 12px;border-radius:9px}
+.rack-move-hint{color:#dbe9f3;background:#233746;border:1px solid #49697a;border-radius:9px;padding:11px 12px;margin:8px 0}
+.rack-unit.free.rack-move-target{border-color:#dff500;color:#e8ff5a;background:#1d302c;cursor:pointer}
+.rack-unit.free.rack-move-target:hover,.rack-unit.free.rack-drag-hover{box-shadow:inset 0 0 0 2px #dff500;background:#2b3f35}
+.rack-unit.free.rack-move-invalid{opacity:.45;cursor:not-allowed}
+@media(max-width:600px){.rack-move-button{font-size:11px;min-height:30px}.rack-unit-span .rack-equipment{gap:2px}}

@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
-let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null;
+let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null;
 const PKG_PHOTO_BUCKET='packaging-photos';let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false;
 function pkgPhotoReset(){if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
 function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;if(!url)return;const img=document.createElement('img');img.alt='Фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);}
@@ -17,7 +17,7 @@ function descendants(id){const found=[];const walk=p=>{for(const c of items.filt
 function allWeight(id,seen=new Set()){if(seen.has(id))return 0;seen.add(id);const p=items.find(x=>x.id===id);if(!p)return 0;const own=Number(p.empty_weight_kg||0);const eq=contents.filter(x=>x.packaging_id===id).reduce((sum,x)=>sum+Number(equipment.find(e=>e.id===x.equipment_id)?.weight||0)*Number(x.quantity),0);return own+eq+items.filter(x=>x.parent_id===id).reduce((sum,x)=>sum+allWeight(x.id,seen),0)}
 function pkgCardPhoto(p){const url=String(p.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<div class="pkg-card-photo"><img src="${esc(url)}" alt="Фото ${esc(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></div>`:'';}
 function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${contents.filter(x=>x.packaging_id===p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
-async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,model,description,weight,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
+async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,model,description,weight,rack_units,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
 async function edit(p){
  selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';
  if(p)for(const [k,v] of Object.entries(p)){const input=f.elements.namedItem(k);if(input&&v!=null)input.value=v}
@@ -95,22 +95,35 @@ function rackView(p,own){
  if(!units)return '<div class="rack-empty-config">Щоб відображати юніти, вкажіть висоту река (U) у параметрах картки.</div>';
  const rows=[];
  let used=0;
- for(let u=units;u>=1;u--){
+ // Each installed item is represented by ONE continuous block of its actual height.
+ for(let u=units;u>=1;){
   const record=own.find(x=>x.rack_start_u!=null&&x.rack_height_u!=null&&u>=Number(x.rack_start_u)&&u<Number(x.rack_start_u)+Number(x.rack_height_u));
-  const isTop=record&&u===Number(record.rack_start_u)+Number(record.rack_height_u)-1;
-  if(record){used++;rows.push(`<div class="rack-unit occupied" aria-label="U${u}: зайнято"><span class="rack-number">${u}U</span><div class="rack-equipment">${isTop?`<strong>${eqLabel(record.equipment_id)}</strong><small>${record.rack_height_u}U · ${record.rack_start_u}–${Number(record.rack_start_u)+Number(record.rack_height_u)-1}U</small>`:'<span class="rack-continuation">│</span>'}</div></div>`)}
-  else rows.push(`<button class="rack-unit free" type="button" data-rack-free="${u}" aria-label="Вільний юніт ${u}, додати обладнання"><span class="rack-number">${u}U</span><span class="rack-empty-text">＋ Вільно — додати обладнання</span></button>`);
+  if(record){
+   const start=Number(record.rack_start_u),height=Number(record.rack_height_u),top=start+height-1;
+   // Skip any inconsistent partial/overlapping record without breaking the rack view.
+   if(u!==top){u--;continue;}
+   used+=height;
+   const slotNumbers=Array.from({length:height},(_,i)=>top-i);
+   rows.push(`<div class="rack-unit occupied rack-unit-span${rackMovingId===record.id?' rack-is-moving':''}" style="--rack-span:${height}" draggable="true" data-rack-drag="${esc(record.id)}" aria-label="${esc(eqLabel(record.equipment_id))}: ${height}U, юніти ${start}–${top}"><div class="rack-span-numbers">${slotNumbers.map(n=>`<span class="rack-number">${n}U</span>`).join('')}</div><div class="rack-equipment"><strong>${eqLabel(record.equipment_id)}</strong><small>${height}U · юніти ${start}–${top}</small><button type="button" class="rack-move-button" data-rack-move="${esc(record.id)}">↕ Перемістити</button></div></div>`);
+   u=start-1;
+  }else{
+   const moving=own.find(x=>x.id===rackMovingId),canMove=!!moving&&!rackOccupied(u,Number(moving.rack_height_u),moving.id);
+   rows.push(`<button class="rack-unit free${moving?(canMove?' rack-move-target':' rack-move-invalid'):''}" type="button" data-rack-free="${u}" aria-label="${moving?(canMove?'Перемістити обладнання на юніт ':'Немає місця для переміщення на юніт '):'Вільний юніт '}${u}" ${moving&&!canMove?'disabled':''}><span class="rack-number">${u}U</span><span class="rack-empty-text">${moving?(canMove?'↓ Перемістити сюди':'Недостатньо вільних U'):'＋ Вільно — додати обладнання'}</span></button>`);
+   u--;
+  }
  }
  const notPlaced=own.filter(x=>x.rack_start_u==null||x.rack_height_u==null);
- return `<div class="rack-overview"><span>${units}U загалом</span><span>${used}U зайнято</span><span>${units-used}U вільно</span></div><div class="rack-chassis"><div class="rack-panel-top">REК · ${units}U</div><div class="rack-unit-list">${rows.join('')}</div><div class="rack-panel-bottom"></div></div>${notPlaced.length?`<div class="rack-unplaced"><h4>Не розміщено в юнітах (${notPlaced.length})</h4><p class="pkg-note">Раніше додане обладнання залишилося у пакуванні. Вкажіть для нього позицію та висоту в U.</p>${notPlaced.map(x=>`<div class="rack-unplaced-row"><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span>${Number(x.quantity)===1?`<button type="button" data-rack-place="${esc(x.id)}">Розмістити в реку</button>`:'<small>Для позиціонування потрібно по 1 шт. на рядок</small>'}</div>`).join('')}</div>`:''}`;
+ return `<div class="rack-overview"><span>${units}U загалом</span><span>${used}U зайнято</span><span>${units-used}U вільно</span>${rackMovingId?'<button type="button" class="rack-cancel-move" data-rack-cancel>Скасувати переміщення</button>':''}</div>${rackMovingId?'<p class="rack-move-hint">Виберіть підсвічений вільний юніт або перетягніть обладнання. Вибраний номер U — нижній слот блоку.</p>':''}<div class="rack-chassis"><div class="rack-panel-top">REК · ${units}U</div><div class="rack-unit-list">${rows.join('')}</div><div class="rack-panel-bottom"></div></div>${notPlaced.length?`<div class="rack-unplaced"><h4>Не розміщено в юнітах (${notPlaced.length})</h4><p class="pkg-note">Раніше додане обладнання залишилося у пакуванні. Вкажіть позицію в реку. Висота U береться з картки обладнання, якщо задана.</p>${notPlaced.map(x=>`<div class="rack-unplaced-row"><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span>${Number(x.quantity)===1?`<button type="button" data-rack-place="${esc(x.id)}">Розмістити в реку</button>`:'<small>Для позиціонування потрібно по 1 шт. на рядок</small>'}</div>`).join('')}</div>`:''}`;
 }
-function rackPlacement(excludeId=null){
+function rackPlacement(equipmentId=null,excludeId=null){
  const n=rackUnits(selected);
  if(!n){msg('Спочатку вкажіть висоту река (U) у параметрах пакування',true);return null}
- const heightRaw=prompt(`Скільки юнітів (U) займає обладнання? Рек ${n}U:`, '1');
+ const equipmentRecord=equipment.find(e=>e.id===equipmentId);
+ const savedHeight=equipmentRecord?.rack_units==null?null:Number(equipmentRecord.rack_units);
+ const heightRaw=savedHeight!==null?savedHeight:prompt(`Для цього обладнання не задано висоту U. Скільки юнітів займає обладнання? Рек ${n}U:`, '1');
  if(heightRaw===null)return null;
  const height=Number(heightRaw);
- if(!Number.isSafeInteger(height)||height<1||height>n){msg('Некоректна висота обладнання в U',true);return null}
+ if(!Number.isSafeInteger(height)||height<1||height>n){msg('Обладнання має недопустиму висоту U або не поміщається в рек',true);return null}
  const suggested=rackPendingStart!=null?Math.max(1,Math.min(n-height+1,rackPendingStart)):
   Array.from({length:n-height+1},(_,i)=>i+1).find(start=>!rackOccupied(start,height,excludeId));
  if(!suggested){msg('У реку немає вільної послідовності юнітів такої висоти',true);return null}
@@ -120,10 +133,22 @@ function rackPlacement(excludeId=null){
  if(rackOccupied(start,height,excludeId)){msg('Юніти зайняті або позиція виходить за межі река',true);return null}
  return {rack_start_u:start,rack_height_u:height};
 }
+async function rackMoveTo(rowId,newStart){
+ if(!selected||selected.kind!=='rack')return;
+ const row=contents.find(x=>x.id===rowId&&x.packaging_id===selected.id);
+ if(!row||row.rack_start_u==null||row.rack_height_u==null||Number(row.quantity)!==1){msg('Це обладнання неможливо перемістити між юнітами',true);return}
+ const start=Number(newStart),height=Number(row.rack_height_u);
+ if(!Number.isSafeInteger(start)||rackOccupied(start,height,row.id)){msg('Недостатньо суміжних вільних юнітів для переміщення',true);return}
+ if(start===Number(row.rack_start_u)){rackMovingId=null;details(selected);return}
+ try{
+  check(await db.from('packaging_contents').update({rack_start_u:start}).eq('id',row.id).eq('packaging_id',selected.id).select());
+  rackMovingId=null;await reloadDetail();msg(`Обладнання переміщено на юніти ${start}–${start+height-1}`);
+ }catch(err){msg('Не вдалося перемістити: '+(err?.message||err),true)}
+}
 function details(p){
  const detailDialog=$('details');
  const resetToTop=!detailDialog.open||selected?.id!==p.id;
- const pkgHero=pkgCardPhoto(p);if(selected?.id!==p.id)rackPendingStart=null;selected=p;$('detailTitle').textContent=`${p.pk_id} · ${p.name}`;const own=contents.filter(x=>x.packaging_id===p.id),plan=plans.filter(x=>x.packaging_id===p.id),children=items.filter(x=>x.parent_id===p.id),parent=items.find(x=>x.id===p.parent_id);const total=allWeight(p.id);$('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${own.length})</h3>${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||'<p class="pkg-note">Обладнання немає</p>'}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Планова комплектація (${plan.length})</h3>${plan.map(x=>`<div class="pkg-row"><span>${esc(x.item_name)} · ${fmt(x.quantity)} шт.</span><button data-planremove="${x.id}">Видалити</button></div>`).join('')||'<p class="pkg-note">План не заданий</p>'}<button id="addPlan">＋ Додати до плану</button></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><span>${esc(x.pk_id)} · ${esc(x.name)}</span><button data-child="${x.id}">Відкрити</button></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;detailDialog.showModal();if(resetToTop){
+ const pkgHero=pkgCardPhoto(p);if(selected?.id!==p.id){rackPendingStart=null;rackMovingId=null;}selected=p;$('detailTitle').textContent=`${p.pk_id} · ${p.name}`;const own=contents.filter(x=>x.packaging_id===p.id),plan=plans.filter(x=>x.packaging_id===p.id),children=items.filter(x=>x.parent_id===p.id),parent=items.find(x=>x.id===p.parent_id);const total=allWeight(p.id);$('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${own.length})</h3>${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||'<p class="pkg-note">Обладнання немає</p>'}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Планова комплектація (${plan.length})</h3>${plan.map(x=>`<div class="pkg-row"><span>${esc(x.item_name)} · ${fmt(x.quantity)} шт.</span><button data-planremove="${x.id}">Видалити</button></div>`).join('')||'<p class="pkg-note">План не заданий</p>'}<button id="addPlan">＋ Додати до плану</button></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><span>${esc(x.pk_id)} · ${esc(x.name)}</span><button data-child="${x.id}">Відкрити</button></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;detailDialog.showModal();if(resetToTop){
  // Mobile browsers may restore scroll position or focus an off-screen dialog control.
  // Both the outer dialog and its internal scroll area must start at the top.
  detailDialog.tabIndex=-1;
@@ -175,7 +200,7 @@ async function chooseEquipment(e){
   const available=pickerAvailable(e);
   if(available<1)return msg('Це обладнання недоступне для додавання в рек',true);
   if(contents.some(x=>x.packaging_id===selected.id&&x.equipment_id===e.id))return msg('Цей EQ-ID уже є у реку',true);
-  const placement=rackPlacement();
+  const placement=rackPlacement(e.id);
   if(!placement)return;
   const pk=selected.id;
   try{
@@ -461,8 +486,28 @@ async function deletePackaging(){
  finally{if(button?.isConnected)button.disabled=false}
 }
 
-$('detailBody').onclick=async e=>{const b=e.target.closest('button');if(!b||!selected)return;if(b.id==='editItem'){$('details').close();edit(selected)}else if(b.dataset.rackFree){rackPendingStart=Number(b.dataset.rackFree);addDialog()}
-else if(b.dataset.rackPlace){const row=contents.find(x=>x.id===b.dataset.rackPlace&&x.packaging_id===selected.id);if(!row||row.quantity!==1)return;const placement=rackPlacement(row.id);if(!placement)return;try{check(await db.from('packaging_contents').update(placement).eq('id',row.id).select());rackPendingStart=null;await reloadDetail()}catch(err){msg('Не вдалося розмістити: '+err.message,true)}}
+let rackDragId=null;
+$('detailBody').addEventListener('dragstart',e=>{
+ const block=e.target.closest('[data-rack-drag]');if(!block||!selected||selected.kind!=='rack')return;
+ rackDragId=block.dataset.rackDrag;rackMovingId=rackDragId;
+ e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',rackDragId);
+});
+$('detailBody').addEventListener('dragover',e=>{
+ const target=e.target.closest('[data-rack-free]');if(!target||!rackDragId||!selected||selected.kind!=='rack')return;
+ const row=contents.find(x=>x.id===rackDragId&&x.packaging_id===selected.id);
+ if(!row||rackOccupied(Number(target.dataset.rackFree),Number(row.rack_height_u),row.id))return;
+ e.preventDefault();e.dataTransfer.dropEffect='move';target.classList.add('rack-drag-hover');
+});
+$('detailBody').addEventListener('dragleave',e=>{const target=e.target.closest('[data-rack-free]');if(target)target.classList.remove('rack-drag-hover')});
+$('detailBody').addEventListener('drop',async e=>{
+ const target=e.target.closest('[data-rack-free]');if(!target||!rackDragId)return;
+ e.preventDefault();const id=rackDragId;rackDragId=null;await rackMoveTo(id,Number(target.dataset.rackFree));
+});
+$('detailBody').addEventListener('dragend',()=>{rackDragId=null;if(rackMovingId){rackMovingId=null;if(selected?.kind==='rack')details(selected)}});
+$('detailBody').onclick=async e=>{const b=e.target.closest('button');if(!b||!selected)return;if(b.id==='editItem'){$('details').close();edit(selected)}else if(b.dataset.rackCancel!==undefined){rackMovingId=null;details(selected)}
+else if(b.dataset.rackMove){rackMovingId=rackMovingId===b.dataset.rackMove?null:b.dataset.rackMove;details(selected)}
+else if(b.dataset.rackFree){if(rackMovingId)await rackMoveTo(rackMovingId,Number(b.dataset.rackFree));else{rackPendingStart=Number(b.dataset.rackFree);addDialog()}}
+else if(b.dataset.rackPlace){const row=contents.find(x=>x.id===b.dataset.rackPlace&&x.packaging_id===selected.id);if(!row||row.quantity!==1)return;const placement=rackPlacement(row.equipment_id,row.id);if(!placement)return;try{check(await db.from('packaging_contents').update(placement).eq('id',row.id).select());rackPendingStart=null;await reloadDetail()}catch(err){msg('Не вдалося розмістити: '+err.message,true)}}
 else if(b.id==='addEquipment'){rackPendingStart=null;addDialog()}else if(b.id==='addPlan')await addPlan();else if(b.id==='addChild')await addChild();else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.id==='deleteItem')await deletePackaging();else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove||b.dataset.planremove){if(!confirm('Підтвердити вилучення запису?'))return;const table=b.dataset.remove?'packaging_contents':'packaging_plan',id=b.dataset.remove||b.dataset.planremove;try{check(await db.from(table).delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
 load();
 })();
