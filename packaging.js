@@ -124,7 +124,11 @@ function rackPlacement(equipmentId=null,excludeId=null){
  if(heightRaw===null)return null;
  const height=Number(heightRaw);
  if(!Number.isSafeInteger(height)||height<1||height>n){msg('Обладнання має недопустиму висоту U або не поміщається в рек',true);return null}
- const suggested=rackPendingStart!=null?Math.max(1,Math.min(n-height+1,rackPendingStart)):
+ if(rackPendingStart!=null&&rackOccupied(rackPendingStart,height,excludeId)){
+  msg(`Вибрана позиція ${rackPendingStart}U не вміщує обладнання ${height}U. Виберіть інший юніт.`,true);
+  return null;
+ }
+ const suggested=rackPendingStart!=null?rackPendingStart:
   Array.from({length:n-height+1},(_,i)=>i+1).find(start=>!rackOccupied(start,height,excludeId));
  if(!suggested){msg('У реку немає вільної послідовності юнітів такої висоти',true);return null}
  const startRaw=prompt(`Позиція нижнього юніта (1–${n-height+1}).\nОбладнання займатиме ${height}U.`,String(suggested));
@@ -168,7 +172,26 @@ function details(p){
  setTimeout(resetCardTop,300);
 }loadHistory(p.id)}
 async function loadHistory(id){try{const h=check(await db.from('packaging_history').select('action,created_at,details').eq('packaging_id',id).order('created_at',{ascending:false}).limit(30));if(selected?.id===id)$('history').innerHTML=h.map(x=>`<div class="pkg-row">${esc(new Date(x.created_at).toLocaleString('uk-UA'))} · ${esc(x.action)} · ${esc(x.details?.table||'переміщення')}</div>`).join('')||'Історія порожня'}catch(e){if($('history'))$('history').textContent=e.message}}
+function renderRackSlotPicker(){
+ const active=selected?.kind==='rack';
+ $('pkgRackUnits').hidden=!active;
+ if(!active){$('pkgRackSlotsPanel').hidden=true;return}
+ const n=rackUnits(selected);
+ const slots=$('pkgRackSlots');
+ $('pkgRackSlotClear').disabled=rackPendingStart==null;
+ $('pkgRackSlotsHint').textContent=rackPendingStart!=null
+  ? `Вибрано нижній юніт ${rackPendingStart}U. Тепер виберіть спосіб додавання обладнання. Прилад висотою 2U займе ${rackPendingStart}–${rackPendingStart+1}U, якщо обидва слоти вільні.`
+  : 'Виберіть нижній юніт обладнання, потім спосіб додавання. Висота в U береться з картки приладу.';
+ if(!n){slots.innerHTML='<p class="pkg-note">Спочатку задайте висоту река в його картці.</p>';return}
+ slots.innerHTML=Array.from({length:n},(_,i)=>n-i).map(u=>{
+  const installed=contents.find(x=>x.packaging_id===selected.id&&x.rack_start_u!=null&&x.rack_height_u!=null&&u>=Number(x.rack_start_u)&&u<Number(x.rack_start_u)+Number(x.rack_height_u));
+  const chosen=rackPendingStart===u;
+  return `<button type="button" class="pkg-rack-slot${installed?' pkg-rack-slot-used':''}${chosen?' pkg-rack-slot-selected':''}" data-pkg-rack-slot="${u}" ${installed?'disabled':''} aria-pressed="${chosen}" title="${installed?esc(eqLabel(installed.equipment_id)):'Вільний юніт'}">${u}U <small>${installed?'Зайнято':chosen?'Вибрано':'Вільно'}</small></button>`;
+ }).join('');
+}
 function addDialog(){
+ renderRackSlotPicker();
+ $('pkgRackSlotsPanel').hidden=true;
  $('addMethod').showModal();
 }
 function findEq(code){const raw=String(code||'').trim();const normalized=raw.match(/EQ-\d+/i)?.[0]||raw;return equipment.find(x=>String(x.eq_id||'').toLowerCase()===normalized.toLowerCase())}
@@ -360,6 +383,19 @@ $('pkgMoveForm').onsubmit=async event=>{
 };
 
 async function reloadDetail(){const id=selected.id;await load();const p=items.find(x=>x.id===id);if(p)details(p)}
+$('pkgRackUnits').onclick=()=>{
+ if(selected?.kind!=='rack')return;
+ const panel=$('pkgRackSlotsPanel');
+ panel.hidden=!panel.hidden;
+ renderRackSlotPicker();
+};
+$('pkgRackSlots').addEventListener('click',event=>{
+ const button=event.target.closest('[data-pkg-rack-slot]');
+ if(!button||button.disabled||selected?.kind!=='rack')return;
+ rackPendingStart=Number(button.dataset.pkgRackSlot);
+ renderRackSlotPicker();
+});
+$('pkgRackSlotClear').onclick=()=>{rackPendingStart=null;renderRackSlotPicker()};
 $('pkgManual').onclick=()=>{$('pkgManualPanel').hidden=false;$('pkgEqId').focus()};
 $('pkgEqConfirm').onclick=addById;
 $('pkgEqId').onkeydown=e=>{if(e.key==='Enter')addById()};
