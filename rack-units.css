@@ -187,3 +187,39 @@
     width: 45px;
   }
 }
+
+/* V49.59: show valid occupied targets for an atomic slot exchange. */
+.rack-unit-list .rack-unit.occupied.rack-swap-target {
+  border-color:#dff500;
+  box-shadow:inset 0 0 0 1px #dff500;
+}
+.rack-unit-list .rack-unit.occupied.rack-swap-target.rack-drag-hover {
+  background:#294638;
+  box-shadow:inset 0 0 0 2px #dff500;
+}
+.rack-unit-list .rack-unit-span .rack-equipment .rack-swap-button {
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:140px;
+  height:36px;
+  min-height:36px;
+  padding:0 9px;
+  border:1px solid #dff500;
+  border-radius:9px;
+  color:#dff500;
+  background:#23392f;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.rack-unit-list .rack-unit-span .rack-equipment .rack-swap-button:hover{background:#304e3c}
+.rack-unit-list .rack-unit.occupied.rack-swap-target .rack-equipment {padding-right:166px}
+@media(max-width:600px){
+ .rack-unit-list .rack-unit-span .rack-equipment .rack-swap-button{
+   right:5px;width:105px;height:30px;min-height:30px;padding:0 4px;font-size:9px;
+ }
+ .rack-unit-list .rack-unit.occupied.rack-swap-target .rack-equipment{padding-right:116px}
+}

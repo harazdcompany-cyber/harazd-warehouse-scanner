@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
-let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null;
+let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null,rackSwapBusy=false,rackDropHandled=false;
 const PKG_PHOTO_BUCKET='packaging-photos';let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false;
 function pkgPhotoReset(){if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
 function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;if(!url)return;const img=document.createElement('img');img.alt='Фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);}
@@ -90,6 +90,43 @@ function rackOccupied(start,height,excludeId=null){
  if(!Number.isSafeInteger(s)||!Number.isSafeInteger(h)||s<1||h<1||s+h-1>n)return true;
  return contents.some(row=>row.packaging_id===selected.id&&row.id!==excludeId&&row.rack_start_u!=null&&row.rack_height_u!=null&&s<=Number(row.rack_start_u)+Number(row.rack_height_u)-1&&s+h-1>=Number(row.rack_start_u));
 }
+function rackSwapAllowed(source,target){
+ if(!selected||selected.kind!=='rack'||!source||!target||source.id===target.id
+  ||source.packaging_id!==selected.id||target.packaging_id!==selected.id
+  ||Number(source.quantity)!==1||Number(target.quantity)!==1)return false;
+ const aStart=Number(source.rack_start_u), bStart=Number(target.rack_start_u);
+ const aHeight=Number(source.rack_height_u), bHeight=Number(target.rack_height_u);
+ const count=rackUnits(selected);
+ if(!Number.isSafeInteger(aStart)||!Number.isSafeInteger(bStart)
+  ||!Number.isSafeInteger(aHeight)||!Number.isSafeInteger(bHeight)
+  ||aStart<1||bStart<1||aHeight<1||bHeight<1)return false;
+ const aEnd=bStart+aHeight-1, bEnd=aStart+bHeight-1;
+ if(aEnd>count||bEnd>count)return false;
+ if(bStart<=bEnd && aStart<=aEnd)return false;
+ return !contents.some(row=>row.packaging_id===selected.id
+  &&row.id!==source.id&&row.id!==target.id
+  &&row.rack_start_u!=null&&row.rack_height_u!=null
+  &&((bStart<=Number(row.rack_start_u)+Number(row.rack_height_u)-1&&aEnd>=Number(row.rack_start_u))
+  ||(aStart<=Number(row.rack_start_u)+Number(row.rack_height_u)-1&&bEnd>=Number(row.rack_start_u))));
+}
+async function rackSwap(sourceId,targetId){
+ if(rackSwapBusy||!selected||selected.kind!=='rack')return;
+ const source=contents.find(x=>x.id===sourceId&&x.packaging_id===selected.id);
+ const target=contents.find(x=>x.id===targetId&&x.packaging_id===selected.id);
+ if(!rackSwapAllowed(source,target)){
+  msg('Не можна поміняти прилади місцями: недостатньо суміжних вільних юнітів',true);return;
+ }
+ rackSwapBusy=true;
+ try{
+  check(await db.rpc('packaging_rack_swap',{
+   p_packaging_id:selected.id,p_source_id:source.id,p_target_id:target.id
+  }));
+  rackMovingId=null;
+  await reloadDetail();
+  msg('Обладнання успішно помінялося місцями');
+ }catch(err){msg('Не вдалося поміняти місцями: '+(err?.message||err),true)}
+ finally{rackSwapBusy=false}
+}
 function rackView(p,own){
  const units=rackUnits(p);
  if(!units)return '<div class="rack-empty-config">Щоб відображати юніти, вкажіть висоту река (U) у параметрах картки.</div>';
@@ -104,7 +141,9 @@ function rackView(p,own){
    if(u!==top){u--;continue;}
    used+=height;
    const slotNumbers=Array.from({length:height},(_,i)=>top-i);
-   rows.push(`<div class="rack-unit occupied rack-unit-span${rackMovingId===record.id?' rack-is-moving':''}" style="--rack-span:${height}" draggable="true" data-rack-drag="${esc(record.id)}" aria-label="${esc(eqLabel(record.equipment_id))}: ${height}U, юніти ${start}–${top}"><div class="rack-span-numbers">${slotNumbers.map(n=>`<span class="rack-number">${n}U</span>`).join('')}</div><div class="rack-equipment"><strong>${eqLabel(record.equipment_id)}</strong><small>${height}U · юніти ${start}–${top}</small><button type="button" class="rack-move-button" data-rack-move="${esc(record.id)}">↕ Перемістити</button></div></div>`);
+   const moving=own.find(x=>x.id===rackMovingId);
+   const canSwap=!!moving&&rackSwapAllowed(moving,record);
+   rows.push(`<div class="rack-unit occupied rack-unit-span${rackMovingId===record.id?' rack-is-moving':''}${canSwap?' rack-swap-target':''}" style="--rack-span:${height}" draggable="true" data-rack-drag="${esc(record.id)}" ${canSwap?`data-rack-swap-target="${esc(record.id)}"`:''} aria-label="${esc(eqLabel(record.equipment_id))}: ${height}U, юніти ${start}–${top}"><div class="rack-span-numbers">${slotNumbers.map(n=>`<span class="rack-number">${n}U</span>`).join('')}</div><div class="rack-equipment"><strong>${eqLabel(record.equipment_id)}</strong><small>${height}U · юніти ${start}–${top}</small>${canSwap?`<button type="button" class="rack-swap-button" data-rack-swap="${esc(record.id)}">⇄ Поміняти місцями</button>`:`<button type="button" class="rack-move-button" data-rack-move="${esc(record.id)}">↕ Перемістити</button>`}</div></div>`);
    u=start-1;
   }else{
    const moving=own.find(x=>x.id===rackMovingId),canMove=!!moving&&!rackOccupied(u,Number(moving.rack_height_u),moving.id);
@@ -113,7 +152,7 @@ function rackView(p,own){
   }
  }
  const notPlaced=own.filter(x=>x.rack_start_u==null||x.rack_height_u==null);
- return `<div class="rack-overview"><span>${units}U загалом</span><span>${used}U зайнято</span><span>${units-used}U вільно</span>${rackMovingId?'<button type="button" class="rack-cancel-move" data-rack-cancel>Скасувати переміщення</button>':''}</div>${rackMovingId?'<p class="rack-move-hint">Виберіть підсвічений вільний юніт або перетягніть обладнання. Вибраний номер U — нижній слот блоку.</p>':''}<div class="rack-chassis"><div class="rack-panel-top">REК · ${units}U</div><div class="rack-unit-list">${rows.join('')}</div><div class="rack-panel-bottom"></div></div>${notPlaced.length?`<div class="rack-unplaced"><h4>Не розміщено в юнітах (${notPlaced.length})</h4><p class="pkg-note">Раніше додане обладнання залишилося у пакуванні. Вкажіть позицію в реку. Висота U береться з картки обладнання, якщо задана.</p>${notPlaced.map(x=>`<div class="rack-unplaced-row"><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span>${Number(x.quantity)===1?`<button type="button" data-rack-place="${esc(x.id)}">Розмістити в реку</button>`:'<small>Для позиціонування потрібно по 1 шт. на рядок</small>'}</div>`).join('')}</div>`:''}`;
+ return `<div class="rack-overview"><span>${units}U загалом</span><span>${used}U зайнято</span><span>${units-used}U вільно</span>${rackMovingId?'<button type="button" class="rack-cancel-move" data-rack-cancel>Скасувати переміщення</button>':''}</div>${rackMovingId?'<p class="rack-move-hint">Виберіть вільний юніт або натисніть «Поміняти місцями» на зайнятому слоті. Можна також перетягнути блок.</p>':''}<div class="rack-chassis"><div class="rack-panel-top">REК · ${units}U</div><div class="rack-unit-list">${rows.join('')}</div><div class="rack-panel-bottom"></div></div>${notPlaced.length?`<div class="rack-unplaced"><h4>Не розміщено в юнітах (${notPlaced.length})</h4><p class="pkg-note">Раніше додане обладнання залишилося у пакуванні. Вкажіть позицію в реку. Висота U береться з картки обладнання, якщо задана.</p>${notPlaced.map(x=>`<div class="rack-unplaced-row"><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span>${Number(x.quantity)===1?`<button type="button" data-rack-place="${esc(x.id)}">Розмістити в реку</button>`:'<small>Для позиціонування потрібно по 1 шт. на рядок</small>'}</div>`).join('')}</div>`:''}`;
 }
 function rackPlacement(equipmentId=null,excludeId=null){
  const n=rackUnits(selected);
@@ -493,18 +532,47 @@ $('detailBody').addEventListener('dragstart',e=>{
  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',rackDragId);
 });
 $('detailBody').addEventListener('dragover',e=>{
- const target=e.target.closest('[data-rack-free]');if(!target||!rackDragId||!selected||selected.kind!=='rack')return;
- const row=contents.find(x=>x.id===rackDragId&&x.packaging_id===selected.id);
- if(!row||rackOccupied(Number(target.dataset.rackFree),Number(row.rack_height_u),row.id))return;
+ if(!rackDragId||!selected||selected.kind!=='rack'||rackSwapBusy)return;
+ const source=contents.find(x=>x.id===rackDragId&&x.packaging_id===selected.id);
+ const occupied=e.target.closest('[data-rack-drag]');
+ if(occupied&&occupied.dataset.rackDrag!==rackDragId){
+  const target=contents.find(x=>x.id===occupied.dataset.rackDrag&&x.packaging_id===selected.id);
+  if(rackSwapAllowed(source,target)){
+   e.preventDefault();e.dataTransfer.dropEffect='move';occupied.classList.add('rack-drag-hover');
+  }
+  return;
+ }
+ const target=e.target.closest('[data-rack-free]');
+ if(!target||!source||rackOccupied(Number(target.dataset.rackFree),Number(source.rack_height_u),source.id))return;
  e.preventDefault();e.dataTransfer.dropEffect='move';target.classList.add('rack-drag-hover');
 });
-$('detailBody').addEventListener('dragleave',e=>{const target=e.target.closest('[data-rack-free]');if(target)target.classList.remove('rack-drag-hover')});
-$('detailBody').addEventListener('drop',async e=>{
- const target=e.target.closest('[data-rack-free]');if(!target||!rackDragId)return;
- e.preventDefault();const id=rackDragId;rackDragId=null;await rackMoveTo(id,Number(target.dataset.rackFree));
+$('detailBody').addEventListener('dragleave',e=>{
+ const target=e.target.closest('[data-rack-free], [data-rack-drag]');
+ if(target)target.classList.remove('rack-drag-hover');
 });
-$('detailBody').addEventListener('dragend',()=>{rackDragId=null;if(rackMovingId){rackMovingId=null;if(selected?.kind==='rack')details(selected)}});
+$('detailBody').addEventListener('drop',async e=>{
+ if(!rackDragId||rackSwapBusy)return;
+ const occupied=e.target.closest('[data-rack-drag]');
+ const free=e.target.closest('[data-rack-free]');
+ const id=rackDragId;
+ if(occupied&&occupied.dataset.rackDrag!==id){
+  const source=contents.find(x=>x.id===id&&x.packaging_id===selected.id);
+  const target=contents.find(x=>x.id===occupied.dataset.rackDrag&&x.packaging_id===selected.id);
+  if(!rackSwapAllowed(source,target))return;
+  e.preventDefault();rackDragId=null;rackDropHandled=true;
+  await rackSwap(id,target.id);
+ }else if(free){
+  e.preventDefault();rackDragId=null;rackDropHandled=true;
+  await rackMoveTo(id,Number(free.dataset.rackFree));
+ }
+});
+$('detailBody').addEventListener('dragend',()=>{
+ rackDragId=null;
+ if(rackDropHandled){rackDropHandled=false;return}
+ if(rackMovingId){rackMovingId=null;if(selected?.kind==='rack')details(selected)}
+});
 $('detailBody').onclick=async e=>{const b=e.target.closest('button');if(!b||!selected)return;if(b.id==='editItem'){$('details').close();edit(selected)}else if(b.dataset.rackCancel!==undefined){rackMovingId=null;details(selected)}
+else if(b.dataset.rackSwap){if(rackMovingId)await rackSwap(rackMovingId,b.dataset.rackSwap)}
 else if(b.dataset.rackMove){rackMovingId=rackMovingId===b.dataset.rackMove?null:b.dataset.rackMove;details(selected)}
 else if(b.dataset.rackFree){if(rackMovingId)await rackMoveTo(rackMovingId,Number(b.dataset.rackFree));else{rackPendingStart=Number(b.dataset.rackFree);addDialog()}}
 else if(b.dataset.rackPlace){const row=contents.find(x=>x.id===b.dataset.rackPlace&&x.packaging_id===selected.id);if(!row||row.quantity!==1)return;const placement=rackPlacement(row.equipment_id,row.id);if(!placement)return;try{check(await db.from('packaging_contents').update(placement).eq('id',row.id).select());rackPendingStart=null;await reloadDetail()}catch(err){msg('Не вдалося розмістити: '+err.message,true)}}
