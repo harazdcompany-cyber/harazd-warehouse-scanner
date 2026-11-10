@@ -16,8 +16,21 @@ function editable(){return !!session}
 function fmt(n){return Number(n||0).toLocaleString('uk-UA',{maximumFractionDigits:2})}
 function descendants(id){const found=[];const walk=p=>{for(const c of items.filter(x=>x.parent_id===p)){found.push(c.id);walk(c.id)}};walk(id);return found}
 function allWeight(id,seen=new Set()){if(seen.has(id))return 0;seen.add(id);const p=items.find(x=>x.id===id);if(!p)return 0;const own=Number(p.empty_weight_kg||0);const eq=contents.filter(x=>x.packaging_id===id).reduce((sum,x)=>sum+Number(equipment.find(e=>e.id===x.equipment_id)?.weight||0)*Number(x.quantity),0);return own+eq+items.filter(x=>x.parent_id===id).reduce((sum,x)=>sum+allWeight(x.id,seen),0)}
+// A nested package remains the owner of its equipment; the parent's totals are a view of the tree.
+function pkgTreeIds(rootId){
+ const ids=new Set(),queue=[rootId];
+ while(queue.length){
+  const id=queue.pop();
+  if(ids.has(id))continue;
+  ids.add(id);
+  for(const child of items)if(child.parent_id===id&&!ids.has(child.id))queue.push(child.id);
+ }
+ return ids;
+}
+function pkgTreeContents(rootId){const ids=pkgTreeIds(rootId);return contents.filter(x=>ids.has(x.packaging_id))}
+function pkgTreeQty(rootId){return pkgTreeContents(rootId).reduce((sum,x)=>sum+Number(x.quantity||0),0)}
 function pkgCardPhoto(p){const url=String(p.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<div class="pkg-card-photo"><img src="${esc(url)}" alt="Фото ${esc(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></div>`:'';}
-function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${contents.filter(x=>x.packaging_id===p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
+function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${pkgTreeContents(p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
 async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('packaging_plan').select('*'),db.from('equipment').select('id,eq_id,name,model,description,weight,rack_units,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);plans=check(results[2]);equipment=check(results[3]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
 async function edit(p){
  selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';
@@ -188,25 +201,41 @@ async function rackMoveTo(rowId,newStart){
 function details(p){
  const detailDialog=$('details');
  const resetToTop=!detailDialog.open||selected?.id!==p.id;
- const pkgHero=pkgCardPhoto(p);if(selected?.id!==p.id){rackPendingStart=null;rackMovingId=null;}selected=p;$('detailTitle').textContent=`${p.pk_id} · ${p.name}`;const own=contents.filter(x=>x.packaging_id===p.id),plan=plans.filter(x=>x.packaging_id===p.id),children=items.filter(x=>x.parent_id===p.id),parent=items.find(x=>x.id===p.parent_id);const total=allWeight(p.id);$('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${own.length})</h3>${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||'<p class="pkg-note">Обладнання немає</p>'}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Планова комплектація (${plan.length})</h3>${plan.map(x=>`<div class="pkg-row"><span>${esc(x.item_name)} · ${fmt(x.quantity)} шт.</span><button data-planremove="${x.id}">Видалити</button></div>`).join('')||'<p class="pkg-note">План не заданий</p>'}<button id="addPlan">＋ Додати до плану</button></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><span>${esc(x.pk_id)} · ${esc(x.name)}</span><button data-child="${x.id}">Відкрити</button></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;detailDialog.showModal();if(resetToTop){
- // Mobile browsers may restore scroll position or focus an off-screen dialog control.
- // Both the outer dialog and its internal scroll area must start at the top.
- detailDialog.tabIndex=-1;
- detailDialog.style.overflowAnchor='none';
- const scrollArea=$('detailBody');
- scrollArea.style.overflowAnchor='none';
- detailDialog.focus({preventScroll:true});
- const pkgId=p.id;
- const resetCardTop=()=>{
-  if(!detailDialog.open||selected?.id!==pkgId)return;
-  detailDialog.scrollTop=0;
-  scrollArea.scrollTop=0;
- };
- resetCardTop();
- requestAnimationFrame(()=>requestAnimationFrame(resetCardTop));
- setTimeout(resetCardTop,100);
- setTimeout(resetCardTop,300);
-}loadHistory(p.id)}
+ const pkgHero=pkgCardPhoto(p);
+ if(selected?.id!==p.id){rackPendingStart=null;rackMovingId=null;}
+ selected=p;
+ $('detailTitle').textContent=`${p.pk_id} · ${p.name}`;
+ const own=contents.filter(x=>x.packaging_id===p.id),plan=plans.filter(x=>x.packaging_id===p.id);
+ const children=items.filter(x=>x.parent_id===p.id),parent=items.find(x=>x.id===p.parent_id);
+ const inherited=pkgTreeContents(p.id).filter(x=>x.packaging_id!==p.id);
+ const treeRows=[...own,...inherited];
+ const total=allWeight(p.id);
+ const nestedEquipment=inherited.length?`<h4 class="pkg-nested-content-title">З вкладених пакувань (${inherited.length})</h4>${inherited.map(x=>{
+  const container=items.find(item=>item.id===x.packaging_id);
+  return `<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.<small class="pkg-note pkg-nested-source">${esc(container?.pk_id||'')} · ${esc(container?.name||'')}</small></span></div></div>`;
+ }).join('')}`:'';
+ $('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${treeRows.length})</h3>${inherited.length?`<p class="pkg-note">Безпосередньо: ${own.length} позицій · У вкладених: ${inherited.length} · Всього: ${fmt(treeRows.reduce((sum,x)=>sum+Number(x.quantity||0),0))} шт.</p>`:''}${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||(!inherited.length?'<p class="pkg-note">Обладнання немає</p>':'')}${nestedEquipment}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Планова комплектація (${plan.length})</h3>${plan.map(x=>`<div class="pkg-row"><span>${esc(x.item_name)} · ${fmt(x.quantity)} шт.</span><button data-planremove="${x.id}">Видалити</button></div>`).join('')||'<p class="pkg-note">План не заданий</p>'}<button id="addPlan">＋ Додати до плану</button></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><span>${esc(x.pk_id)} · ${esc(x.name)}<small class="pkg-note pkg-nested-source">${pkgTreeContents(x.id).length} позицій · ${fmt(pkgTreeQty(x.id))} шт. · ${fmt(allWeight(x.id))} кг</small></span><span class="pkg-nested-actions"><button data-child="${x.id}">Відкрити</button><button data-childdetach="${x.id}" type="button">Вийняти</button></span></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${children.length?`<p class="pkg-note">У тому числі вкладені пакування з їхнім обладнанням: ${fmt(children.reduce((sum,x)=>sum+allWeight(x.id),0))} кг</p>`:''}${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;
+ if(!detailDialog.open)detailDialog.showModal();
+ if(resetToTop){
+  // Mobile browsers may restore scroll position or focus an off-screen dialog control.
+  detailDialog.tabIndex=-1;
+  detailDialog.style.overflowAnchor='none';
+  const scrollArea=$('detailBody');
+  scrollArea.style.overflowAnchor='none';
+  detailDialog.focus({preventScroll:true});
+  const pkgId=p.id;
+  const resetCardTop=()=>{
+   if(!detailDialog.open||selected?.id!==pkgId)return;
+   detailDialog.scrollTop=0;
+   scrollArea.scrollTop=0;
+  };
+  resetCardTop();
+  requestAnimationFrame(()=>requestAnimationFrame(resetCardTop));
+  setTimeout(resetCardTop,100);
+  setTimeout(resetCardTop,300);
+ }
+ loadHistory(p.id);
+}
 async function loadHistory(id){try{const h=check(await db.from('packaging_history').select('action,created_at,details').eq('packaging_id',id).order('created_at',{ascending:false}).limit(30));if(selected?.id===id)$('history').innerHTML=h.map(x=>`<div class="pkg-row">${esc(new Date(x.created_at).toLocaleString('uk-UA'))} · ${esc(x.action)} · ${esc(x.details?.table||'переміщення')}</div>`).join('')||'Історія порожня'}catch(e){if($('history'))$('history').textContent=e.message}}
 function addDialog(){
  $('addMethod').showModal();
@@ -468,7 +497,74 @@ async function startQr(){
 }
 
 async function addPlan(){const name=prompt('Назва обладнання за планом:');if(!name?.trim())return;const q=prompt('Кількість:','1');if(q===null)return;const count=Number(q);if(!Number.isFinite(count)||count<=0)return msg('Некоректна кількість',true);try{check(await db.from('packaging_plan').insert({packaging_id:selected.id,item_name:name.trim(),quantity:count}));await reloadDetail()}catch(e){msg(e.message,true)}}
-async function addChild(){const id=prompt('Введіть PK-ID пакування, яке потрібно вкласти:');if(!id)return;const child=items.find(x=>x.pk_id?.toLowerCase()===id.trim().toLowerCase());if(!child)return msg('PK-ID не знайдено',true);if(child.id===selected.id||descendants(child.id).includes(selected.id))return msg('Циклічне вкладення заборонено',true);if(child.parent_id)return msg('Пакування вже вкладено в інше. Спочатку вилучіть його.',true);try{check(await db.from('packaging').update({parent_id:selected.id}).eq('id',child.id).select());await reloadDetail()}catch(e){msg(e.message,true)}}
+let pkgNestedTargetId=null,pkgNestedBusy=false;
+function pkgNestedDisableReason(candidate){
+ if(!pkgNestedTargetId)return 'Оберіть основне пакування';
+ if(candidate.id===pkgNestedTargetId)return 'Поточне пакування';
+ if(candidate.parent_id)return 'Уже вкладено в інше пакування';
+ // An ancestor cannot be put inside its own descendant.
+ if(descendants(candidate.id).includes(pkgNestedTargetId))return 'Неможливо створити циклічне вкладення';
+ return '';
+}
+function renderNestedPicker(){
+ const search=$('pkgNestedSearch').value.trim().toLocaleLowerCase('uk-UA');
+ const kindFilter=$('pkgNestedKind').value;
+ const availableOnly=$('pkgNestedAvailability').value==='available';
+ const shown=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!availableOnly||!pkgNestedDisableReason(p))&&[p.pk_id,p.name,p.model,p.location].join(' ').toLocaleLowerCase('uk-UA').includes(search));
+ $('pkgNestedCount').textContent=`Знайдено: ${shown.length} · Доступно: ${shown.filter(p=>!pkgNestedDisableReason(p)).length}`;
+ $('pkgNestedGrid').innerHTML=shown.length?shown.map(p=>{
+  const reason=pkgNestedDisableReason(p),rows=pkgTreeContents(p.id),weight=allWeight(p.id);
+  const preview=rows.slice(0,3).map(x=>`<div class="pkg-nested-preview-row">${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</div>`).join('');
+  return `<button type="button" class="pkg-card pkg-nested-card" data-nestedpick="${esc(p.id)}" ${reason||pkgNestedBusy?'disabled':''}>${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind]||'Пакування')} · ${esc(p.location||'Без розміщення')}</div><div class="pkg-nested-totals">${rows.length} позицій · ${fmt(pkgTreeQty(p.id))} шт. · ${fmt(weight)} кг</div><div class="pkg-nested-preview">${preview||'<span class="pkg-note">Обладнання немає</span>'}${rows.length>3?`<small class="pkg-note">та ще ${rows.length-3} позицій</small>`:''}</div><span class="pkg-nested-pick-label">${reason?esc(reason):'＋ Вкласти пакування'}</span></button>`;
+ }).join(''):'<p class="pkg-note">Пакувань за заданими фільтрами немає.</p>';
+}
+function addChild(){
+ if(!selected)return;
+ pkgNestedTargetId=selected.id;
+ $('pkgNestedTarget').textContent=`Основне пакування: ${selected.pk_id} · ${selected.name}`;
+ $('pkgNestedSearch').value='';
+ $('pkgNestedKind').value='';
+ $('pkgNestedAvailability').value='available';
+ renderNestedPicker();
+ $('pkgNestedPicker').showModal();
+ $('pkgNestedSearch').focus({preventScroll:true});
+}
+async function attachNestedPackaging(childId){
+ if(pkgNestedBusy)return;
+ const parent=items.find(p=>p.id===pkgNestedTargetId),child=items.find(p=>p.id===childId);
+ if(!parent||!child)return msg('Пакування не знайдено. Оновіть сторінку.',true);
+ const reason=pkgNestedDisableReason(child);
+ if(reason)return msg(reason,true);
+ pkgNestedBusy=true;
+ renderNestedPicker();
+ try{
+  const result=check(await db.from('packaging').update({parent_id:parent.id}).eq('id',child.id).is('parent_id',null).select('id,parent_id'));
+  if(!result?.length)throw Error('Пакування вже було переміщено. Оновіть список і повторіть спробу.');
+  $('pkgNestedPicker').close();
+  await reloadDetail();
+  msg(`Пакування ${child.pk_id} вкладено в ${parent.pk_id}. Вага та обладнання враховані в підсумках.`);
+ }catch(e){msg('Не вдалося вкласти пакування: '+e.message,true)}
+ finally{pkgNestedBusy=false;if($('pkgNestedPicker').open)renderNestedPicker()}
+}
+async function detachNestedPackaging(childId){
+ if(!selected)return;
+ const parent=selected,child=items.find(x=>x.id===childId&&x.parent_id===parent.id);
+ if(!child)return msg('Це пакування вже не вкладено до поточного',true);
+ if(!confirm(`Вийняти пакування ${child.pk_id} · ${child.name} з ${parent.pk_id}?\nОбладнання залишиться в ${child.pk_id}.`))return;
+ try{
+  const result=check(await db.from('packaging').update({parent_id:null}).eq('id',child.id).eq('parent_id',parent.id).select('id'));
+  if(!result?.length)throw Error('Вкладення вже змінене. Оновіть дані.');
+  await reloadDetail();
+  msg(`Пакування ${child.pk_id} вийнято з ${parent.pk_id}`);
+ }catch(e){msg('Не вдалося вийняти пакування: '+e.message,true)}
+}
+$('pkgNestedClose').onclick=()=>{if(!pkgNestedBusy)$('pkgNestedPicker').close()};
+$('pkgNestedPicker').addEventListener('cancel',e=>{if(pkgNestedBusy)e.preventDefault()});
+$('pkgNestedPicker').addEventListener('close',()=>{pkgNestedTargetId=null});
+$('pkgNestedGrid').addEventListener('click',e=>{const button=e.target.closest('[data-nestedpick]');if(button&&!button.disabled)attachNestedPackaging(button.dataset.nestedpick)});
+$('pkgNestedSearch').addEventListener('input',renderNestedPicker);
+$('pkgNestedKind').addEventListener('change',renderNestedPicker);
+$('pkgNestedAvailability').addEventListener('change',renderNestedPicker);
 let pkgLocationNodes=[],pkgWarehouses=[];
 async function pkgLoadLocations(){
  const r=await Promise.all([db.from('warehouses').select('id,name').order('name'),db.from('storage_locations').select('id,warehouse_id,parent_id,kind,name').order('name')]);
@@ -698,6 +794,6 @@ else if(b.dataset.rackSwap){if(rackMovingId)await rackSwap(rackMovingId,b.datase
 else if(b.dataset.rackMove){rackMovingId=rackMovingId===b.dataset.rackMove?null:b.dataset.rackMove;details(selected)}
 else if(b.dataset.rackFree){if(rackMovingId)await rackMoveTo(rackMovingId,Number(b.dataset.rackFree));else{rackPendingStart=Number(b.dataset.rackFree);addDialog()}}
 else if(b.dataset.rackPlace){const row=contents.find(x=>x.id===b.dataset.rackPlace&&x.packaging_id===selected.id);if(!row||row.quantity!==1)return;const placement=rackPlacement(row.equipment_id,row.id);if(!placement)return;try{check(await db.from('packaging_contents').update(placement).eq('id',row.id).select());rackPendingStart=null;await reloadDetail()}catch(err){msg('Не вдалося розмістити: '+err.message,true)}}
-else if(b.id==='addEquipment'){rackPendingStart=null;addDialog()}else if(b.id==='addPlan')await addPlan();else if(b.id==='addChild')await addChild();else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.id==='deleteItem')await deletePackaging();else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove||b.dataset.planremove){if(!confirm('Підтвердити вилучення запису?'))return;const table=b.dataset.remove?'packaging_contents':'packaging_plan',id=b.dataset.remove||b.dataset.planremove;try{check(await db.from(table).delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
+else if(b.id==='addEquipment'){rackPendingStart=null;addDialog()}else if(b.id==='addPlan')await addPlan();else if(b.id==='addChild')addChild();else if(b.dataset.childdetach)await detachNestedPackaging(b.dataset.childdetach);else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.id==='deleteItem')await deletePackaging();else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove||b.dataset.planremove){if(!confirm('Підтвердити вилучення запису?'))return;const table=b.dataset.remove?'packaging_contents':'packaging_plan',id=b.dataset.remove||b.dataset.planremove;try{check(await db.from(table).delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
 load();
 })();
