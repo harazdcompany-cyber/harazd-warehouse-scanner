@@ -224,7 +224,7 @@ function details(p){
   const container=items.find(item=>item.id===x.packaging_id);
   return `<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.<small class="pkg-note pkg-nested-source">${esc(container?.pk_id||'')} · ${esc(container?.name||'')}</small></span></div></div>`;
  }).join('')}`:'';
- $('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${treeRows.length})</h3>${inherited.length?`<p class="pkg-note">Безпосередньо: ${own.length} позицій · У вкладених: ${inherited.length} · Всього: ${fmt(treeRows.reduce((sum,x)=>sum+Number(x.quantity||0),0))} шт.</p>`:''}${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||(!inherited.length?'<p class="pkg-note">Обладнання немає</p>':'')}${nestedEquipment}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${pkgNestedThumb(x)}</div><span>${esc(x.pk_id)} · ${esc(x.name)}<small class="pkg-note pkg-nested-source">${pkgTreeContents(x.id).length} позицій · ${fmt(pkgTreeQty(x.id))} шт. · ${fmt(allWeight(x.id))} кг</small></span></div><span class="pkg-nested-actions"><button data-child="${x.id}">Відкрити</button><button data-childdetach="${x.id}" type="button">Вийняти</button></span></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${children.length?`<p class="pkg-note">У тому числі вкладені пакування з їхнім обладнанням: ${fmt(children.reduce((sum,x)=>sum+allWeight(x.id),0))} кг</p>`:''}${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;
+ $('detailBody').innerHTML=`${pkgHero}<p class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація · ${esc(p.location||'Без розміщення')}</p><div class="pkg-tools"><button id="editItem">Редагувати картку</button><button id="moveItem">Перемістити пакування</button><button id="printPkgQr">▦ Друк QR</button><button id="disbandItem" type="button" ${own.length||children.length?'':'disabled'}>Розформувати</button><button id="deleteItem" class="pkg-danger" type="button">Видалити</button></div><div class="pkg-section"><h3>Фактичний вміст (${treeRows.length})</h3>${inherited.length?`<p class="pkg-note">Безпосередньо: ${own.length} позицій · У вкладених: ${inherited.length} · Всього: ${fmt(treeRows.reduce((sum,x)=>sum+Number(x.quantity||0),0))} шт.</p>`:''}${p.kind==='rack'?rackView(p,own):''}${own.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${equipmentThumb(x.equipment_id)}</div><span>${eqLabel(x.equipment_id)} · ${fmt(x.quantity)} шт.</span></div><button data-remove="${x.id}">Вилучити</button></div>`).join('')||(!inherited.length?'<p class="pkg-note">Обладнання немає</p>':'')}${nestedEquipment}<div class="pkg-tools"><button class="primary" id="addEquipment">${p.kind==='rack'?'＋ Додати в рек':'＋ Додати зі складу'}</button></div></div><div class="pkg-section"><h3>Вкладені пакування (${children.length})</h3>${children.map(x=>`<div class="pkg-row"><div class="pkg-equipment-info"><div class="pkg-equipment-thumb">${pkgNestedThumb(x)}</div><span>${esc(x.pk_id)} · ${esc(x.name)}<small class="pkg-note pkg-nested-source">${pkgTreeContents(x.id).length} позицій · ${fmt(pkgTreeQty(x.id))} шт. · ${fmt(allWeight(x.id))} кг</small></span></div><span class="pkg-nested-actions"><button data-child="${x.id}">Відкрити</button><button data-childdetach="${x.id}" type="button">Вийняти</button></span></div>`).join('')||'<p class="pkg-note">Вкладень немає</p>'}<button id="addChild">＋ Вкласти пакування</button>${parent?`<p class="pkg-note">У пакуванні: ${esc(parent.pk_id)} · ${esc(parent.name)}</p>`:''}</div><div class="pkg-section"><h3>Вага</h3><p>Порожнє: ${fmt(p.empty_weight_kg)} кг · Разом із вмістом: ${fmt(total)} кг</p>${children.length?`<p class="pkg-note">У тому числі вкладені пакування з їхнім обладнанням: ${fmt(children.reduce((sum,x)=>sum+allWeight(x.id),0))} кг</p>`:''}${p.max_payload_kg!=null?`<p class="pkg-note">Допустиме навантаження: ${fmt(p.max_payload_kg)} кг${total-Number(p.empty_weight_kg||0)>Number(p.max_payload_kg)?' · ⚠ Перевищено':''}</p>`:''}</div><div class="pkg-section"><h3>Історія</h3><div id="history" class="pkg-note">Завантаження...</div></div>`;
  if(!detailDialog.open)detailDialog.showModal();
  if(resetToTop){
   // Mobile browsers may restore scroll position or focus an off-screen dialog control.
@@ -728,6 +728,30 @@ async function downloadPkgLabel(){
  finally{button.disabled=false}
 }
 
+let pkgDisbandBusy=false;
+async function disbandPackaging(){
+ const p=selected;
+ if(!p||pkgDisbandBusy)return;
+ const qty=contents.filter(x=>x.packaging_id===p.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);
+ const children=items.filter(x=>x.parent_id===p.id).length;
+ if(!qty&&!children)return msg('Пакування вже порожнє');
+ if(!confirm(`Розформувати ${p.pk_id} · ${p.name}?\n\n${fmt(qty)} шт. обладнання повернуться у місця, де перебували до пакування.${children?`\n${children} вкладених пакувань буде вийнято та повернуто на їхні попередні місця (разом із вмістом).`:''}\n\nПакування залишиться у списку порожнім.`))return;
+ const button=$('disbandItem');
+ pkgDisbandBusy=true;
+ if(button)button.disabled=true;
+ try{
+  const result=check(await db.rpc('packaging_disband',{p_packaging_id:p.id}));
+  await reloadDetail();
+  msg(`Пакування розформовано: ${fmt(result?.equipment_quantity||0)} шт. повернуто, вкладень від'єднано: ${fmt(result?.detached_packages||0)}.`);
+ }catch(e){
+  const detail=String(e?.message||e);
+  msg(detail.includes('packaging_disband')&&detail.includes('schema cache')?'Спочатку виконайте SETUP_PACKAGING_DISBAND.sql у Supabase SQL Editor.':'Не вдалося розформувати: '+detail,true);
+ }finally{
+  pkgDisbandBusy=false;
+  if(button?.isConnected)button.disabled=false;
+ }
+}
+
 async function deletePackaging(){
  const p=selected;
  if(!p)return;
@@ -802,6 +826,6 @@ else if(b.dataset.rackSwap){if(rackMovingId)await rackSwap(rackMovingId,b.datase
 else if(b.dataset.rackMove){rackMovingId=rackMovingId===b.dataset.rackMove?null:b.dataset.rackMove;details(selected)}
 else if(b.dataset.rackFree){if(rackMovingId)await rackMoveTo(rackMovingId,Number(b.dataset.rackFree));else{rackPendingStart=Number(b.dataset.rackFree);addDialog()}}
 else if(b.dataset.rackPlace){const row=contents.find(x=>x.id===b.dataset.rackPlace&&x.packaging_id===selected.id);if(!row||row.quantity!==1)return;const placement=rackPlacement(row.equipment_id,row.id);if(!placement)return;try{check(await db.from('packaging_contents').update(placement).eq('id',row.id).select());rackPendingStart=null;await reloadDetail()}catch(err){msg('Не вдалося розмістити: '+err.message,true)}}
-else if(b.id==='addEquipment'){rackPendingStart=null;addDialog()}else if(b.id==='addChild')addChild();else if(b.dataset.childdetach)await detachNestedPackaging(b.dataset.childdetach);else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.id==='deleteItem')await deletePackaging();else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove){if(!confirm('Підтвердити вилучення запису?'))return;const id=b.dataset.remove;try{check(await db.from('packaging_contents').delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
+else if(b.id==='addEquipment'){rackPendingStart=null;addDialog()}else if(b.id==='addChild')addChild();else if(b.dataset.childdetach)await detachNestedPackaging(b.dataset.childdetach);else if(b.id==='moveItem')await moveItem();else if(b.id==='printPkgQr')openPkgLabel(selected);else if(b.id==='disbandItem')await disbandPackaging();else if(b.id==='deleteItem')await deletePackaging();else if(b.dataset.child){const p=items.find(x=>x.id===b.dataset.child);if(p)details(p)}else if(b.dataset.remove){if(!confirm('Підтвердити вилучення запису?'))return;const id=b.dataset.remove;try{check(await db.from('packaging_contents').delete().eq('id',id).select());await reloadDetail()}catch(ex){msg(ex.message,true)}}};
 load();
 })();
