@@ -3,6 +3,7 @@ const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.s
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
 let items=[],contents=[],plans=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null,rackSwapBusy=false,rackDropHandled=false;
+let pkgBulkMode=false,pkgBulkBusy=false;const pkgBulkSelected=new Map();
 const PKG_PHOTO_BUCKET='packaging-photos';let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false;
 function pkgPhotoReset(){if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
 function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;if(!url)return;const img=document.createElement('img');img.alt='Фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);}
@@ -214,6 +215,35 @@ function findEq(code){const raw=String(code||'').trim();const normalized=raw.mat
 function pickerLookup(list,id,fallback='—'){return list.find(x=>x.id===id)?.name||fallback}
 function pickerAvailable(e){return Math.max(0,Number(e?.quantity||0)-Number(e?.repair_quantity||0)-contents.filter(x=>x.equipment_id===e?.id).reduce((sum,x)=>sum+Number(x.quantity||0),0))}
 function pickerCurrentQty(equipmentId){return contents.filter(x=>x.packaging_id===selected?.id&&x.equipment_id===equipmentId).reduce((sum,x)=>sum+Number(x.quantity||0),0)}
+// Bulk allocation is for cases/boxes/pallets, not U-positioned rack devices.
+// An EQ-ID already allocated to a different package cannot be reused (DB unique constraint).
+function pkgBulkFree(item,rows=contents){
+ const allocated=rows.filter(x=>x.equipment_id===item.id);
+ if(allocated.some(x=>x.packaging_id!==selected?.id))return 0;
+ const assigned=allocated.reduce((n,x)=>n+Number(x.quantity||0),0);
+ const personal=String(item.accounting_type||'').toLowerCase();
+ if((personal.includes('personal')||personal.includes('персон'))&&assigned>0)return 0;
+ const free=Math.max(0,Number(item.quantity||0)-Number(item.repair_quantity||0)-assigned);
+ return Math.max(0,Math.floor(Math.min(free,(personal.includes('personal')||personal.includes('персон'))?1:free)));
+}
+function pkgBulkGroupFree(group){return (group.members||[]).reduce((n,item)=>n+pkgBulkFree(item),0)}
+function pkgBulkControls(group){
+ const free=pkgBulkGroupFree(group),entry=pkgBulkSelected.get(group.id),checked=!!entry;
+ return `<div class="pkg-bulk-control"><label class="pkg-bulk-check"><input type="checkbox" data-pkg-bulk-check="${esc(group.id)}" ${checked?'checked':''} ${free<1&&!checked?'disabled':''}><span>Вибрати</span></label><label class="pkg-bulk-qty-label">Кількість <input aria-label="Кількість для ${esc(group.name)}" type="number" inputmode="numeric" min="1" max="${Math.max(free,1)}" step="1" value="${checked?esc(entry.quantity):1}" data-pkg-bulk-qty="${esc(group.id)}" ${!checked?'disabled':''}></label></div>`;
+}
+function pkgBulkState(){
+ $('pkgWarehouseBulkToggle').hidden=!selected||selected.kind==='rack';
+ $('pkgWarehouseBulkToggle').setAttribute('aria-pressed',String(pkgBulkMode));
+ $('pkgWarehouseBulkToggle').textContent=pkgBulkMode?'✓ Масовий вибір':'☷ Масове додавання';
+ $('pkgWarehouseBulkBar').classList.toggle('hidden',!pkgBulkMode);
+ const qty=[...pkgBulkSelected.values()].reduce((n,e)=>n+Number(e.quantity||0),0);
+ $('pkgWarehouseBulkCount').textContent=`Вибрано: ${pkgBulkSelected.size} позицій · ${qty} од.`;
+ $('pkgWarehouseBulkAdd').disabled=pkgBulkBusy||pkgBulkSelected.size===0;
+ $('pkgWarehouseBulkCancel').disabled=pkgBulkBusy;
+ $('pkgWarehouseBulkToggle').disabled=pkgBulkBusy;
+}
+function pkgBulkReset(){pkgBulkMode=false;pkgBulkBusy=false;pkgBulkSelected.clear();pkgBulkState()}
+
 function pickerStatus(item){const qty=Number(item?.quantity||0),repair=Number(item?.repair_quantity||0);if(qty<=0||repair>=qty)return{cls:'repair',label:'На ремонті'};if(repair>0)return{cls:'partial',label:'Частково доступно'};return{cls:'available',label:'Доступно'}}
 function pickerPhoto(item){const url=String(item?.photo_url||'');return /^https:\/\/[^\s"'<>]+$/i.test(url)?`<img src="${esc(url)}" alt="${esc(item?.name||'Обладнання')}" loading="lazy" referrerpolicy="no-referrer">`:'<span class="pkg-picker-photo-empty" aria-hidden="true">◇</span>'}
 function pickerLocationMarkup(item){const rows=[["Склад",pickerLookup(pkgPickerRefs.warehouses,item?.warehouse_id,'Не вказано')],["Зона",item?.zone||'—'],["Стелаж",item?.rack||'—'],["Полиця",item?.shelf||'—']];return rows.map(([label,value])=>`<div><span>${esc(label)}:</span><b>${esc(value)}</b></div>`).join('')}
@@ -310,20 +340,112 @@ function renderWarehousePicker(){
  const base=equipment.filter(item=>(!category||item.category_id===category)&&(!subcategory||item.subcategory_id===subcategory)&&(!warehouse||item.warehouse_id===warehouse));
  pkgRenderedGroups=pickerGroupRows(base).filter(group=>!q||pickerGroupFields(group).some(v=>v.includes(q))).sort((a,b)=>pickerCompare(a,b,sort));
  const packedPositions=contents.filter(x=>x.packaging_id===selected?.id).length,packedUnits=contents.filter(x=>x.packaging_id===selected?.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);$('pkgWarehouseSummary').innerHTML=`<strong>${pkgRenderedGroups.length}</strong><span>${pkgRenderedGroups.length===1?'позиція':'позицій'}</span>`;$('pkgWarehouseSelectionSummary').textContent=`У пакуванні: ${packedPositions} позицій · ${packedUnits} од.`;
- $('pkgWarehouseChoices').innerHTML=pkgRenderedGroups.length?pkgRenderedGroups.map(group=>{const available=(group.members||[]).reduce((sum,item)=>sum+pickerAvailable(item),0),status=pickerStatus(group),total=Number(group.quantity||0),percent=total>0?Math.max(0,Math.min(100,Math.round((Math.max(0,total-Number(group.repair_quantity||0))/total)*100))):0,categoryName=pickerLookup(pkgPickerRefs.categories,group.category_id,'Без категорії'),description=group.description||[group.manufacturer,group.model].filter(Boolean).join(' · ')||'Опис не вказано';return `<article class="pkg-picker-card"><div class="pkg-picker-photo">${pickerPhoto(group)}<span class="pkg-picker-photo-badge">${esc(categoryName)}</span></div><div class="pkg-picker-body"><div class="pkg-picker-top"><span class="pkg-picker-id">${esc(pickerGroupEqLabel(group))}</span><span class="pkg-picker-status ${status.cls}">${esc(status.label)}</span></div><h3>${esc(group.name||'Обладнання')}</h3><p class="pkg-picker-description">${esc(description)}</p><div class="pkg-picker-info"><div class="pkg-picker-location">${pickerGroupLocationMarkup(group)}</div><div class="pkg-picker-stock"><div class="pkg-picker-stock-head"><div><small>Доступно</small><strong>${available} <em>/ ${total}</em></strong></div><span>${percent}%</span></div><div class="pkg-picker-progress"><i style="width:${percent}%"></i></div></div></div><div class="pkg-picker-foot"><div><small>${esc(pickerLookup(pkgPickerRefs.subcategories,group.subcategory_id,'Без підкатегорії'))}</small>${group.members.length>1?`<span class="pkg-picker-note">Згруповано: ${group.members.length} EQ-ID</span>`:''}${group.current?`<span class="pkg-picker-note">У цьому пакуванні: ${group.current} од.</span>`:''}</div><button type="button" class="primary" data-pkg-warehouse-group="${esc(group.id)}" ${available<=0?'disabled':''}>${group.current?'Додати ще':'Додати'}</button></div></div></article>`}).join(''):'<div class="pkg-picker-empty">Обладнання не знайдено. Змініть запит або фільтри.</div>';
- $('pkgWarehouseRows').innerHTML=pkgRenderedGroups.length?pkgRenderedGroups.map(group=>{const available=(group.members||[]).reduce((sum,item)=>sum+pickerAvailable(item),0);return `<tr><td><strong>${esc(group.name||'Обладнання')}</strong><small>${esc(group.model||group.description||'')}</small></td><td class="pkg-picker-cell-id">${esc(pickerGroupEqLabel(group))}</td><td>${esc(pickerLookup(pkgPickerRefs.categories,group.category_id,'—'))}<small>${esc(pickerLookup(pkgPickerRefs.subcategories,group.subcategory_id,'—'))}</small></td><td>${esc(pickerGroupLocationText(group))}</td><td class="pkg-picker-cell-qty">${available} / ${Number(group.quantity||0)}${group.current?`<small>У пакуванні: ${group.current}</small>`:''}</td><td class="pkg-picker-cell-action"><button type="button" class="primary" data-pkg-warehouse-group="${esc(group.id)}" ${available<=0?'disabled':''}>${group.current?'Додати ще':'Додати'}</button></td></tr>`}).join(''):'<tr><td colspan="6" class="pkg-picker-empty-row">Обладнання не знайдено.</td></tr>';
- updatePickerViewState();
+ $('pkgWarehouseChoices').innerHTML=pkgRenderedGroups.length?pkgRenderedGroups.map(group=>{const available=pkgBulkMode?pkgBulkGroupFree(group):(group.members||[]).reduce((sum,item)=>sum+pickerAvailable(item),0),status=pickerStatus(group),total=Number(group.quantity||0),percent=total>0?Math.max(0,Math.min(100,Math.round((Math.max(0,total-Number(group.repair_quantity||0))/total)*100))):0,categoryName=pickerLookup(pkgPickerRefs.categories,group.category_id,'Без категорії'),description=group.description||[group.manufacturer,group.model].filter(Boolean).join(' · ')||'Опис не вказано';return `<article class="pkg-picker-card"><div class="pkg-picker-photo">${pickerPhoto(group)}<span class="pkg-picker-photo-badge">${esc(categoryName)}</span></div><div class="pkg-picker-body"><div class="pkg-picker-top"><span class="pkg-picker-id">${esc(pickerGroupEqLabel(group))}</span><span class="pkg-picker-status ${status.cls}">${esc(status.label)}</span></div><h3>${esc(group.name||'Обладнання')}</h3><p class="pkg-picker-description">${esc(description)}</p><div class="pkg-picker-info"><div class="pkg-picker-location">${pickerGroupLocationMarkup(group)}</div><div class="pkg-picker-stock"><div class="pkg-picker-stock-head"><div><small>Доступно</small><strong>${available} <em>/ ${total}</em></strong></div><span>${percent}%</span></div><div class="pkg-picker-progress"><i style="width:${percent}%"></i></div></div></div><div class="pkg-picker-foot"><div><small>${esc(pickerLookup(pkgPickerRefs.subcategories,group.subcategory_id,'Без підкатегорії'))}</small>${group.members.length>1?`<span class="pkg-picker-note">Згруповано: ${group.members.length} EQ-ID</span>`:''}${group.current?`<span class="pkg-picker-note">У цьому пакуванні: ${group.current} од.</span>`:''}</div>${pkgBulkMode?pkgBulkControls(group):`<button type="button" class="primary" data-pkg-warehouse-group="${esc(group.id)}" ${available<=0?'disabled':''}>${group.current?'Додати ще':'Додати'}</button>`}</div></div></article>`}).join(''):'<div class="pkg-picker-empty">Обладнання не знайдено. Змініть запит або фільтри.</div>';
+ $('pkgWarehouseRows').innerHTML=pkgRenderedGroups.length?pkgRenderedGroups.map(group=>{const available=pkgBulkMode?pkgBulkGroupFree(group):(group.members||[]).reduce((sum,item)=>sum+pickerAvailable(item),0);return `<tr><td><strong>${esc(group.name||'Обладнання')}</strong><small>${esc(group.model||group.description||'')}</small></td><td class="pkg-picker-cell-id">${esc(pickerGroupEqLabel(group))}</td><td>${esc(pickerLookup(pkgPickerRefs.categories,group.category_id,'—'))}<small>${esc(pickerLookup(pkgPickerRefs.subcategories,group.subcategory_id,'—'))}</small></td><td>${esc(pickerGroupLocationText(group))}</td><td class="pkg-picker-cell-qty">${available} / ${Number(group.quantity||0)}${group.current?`<small>У пакуванні: ${group.current}</small>`:''}</td><td class="pkg-picker-cell-action">${pkgBulkMode?pkgBulkControls(group):`<button type="button" class="primary" data-pkg-warehouse-group="${esc(group.id)}" ${available<=0?'disabled':''}>${group.current?'Додати ще':'Додати'}</button>`}</td></tr>`}).join(''):'<tr><td colspan="6" class="pkg-picker-empty-row">Обладнання не знайдено.</td></tr>';
+ updatePickerViewState();pkgBulkState();
 }
 async function chooseFromWarehouse(){
  if(!selected)return;
  sessionStorage.removeItem('harazd-packaging-picker');
  sessionStorage.removeItem('harazd-packaging-picked');
  $('addMethod').close();
- updatePickerTarget();
+ pkgBulkReset();updatePickerTarget();
  pickerNotice('');
  $('pkgWarehouseSearch').value='';$('pkgWarehouseCategory').value='';$('pkgWarehouseSubcategory').value='';$('pkgWarehouseWarehouse').value='';$('pkgWarehouseSort').value='subcategory';
  try{await loadPickerRefs();renderWarehousePicker();$('pkgWarehousePicker').showModal();$('pkgWarehouseSearch').focus({preventScroll:true});}catch(e){msg('Не вдалося завантажити довідники: '+e.message,true)}
 }
+function pkgBulkSelectionChange(ev){
+ if(!pkgBulkMode||pkgBulkBusy)return;
+ const checkInput=ev.target.closest('[data-pkg-bulk-check]'),qtyInput=ev.target.closest('[data-pkg-bulk-qty]');
+ if(!checkInput&&!qtyInput)return;
+ const group=pkgRenderedGroups.find(g=>g.id===(checkInput||qtyInput).dataset[checkInput?'pkgBulkCheck':'pkgBulkQty']);
+ if(!group)return;
+ if(checkInput){
+  if(checkInput.checked){
+   const free=pkgBulkGroupFree(group);if(!free){renderWarehousePicker();return;}
+   pkgBulkSelected.set(group.id,{name:group.name,quantity:1,memberIds:group.members.map(e=>e.id)});
+  }else pkgBulkSelected.delete(group.id);
+ }else{
+  const entry=pkgBulkSelected.get(group.id);if(!entry)return;
+  const max=entry.memberIds.reduce((n,id)=>n+pkgBulkFree(equipment.find(e=>e.id===id)||{id,quantity:0}),0);
+  const qty=Number(qtyInput.value);
+  if(!Number.isSafeInteger(qty)||qty<1||qty>max){
+   pickerNotice(`Вкажіть кількість від 1 до ${max} для «${entry.name}».`);
+   qtyInput.value=String(entry.quantity);return;
+  }
+  entry.quantity=qty;pickerNotice('');
+ }
+ renderWarehousePicker();
+}
+function pkgBulkChangeMode(){
+ if(pkgBulkBusy)return;
+ if(selected?.kind==='rack')return pickerNotice('Для река використовуйте додавання з розміщенням по U.');
+ pkgBulkMode=!pkgBulkMode;pkgBulkSelected.clear();pickerNotice('');renderWarehousePicker();
+}
+async function pkgBulkSave(){
+ if(pkgBulkBusy||!pkgBulkMode||!selected||selected.kind==='rack'||!pkgBulkSelected.size)return;
+ const packageId=selected.id,entries=[...pkgBulkSelected.values()];
+ pkgBulkBusy=true;pkgBulkState();pickerNotice('Перевіряємо залишки обладнання...');
+ let savedRows=0;
+ try{
+  // Re-read stock and allocations before writing: do not rely on an old picker snapshot.
+  const ids=[...new Set(entries.flatMap(e=>e.memberIds))];
+  const [stockResult,contentsResult]=await Promise.all([
+   db.from('equipment').select('id,eq_id,quantity,repair_quantity,accounting_type').in('id',ids),
+   db.from('packaging_contents').select('id,packaging_id,equipment_id,quantity')
+  ]);
+  const freshStock=new Map(check(stockResult).map(x=>[x.id,x]));
+  const freshContents=check(contentsResult);
+  const reserved=new Map(),operations=[];
+  for(const entry of entries){
+   let remaining=entry.quantity;
+   if(!Number.isSafeInteger(remaining)||remaining<1)throw Error('Некоректна кількість у вибраних позиціях');
+   const members=entry.memberIds.map(id=>freshStock.get(id)).filter(Boolean).sort((a,b)=>pkgBulkFree(b,freshContents)-pkgBulkFree(a,freshContents)||String(a.eq_id||'').localeCompare(String(b.eq_id||''),'uk'));
+   for(const item of members){
+    if(!remaining)break;
+    const free=Math.max(0,pkgBulkFree(item,freshContents)-(reserved.get(item.id)||0));
+    const take=Math.min(remaining,free);
+    if(!take)continue;
+    reserved.set(item.id,(reserved.get(item.id)||0)+take);
+    const existing=freshContents.find(row=>row.packaging_id===packageId&&row.equipment_id===item.id);
+    const operation=operations.find(row=>row.equipmentId===item.id);
+    if(operation)operation.add+=take;
+    else operations.push({equipmentId:item.id,existing,add:take});
+    remaining-=take;
+   }
+   if(remaining)throw Error(`Недостатньо доступного обладнання «${entry.name}» (бракує ${remaining} шт.). Оновіть вибір.`);
+  }
+  pickerNotice(`Додавання обладнання: 0 / ${operations.length}...`);
+  for(const op of operations){
+   if(op.existing){
+    const updated=check(await db.from('packaging_contents').update({quantity:Number(op.existing.quantity)+op.add}).eq('id',op.existing.id).eq('packaging_id',packageId).select('id'));
+    if(!updated?.length)throw Error('Не вдалося оновити наявну позицію');
+   }else{
+    const inserted=check(await db.from('packaging_contents').insert({packaging_id:packageId,equipment_id:op.equipmentId,quantity:op.add}).select('id'));
+    if(!inserted?.length)throw Error('Не вдалося додати позицію');
+   }
+   savedRows++;pickerNotice(`Додавання обладнання: ${savedRows} / ${operations.length}...`);
+  }
+  pkgBulkSelected.clear();
+  await reloadDetail();
+  pickerNotice(`Додано ${entries.length} позицій (${entries.reduce((sum,e)=>sum+e.quantity,0)} од.) до пакування.`);
+  msg('Обладнання масово додано до пакування');
+ }catch(err){
+  // If a later write fails, show partial completion explicitly; don't offer blind retry.
+  pkgBulkSelected.clear();
+  if(savedRows){
+   await reloadDetail();
+   pickerNotice(`Збережено ${savedRows} позицій, але наступна операція не вдалася: ${err.message}. Перевірте вміст пакування.`);
+  }else pickerNotice('Не додано: '+err.message);
+  msg('Масове додавання: '+err.message,true);
+ }finally{pkgBulkBusy=false;renderWarehousePicker()}
+}
+$('pkgWarehouseBulkToggle').addEventListener('click',pkgBulkChangeMode);
+$('pkgWarehouseBulkCancel').addEventListener('click',()=>{if(pkgBulkBusy)return;pkgBulkSelected.clear();pickerNotice('');renderWarehousePicker()});
+$('pkgWarehouseBulkAdd').addEventListener('click',pkgBulkSave);
+$('pkgWarehousePicker').addEventListener('cancel',e=>{if(pkgBulkBusy)e.preventDefault()});
+$('pkgWarehousePicker').addEventListener('close',pkgBulkReset);
+for(const id of ['pkgWarehouseChoices','pkgWarehouseRows'])$(id).addEventListener('change',pkgBulkSelectionChange);
 $('pkgWarehouseSearch').addEventListener('input',renderWarehousePicker);
 $('pkgWarehouseCategory').addEventListener('change',()=>{$('pkgWarehouseSubcategory').value='';renderWarehousePicker()});
 $('pkgWarehouseSubcategory').addEventListener('change',renderWarehousePicker);
@@ -332,7 +454,7 @@ $('pkgWarehouseSort').addEventListener('change',renderWarehousePicker);
 $('pkgWarehouseClear').addEventListener('click',()=>{$('pkgWarehouseSearch').value='';$('pkgWarehouseCategory').value='';$('pkgWarehouseSubcategory').value='';$('pkgWarehouseWarehouse').value='';$('pkgWarehouseSort').value='subcategory';renderWarehousePicker()});
 $('pkgWarehouseViewCards').addEventListener('click',()=>{pkgPickerView='cards';localStorage.setItem('harazd-packaging-picker-view',pkgPickerView);updatePickerViewState()});
 $('pkgWarehouseViewTable').addEventListener('click',()=>{pkgPickerView='table';localStorage.setItem('harazd-packaging-picker-view',pkgPickerView);updatePickerViewState()});
-$('pkgWarehousePickerClose').addEventListener('click',()=>$('pkgWarehousePicker').close());
+$('pkgWarehousePickerClose').addEventListener('click',()=>{if(!pkgBulkBusy)$('pkgWarehousePicker').close()});
 for(const id of ['pkgWarehouseChoices','pkgWarehouseRows'])$(id).addEventListener('click',async ev=>{const btn=ev.target.closest('[data-pkg-warehouse-group],[data-pkg-warehouse-id]');if(!btn||btn.disabled)return;if(btn.dataset.pkgWarehouseGroup){const group=pkgRenderedGroups.find(g=>g.id===btn.dataset.pkgWarehouseGroup);if(!group)return;await chooseEquipmentGroup(group);return;}const item=equipment.find(e=>e.id===btn.dataset.pkgWarehouseId);if(!item)return;await chooseEquipment(item)});
 let qrScanner=null;
 async function stopQr(){if(qrScanner){try{await qrScanner.stop()}catch(e){}try{qrScanner.clear()}catch(e){}qrScanner=null}}

@@ -119,6 +119,23 @@
 #pkgWarehouseTable .pkg-picker-cell-action button[disabled]{opacity:.55;cursor:not-allowed}
 #pkgWarehouseTable .pkg-picker-empty-row{text-align:center;color:#9fb6cc;padding:26px 16px}
 #pkgWarehouseNotice{margin:14px 0 0;min-height:20px}
+/* Масове додавання: лише додаткові елементи в існуючому вікні вибору. */
+#pkgWarehouseBulkToggle[aria-pressed="true"]{border-color:#dff500;color:#dff500;background:#253139}
+#pkgWarehousePicker .pkg-picker-bulk-bar{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px;padding:12px 16px;background:#192838;border:1px solid #344b60;border-radius:14px;box-shadow:0 5px 14px #0004}
+#pkgWarehousePicker .pkg-picker-bulk-bar strong{font-size:14px;color:#eef6ff}
+#pkgWarehousePicker .pkg-picker-bulk-actions{display:flex;gap:10px;flex-wrap:wrap}
+#pkgWarehousePicker .pkg-picker-bulk-actions button{min-height:40px}
+#pkgWarehousePicker .pkg-picker-bulk-actions button:disabled{opacity:.5;cursor:not-allowed}
+#pkgWarehousePicker .pkg-bulk-control{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+#pkgWarehousePicker .pkg-bulk-check{display:inline-flex;align-items:center;gap:7px;color:#f1f6ff;font-size:13px;cursor:pointer;white-space:nowrap}
+#pkgWarehousePicker .pkg-bulk-check input{width:17px;height:17px;margin:0;accent-color:#dff500;cursor:pointer}
+#pkgWarehousePicker .pkg-bulk-check input:disabled{opacity:.4;cursor:not-allowed}
+#pkgWarehousePicker .pkg-bulk-qty-label{display:inline-flex;align-items:center;gap:7px;color:#aebfd0;font-size:12px;white-space:nowrap}
+#pkgWarehousePicker .pkg-bulk-qty-label input{width:72px;min-width:72px;height:40px;min-height:40px;box-sizing:border-box;margin:0;padding:7px 8px;text-align:center;font-size:14px;color:#f5f8ff;background:#111b27;border:1px solid #405569;border-radius:9px}
+#pkgWarehousePicker .pkg-bulk-qty-label input:disabled{opacity:.45}
+#pkgWarehousePicker .pkg-bulk-qty-label input:focus-visible,#pkgWarehousePicker .pkg-bulk-check input:focus-visible{outline:2px solid #dff500;outline-offset:2px}
+#pkgWarehousePicker .pkg-picker-foot .pkg-bulk-control{margin-left:auto}
+#pkgWarehouseTable .pkg-bulk-control{min-width:230px}
 @media(max-width:1180px){#pkgWarehousePicker .pkg-picker-selects{grid-template-columns:repeat(2,minmax(180px,1fr));flex-basis:100%}}
 @media(max-width:860px){#pkgWarehousePicker{width:min(100vw - 16px,1520px)}#pkgWarehousePicker .pkg-picker-shell{padding:18px 16px 18px}#pkgWarehousePickerClose{width:54px;height:54px;min-height:54px;border-radius:14px}#pkgWarehouseChoices{grid-template-columns:1fr}}
 @media(max-width:680px){#pkgWarehousePicker .pkg-picker-selects{grid-template-columns:1fr}#pkgWarehousePicker .pkg-picker-actions{width:100%;justify-content:space-between}#pkgWarehousePicker .pkg-picker-actions>button{flex:1 1 auto}#pkgWarehousePicker .pkg-picker-view{width:100%;justify-content:stretch}#pkgWarehousePicker .pkg-picker-view button{flex:1 1 0;justify-content:center}#pkgWarehouseChoices .pkg-picker-info{grid-template-columns:1fr}}
@@ -136,6 +153,7 @@
         <select id="pkgWarehouseSort"><option value="subcategory">За підкатегоріями</option><option value="name">За назвою</option><option value="qty">За кількістю</option><option value="availability">Найбільше доступних</option><option value="model">За моделлю</option></select>
       </div>
       <div class="pkg-picker-actions">
+        <button id="pkgWarehouseBulkToggle" type="button" aria-pressed="false" hidden>☷ Масове додавання</button>
         <button id="pkgWarehouseClear" type="button"><span aria-hidden="true">×</span> Очистити фільтри</button>
         <div class="pkg-picker-view" role="group" aria-label="Режим відображення">
           <button id="pkgWarehouseViewCards" type="button" aria-pressed="true"><span aria-hidden="true">▣</span> Картки</button>
@@ -144,6 +162,7 @@
       </div>
     </div>
     <div class="pkg-picker-summary"><div id="pkgWarehouseSummary"><strong>0</strong><span>позицій</span></div><div id="pkgWarehouseSelectionSummary">У пакуванні: 0 позицій · 0 од.</div></div>
+    <div id="pkgWarehouseBulkBar" class="pkg-picker-bulk-bar hidden"><strong id="pkgWarehouseBulkCount" aria-live="polite">Вибрано: 0 позицій · 0 од.</strong><div class="pkg-picker-bulk-actions"><button id="pkgWarehouseBulkCancel" type="button">Очистити вибір</button><button id="pkgWarehouseBulkAdd" class="primary" type="button" disabled>Додати вибрані</button></div></div>
     <div id="pkgWarehouseChoices" aria-live="polite"></div>
     <div id="pkgWarehouseTableWrap" class="hidden"><table id="pkgWarehouseTable"><thead><tr><th>Обладнання</th><th>EQ-ID</th><th>Категорія</th><th>Склад / місце</th><th>Доступно</th><th></th></tr></thead><tbody id="pkgWarehouseRows"></tbody></table></div>
     <p id="pkgWarehouseNotice" class="pkg-note" role="status"></p>
@@ -204,4 +223,4 @@
  document.addEventListener('DOMContentLoaded',()=>{scan();new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});});
 })();
 
-</script><script src="config.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="label-download.js?v=1"></script><script src="packaging.js?v=49.60"></script><script src="module-embed.js?v=49.23" defer></script></body></html>
+</script><script src="config.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="label-download.js?v=1"></script><script src="packaging.js?v=49.63-bulk"></script><script src="module-embed.js?v=49.23" defer></script></body></html>
