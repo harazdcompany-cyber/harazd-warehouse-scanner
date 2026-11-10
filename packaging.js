@@ -252,18 +252,24 @@ function addDialog(){
 }
 function findEq(code){const raw=String(code||'').trim();const normalized=raw.match(/EQ-\d+/i)?.[0]||raw;return equipment.find(x=>String(x.eq_id||'').toLowerCase()===normalized.toLowerCase())}
 function pickerLookup(list,id,fallback='—'){return list.find(x=>x.id===id)?.name||fallback}
-function pickerAvailable(e){return Math.max(0,Number(e?.quantity||0)-Number(e?.repair_quantity||0)-contents.filter(x=>x.equipment_id===e?.id).reduce((sum,x)=>sum+Number(x.quantity||0),0))}
+function pickerAvailable(e,rows=contents){
+ if(!e)return 0;
+ const allocated=rows.filter(x=>x.equipment_id===e.id).reduce((sum,x)=>sum+Number(x.quantity||0),0);
+ const available=Math.max(0,Number(e.quantity||0)-Number(e.repair_quantity||0)-allocated);
+ const personal=String(e.accounting_type||'').toLowerCase();
+ return (personal.includes('personal')||personal.includes('персон'))?(allocated>0?0:Math.min(1,available)):available;
+}
 function pickerCurrentQty(equipmentId){return contents.filter(x=>x.packaging_id===selected?.id&&x.equipment_id===equipmentId).reduce((sum,x)=>sum+Number(x.quantity||0),0)}
 // Bulk allocation is for cases/boxes/pallets, not U-positioned rack devices.
-// An EQ-ID already allocated to a different package cannot be reused (DB unique constraint).
-function pkgBulkFree(item,rows=contents){
- const allocated=rows.filter(x=>x.equipment_id===item.id);
- if(allocated.some(x=>x.packaging_id!==selected?.id))return 0;
- const assigned=allocated.reduce((n,x)=>n+Number(x.quantity||0),0);
- const personal=String(item.accounting_type||'').toLowerCase();
- if((personal.includes('personal')||personal.includes('персон'))&&assigned>0)return 0;
- const free=Math.max(0,Number(item.quantity||0)-Number(item.repair_quantity||0)-assigned);
- return Math.max(0,Math.floor(Math.min(free,(personal.includes('personal')||personal.includes('персон'))?1:free)));
+// Quantity-accounted EQ-IDs may be distributed across multiple packages.
+// Individually accounted EQ-IDs remain exclusive to one package.
+function pkgBulkFree(item,rows=contents){return Math.floor(pickerAvailable(item,rows))} 
+function packagingAllocationError(err){
+ const message=String(err?.message||err||'Невідома помилка');
+ if(err?.code==='23505'&&message.includes('packaging_contents_equipment_id_key')){
+  return 'База даних ще не дозволяє розподіляти одну позицію між пакуваннями. Спочатку виконайте SETUP_PACKAGING_SHARED_QUANTITY.sql у Supabase.';
+ }
+ return message;
 }
 function pkgBulkGroupFree(group){return (group.members||[]).reduce((n,item)=>n+pkgBulkFree(item),0)}
 function pkgPickerAddControl(group,available){
@@ -347,7 +353,7 @@ ${current?`У цьому пакуванні: ${current} шт.
   if(existing)check(await db.from('packaging_contents').update({quantity:Number(existing.quantity)+count}).eq('id',existing.id).select());
   else check(await db.from('packaging_contents').insert({packaging_id:selected.id,equipment_id:e.id,quantity:count}).select());
   $('addMethod').close();await reloadDetail();if($('pkgWarehousePicker').open){renderWarehousePicker();$('pkgWarehouseSearch').focus({preventScroll:true});}msg('Обладнання додано до пакування');
- }catch(ex){msg(ex.message,true)}
+ }catch(ex){msg('Не вдалося додати: '+packagingAllocationError(ex),true)}
 }
 async function chooseEquipmentGroup(group,requestedQuantity=null){
  if(!group||!selected)return;
@@ -382,7 +388,7 @@ ${current?`У цьому пакуванні: ${current} шт.
    else check(await db.from('packaging_contents').insert({packaging_id:selected.id,equipment_id:entry.item.id,quantity:entry.quantity}).select());
   }
   $('addMethod').close();await reloadDetail();if($('pkgWarehousePicker').open){renderWarehousePicker();$('pkgWarehouseSearch').focus({preventScroll:true});}msg('Обладнання додано до пакування');
- }catch(ex){msg(ex.message,true)}
+ }catch(ex){msg('Не вдалося додати: '+packagingAllocationError(ex),true)}
 }
 async function addById(){const code=$('pkgEqId').value.trim();const e=findEq(code);if(!e)return msg('EQ-ID не знайдено на складі',true);await chooseEquipment(e)}
 
@@ -487,9 +493,9 @@ async function pkgBulkSave(){
   pkgBulkSelected.clear();
   if(savedRows){
    await reloadDetail();
-   pickerNotice(`Збережено ${savedRows} позицій, але наступна операція не вдалася: ${err.message}. Перевірте вміст пакування.`);
-  }else pickerNotice('Не додано: '+err.message);
-  msg('Масове додавання: '+err.message,true);
+   pickerNotice(`Збережено ${savedRows} позицій, але наступна операція не вдалася: ${packagingAllocationError(err)}. Перевірте вміст пакування.`);
+  }else pickerNotice('Не додано: '+packagingAllocationError(err));
+  msg('Масове додавання: '+packagingAllocationError(err),true);
  }finally{pkgBulkBusy=false;renderWarehousePicker()}
 }
 $('pkgWarehouseBulkToggle').addEventListener('click',pkgBulkChangeMode);
