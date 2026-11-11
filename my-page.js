@@ -26,7 +26,6 @@
    <div class="my-page-fields">${info('Email',user?.email || profile?.email)}${info('Роль',profile ? roles[profile.role] || profile.role : '—')}${info('Статус',status)}${info('Посада',profile?.position || '—')}${info('Телефон',contact?.phone || '—')}${info('Telegram',contact?.telegram || '—')}${info('Місто',contact?.city || '—')}${info('Дата народження',prettyDate(contact?.birth_date))}${info('Email підтверджено',user?.email_confirmed_at ? 'Так' : 'Ні')}${info('ID користувача',user?.id)}</div>
    <h3>Про себе</h3><p class="my-page-about">${safe(contact?.about || 'Інформацію ще не додано.')}</p>
    <h3>Мої дозволи</h3><div class="my-page-permissions">${allowed.length ? allowed.map(x => `<span>${safe(x)}</span>`).join('') : '<p class="my-page-empty">Дозволи не призначено.</p>'}</div><p class="my-page-help">${ready ? 'Особисті контактні дані доступні тільки вам. ' : 'Для редагування контактів виконайте SQL-оновлення. '}ПІБ, посаду, роль та дозволи змінює адміністратор в розділі «Персонал». Пароль ніколи не відображається.</p>`;
-   window.harazdMyPageExtras?.restoreAvatar?.();
  }
  function openContactEditor() {
    if (!currentUser || !currentProfile || currentProfile.status !== 'active' || !contactsReady) return;
@@ -51,6 +50,7 @@
      if (error) throw error;
      currentContact = data;
      displayProfile(currentUser,currentProfile,currentContact,true);
+     window.harazdMyPageExtras?.restoreAvatar?.();
      el('myPageContactDialog').close();
      el('myPageNotice').textContent = 'Особисту інформацію збережено.';
    } catch (error) {
