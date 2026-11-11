@@ -178,15 +178,41 @@
     const host=byId('myTaskList');
     if (!host) return;
     const filter=byId('myTaskFilter')?.value || 'open';
-    const filtered=tasks.filter(t=>filter==='all' || (filter==='open' ? t.status!=='done' : t.status==='done'));
-    if (!filtered.length) {host.innerHTML='<p class="my-page-empty">Завдань за вибраним фільтром немає.</p>';return;}
+    const sort=byId('myTaskSort')?.value || 'due';
+    const today=localISO(new Date());
+    const ranks={high:0,normal:1,low:2};
+    const compareDue=(a,b)=>{
+      const ad=a.due_date||'9999-12-31',bd=b.due_date||'9999-12-31';
+      return ad.localeCompare(bd);
+    };
+    const filtered=tasks.filter(t=>filter==='all' || (filter==='open' ? t.status!=='done' : t.status==='done')).slice();
+    filtered.sort((a,b)=>{
+      if (filter==='all' && (a.status==='done')!==(b.status==='done')) return a.status==='done'?1:-1;
+      if (sort==='priority') {
+        const diff=(ranks[a.priority]??1)-(ranks[b.priority]??1);
+        if(diff) return diff;
+      } else if (sort==='newest') {
+        const diff=(b.created_at||'').localeCompare(a.created_at||'');
+        if(diff) return diff;
+      }
+      return compareDue(a,b)||(ranks[a.priority]??1)-(ranks[b.priority]??1)||
+        (b.created_at||'').localeCompare(a.created_at||'');
+    });
+    if (!filtered.length) {
+      host.innerHTML='<p class="my-page-empty">Завдань за вибраним фільтром немає.</p>';
+      return;
+    }
     host.innerHTML=filtered.map(task=>{
-      const own = task.assignee_id===currentUser?.id;
-      const assignee = staffNames.get(task.assignee_id);
-      const label = priorities[task.priority]||'Звичайний';
-      return `<div class="my-page-task ${task.status==='done'?'is-done':''}" data-task-id="${escapeHTML(task.id)}">
+      const own=task.assignee_id===currentUser?.id;
+      const assignee=staffNames.get(task.assignee_id);
+      const label=priorities[task.priority]||'Звичайний';
+      const overdue=task.status!=='done' && Boolean(task.due_date && task.due_date<today);
+      return `<div class="my-page-task ${task.status==='done'?'is-done':''} ${overdue?'is-overdue':''}" data-task-id="${escapeHTML(task.id)}">
         <div class="my-page-task-line"><strong>${escapeHTML(task.title)}</strong>
-          <span class="my-page-task-priority priority-${escapeHTML(task.priority)}">${escapeHTML(label)}</span></div>
+          <span class="my-page-task-labels">
+            ${overdue?'<span class="my-page-task-overdue">Прострочено</span>':''}
+            <span class="my-page-task-priority priority-${escapeHTML(task.priority)}">${escapeHTML(label)}</span>
+          </span></div>
         ${task.details?`<p>${escapeHTML(task.details)}</p>`:''}
         <div class="my-page-task-meta"><span>До: ${escapeHTML(dateText(task.due_date))}</span>
           ${!own && assignee?`<span>Працівник: ${escapeHTML(assignee)}</span>`:''}</div>
@@ -196,7 +222,7 @@
           ${manager && task.created_by===currentUser?.id?`<span class="my-page-task-actions"><button type="button" data-my-task-edit="${escapeHTML(task.id)}">Редагувати</button><button type="button" data-my-task-delete="${escapeHTML(task.id)}">Видалити</button></span>`:''}</div></div>`;
     }).join('');
   }
-  async function loadTasks(request) {
+    async function loadTasks(request) {
     const host=byId('myTaskList');if(host)host.innerHTML='<p class="my-page-empty">Завантаження завдань…</p>';
     const queries=[db.from('warehouse_personal_tasks').select('id,assignee_id,created_by,title,details,priority,status,due_date,created_at').order('created_at',{ascending:false}).limit(150)];
     if (manager) queries.push(db.from('warehouse_staff').select('user_id,full_name').eq('status','active').order('full_name'));
@@ -292,7 +318,7 @@
       const {error}=await db.rpc('warehouse_set_my_task_status',{p_task_id:id,p_status:status});
       if(error)throw error;
       task.status=status;displayTasks();renderCalendar();
-      notice('Статус завдання змінено.');
+      notice(status==='done' ? 'Завдання завершено. Переглянути його можна у фільтрі «Завершені».' : 'Статус завдання змінено.');
     }catch(error){select.value=old;notice(error?.message||'Помилка зміни статусу.',true);}
     finally {select.disabled=false;}
   }
@@ -411,6 +437,7 @@
     if (select) updateTaskStatus(select.dataset.myTaskStatus,select.value,select);
   });
   byId('myTaskFilter')?.addEventListener('change',displayTasks);
+  byId('myTaskSort')?.addEventListener('change',displayTasks);
   byId('myAvatarPick')?.addEventListener('click',()=>byId('myAvatarFile')?.click());
   byId('myAvatarRemove')?.addEventListener('click',removeAvatar);
   byId('myPageProfile')?.addEventListener('click',event=>{
