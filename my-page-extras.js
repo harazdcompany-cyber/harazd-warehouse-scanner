@@ -38,30 +38,41 @@
       wrap.className = 'my-page-avatar-wrap';
       avatar.parentNode.insertBefore(wrap,avatar);
       wrap.appendChild(avatar);
-      const pick = document.createElement('button');
-      pick.type = 'button';
-      pick.id = 'myAvatarPick';
-      pick.className = 'my-page-avatar-action';
-      pick.textContent = 'Додати фото';
-      wrap.appendChild(pick);
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.id = 'myAvatarRemove';
-      remove.className = 'my-page-avatar-remove';
-      remove.textContent = 'Прибрати';
-      wrap.appendChild(remove);
     }
-    const isActive = currentProfile?.status === 'active';
-    byId('myAvatarPick').disabled = !isActive;
-    byId('myAvatarPick').textContent = avatarPath ? 'Змінити фото' : 'Додати фото';
-    byId('myAvatarRemove').hidden = !avatarPath || !isActive;
     return avatar;
   }
-  async function paintAvatar(request) {
+  function syncAvatarEditor() {
+    const preview = byId('myAvatarDialogPreview');
+    if (!preview) return;
+    const image = document.querySelector('#myPageProfile .my-page-avatar img');
+    if (image) {
+      const clone = image.cloneNode(false);
+      clone.alt = 'Фото профілю';
+      preview.replaceChildren(clone);
+    } else {
+      preview.replaceChildren();
+      preview.textContent = initials();
+    }
+    const pick = byId('myAvatarPick'), remove = byId('myAvatarRemove');
+    const isActive = currentProfile?.status === 'active';
+    if (pick) pick.textContent = avatarPath ? 'Змінити фото' : 'Додати фото';
+    if (pick && !pick.dataset.uploading) pick.disabled = !isActive;
+    if (remove) remove.hidden = !avatarPath || !isActive;
+  }
+  function avatarNotice(message, error = false) {
+    notice(message,error);
+    const feedback = byId('myAvatarDialogFeedback');
+    if (feedback) {
+      feedback.textContent = message || '';
+      feedback.classList.toggle('is-error',error);
+    }
+  }
+    async function paintAvatar(request) {
     const avatar = ensureAvatarControls();
     if (!avatar) return;
     avatar.replaceChildren();
     avatar.textContent = initials();
+    syncAvatarEditor();
     if (!avatarPath) return;
     const path = avatarPath;
     const {data,error} = await db.storage.from(BUCKET).createSignedUrl(path,3600);
@@ -71,8 +82,9 @@
     image.alt = 'Фото профілю';
     image.className = 'my-page-avatar-image';
     image.src = data.signedUrl;
-    image.onerror = () => {image.remove();avatar.textContent = initials();};
+    image.onerror = () => {image.remove();avatar.textContent = initials();syncAvatarEditor();};
     avatar.replaceChildren(image);
+    syncAvatarEditor();
   }
   async function loadAvatar(request) {
     const {data,error} = await db.from('warehouse_staff_avatar')
@@ -109,11 +121,12 @@
   }
   async function uploadAvatar(file) {
     if (!currentUser || currentProfile?.status!=='active') return;
-    const button=byId('myAvatarPick');if (button) button.disabled=true;
+    const button=byId('myAvatarPick');
+    if (button) {button.disabled=true;button.dataset.uploading='1';}
     const originalUser=currentUser.id,request=activeRequest,old=avatarPath;
     let path='';
     try {
-      notice('Обробляємо фото профілю…');
+      avatarNotice('Обробляємо фото профілю…');
       const blob=await prepareAvatar(file);
       path=originalUser+'/avatar-'+crypto.randomUUID()+'.jpg';
       const upload=await db.storage.from(BUCKET).upload(path,blob,{contentType:'image/jpeg',cacheControl:'3600',upsert:false});
@@ -124,22 +137,22 @@
       if (request !== activeRequest || currentUser?.id !== originalUser) return;
       avatarPath=path;
       await paintAvatar(request);
-      notice('Фото профілю оновлено.');
+      avatarNotice('Фото профілю оновлено.');
       if (old && old!==path) db.storage.from(BUCKET).remove([old]).catch(()=>{});
     } catch(error) {
       if (path) db.storage.from(BUCKET).remove([path]).catch(()=>{});
-      notice(error?.message || 'Помилка завантаження фото.',true);
-    } finally {if (button) button.disabled=false;}
+      avatarNotice(error?.message || 'Помилка завантаження фото.',true);
+    } finally {if (button) {button.disabled=false;delete button.dataset.uploading;} syncAvatarEditor();}
   }
   async function removeAvatar() {
     if (!avatarPath || !currentUser) return;
     const old=avatarPath;
     const {error}=await db.from('warehouse_staff_avatar').delete().eq('user_id',currentUser.id);
-    if (error) return notice('Помилка видалення фото: '+error.message,true);
+    if (error) return avatarNotice('Помилка видалення фото: '+error.message,true);
     avatarPath='';
-    paintAvatar(activeRequest);
+    await paintAvatar(activeRequest);
     db.storage.from(BUCKET).remove([old]).catch(()=>{});
-    notice('Фото профілю прибрано.');
+    avatarNotice('Фото профілю прибрано.');
   }
   async function decorateStaffList(visibleStaff) {
     if (!Array.isArray(visibleStaff) || !visibleStaff.length || typeof db==='undefined') return;
@@ -342,13 +355,12 @@
       renderCalendar();return;
     }
     ensureAvatarControls();
+    syncAvatarEditor();
     await Promise.allSettled([loadAvatar(request),loadTasks(request)]);
   }
   const root=byId('my-page');
   root?.addEventListener('click',event=>{
-    if (event.target.closest('#myAvatarPick')) byId('myAvatarFile')?.click();
-    else if (event.target.closest('#myAvatarRemove')) removeAvatar();
-    else if (event.target.closest('#myTaskNew')) openTaskForm();
+    if (event.target.closest('#myTaskNew')) openTaskForm();
     else if (event.target.closest('[data-my-task-delete]')) deleteTask(event.target.closest('[data-my-task-delete]').dataset.myTaskDelete);
     else if (event.target.closest('[data-my-calendar-shift]')) changeMonth(Number(event.target.closest('[data-my-calendar-shift]').dataset.myCalendarShift));
     else if (event.target.closest('#myCalendarToday')) {
@@ -362,6 +374,15 @@
     if (select) updateTaskStatus(select.dataset.myTaskStatus,select.value,select);
   });
   byId('myTaskFilter')?.addEventListener('change',displayTasks);
+  byId('myAvatarPick')?.addEventListener('click',()=>byId('myAvatarFile')?.click());
+  byId('myAvatarRemove')?.addEventListener('click',removeAvatar);
+  byId('myPageProfile')?.addEventListener('click',event=>{
+    if (event.target.closest('#myPageEditProfile')) {
+      const feedback=byId('myAvatarDialogFeedback');
+      if (feedback) {feedback.textContent='';feedback.classList.remove('is-error');}
+      syncAvatarEditor();
+    }
+  });
   byId('myAvatarFile')?.addEventListener('change',async event=>{
     const file=event.target.files?.[0];event.target.value='';if(file)await uploadAvatar(file);
   });
