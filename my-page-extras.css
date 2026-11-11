@@ -2,11 +2,7 @@
 #my-page .my-page-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 0 92px;min-width:92px}
 #my-page .my-page-avatar-wrap .my-page-avatar{width:72px;height:72px;flex:0 0 72px;overflow:hidden}
 #my-page .my-page-avatar-image{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
-#my-page .my-page-avatar-action,#my-page .my-page-avatar-remove{background:transparent;border:0;color:#c3dded;font-size:11px;cursor:pointer;padding:3px 2px;white-space:nowrap;max-width:120px}
-#my-page .my-page-avatar-remove{color:#e8aeb4}
-#my-page .my-page-avatar-action:hover,#my-page .my-page-avatar-remove:hover{text-decoration:underline}
-#my-page .my-page-avatar-action:disabled{opacity:.4;cursor:not-allowed}
-#my-page .my-page-avatar-remove[hidden],#my-page #myTaskNew[hidden]{display:none!important}
+#my-page #myTaskNew[hidden]{display:none!important}
 .staff-avatar .my-page-staff-avatar-image{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
 #my-page #myExtrasNotice{font-size:12px;line-height:1.5;color:#b6d9c4;margin:2px 0 11px}
 #my-page #myExtrasNotice:empty{display:none}
@@ -60,3 +56,21 @@
 
 /* Task dialog select controls match the existing personal info forms. */
 #myTaskDialog .my-page-form-grid select{background:#0b1521;color:#f5f8ff;box-sizing:border-box;border:1px solid #40566f;border-radius:10px;padding:12px 13px;width:100%;font:inherit;min-height:43px}
+
+/* Profile photo actions live in the existing "Редагувати інформацію" dialog. */
+#myPageContactDialog .my-page-photo-editor{display:flex;align-items:center;gap:16px;min-width:0;margin:0 0 15px;padding:14px;border:1px solid #3a5069;border-radius:12px;background:#111f30}
+#myPageContactDialog .my-page-photo-editor-preview{width:72px;height:72px;flex:0 0 72px;display:grid;place-items:center;overflow:hidden;border:1px solid #5d6729;border-radius:16px;background:#273421;color:#deff00;font-size:23px;font-weight:800}
+#myPageContactDialog .my-page-photo-editor-preview img{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
+#myPageContactDialog .my-page-photo-editor-content{min-width:0;flex:1}
+#myPageContactDialog .my-page-photo-editor-content>strong{display:block;font-size:14px;margin:0 0 9px;color:#eff5ff}
+#myPageContactDialog .my-page-photo-editor-actions{display:flex;gap:8px;flex-wrap:wrap}
+#myPageContactDialog .my-page-photo-editor-actions button{padding:9px 12px;background:#1d2c3d;color:#edf5ff;border:1px solid #40566f;border-radius:9px;font-size:12px;cursor:pointer}
+#myPageContactDialog .my-page-photo-editor-actions button:hover:not(:disabled){border-color:#a3c4da}
+#myPageContactDialog .my-page-photo-editor-actions button:disabled{opacity:.5;cursor:wait}
+#myPageContactDialog #myAvatarRemove{color:#ffb9bf}
+#myPageContactDialog #myAvatarRemove[hidden]{display:none!important}
+#myPageContactDialog .my-page-photo-editor-content>small{display:block;font-size:11px;color:#a8bbcd;line-height:1.5;margin-top:9px}
+#myPageContactDialog .my-page-photo-editor-feedback{margin:-6px 0 13px;font-size:12px;line-height:1.45;color:#b6d9c4}
+#myPageContactDialog .my-page-photo-editor-feedback.is-error{color:#ffb9bf}
+#myPageContactDialog .my-page-photo-editor-feedback:empty{display:none}
+@media(max-width:430px){#myPageContactDialog .my-page-photo-editor{align-items:flex-start;gap:10px;padding:11px}#myPageContactDialog .my-page-photo-editor-preview{width:58px;height:58px;flex-basis:58px;font-size:19px}}
