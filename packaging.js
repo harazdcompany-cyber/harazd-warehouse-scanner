@@ -2,6 +2,26 @@
 const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',netbox:'Нетбокс',transport_container:'Транспортний контейнер',other:'Інше'};
+
+// Keep packaging type options in sync in embedded or previously cached views.
+function pkgEnsureTypeOptions(){
+ const fields=[
+  {el:document.querySelector('#form select[name="kind"]'),labels:['Нетбокс','Транспортний контейнер']},
+  {el:document.getElementById('kind'),labels:['Нетбокси','Транспортні контейнери']},
+  {el:document.getElementById('pkgNestedKind'),labels:['Нетбокси','Транспортні контейнери']}
+ ];
+ for(const {el,labels} of fields){
+  if(!el)continue;
+  for(const [i,value] of ['netbox','transport_container'].entries()){
+   if([...el.options].some(option=>option.value===value))continue;
+   const option=new Option(labels[i],value);
+   const other=[...el.options].find(o=>o.value==='other');
+   el.insertBefore(option,other||null);
+  }
+ }
+}
+pkgEnsureTypeOptions();
+
 let items=[],contents=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null,rackSwapBusy=false,rackDropHandled=false;
 let pkgBulkMode=false,pkgBulkBusy=false;const pkgBulkSelected=new Map();
 const PKG_PHOTO_BUCKET='packaging-photos',PKG_PHOTO_MAX_DIMENSION=1600,PKG_PHOTO_JPEG_QUALITY=.9,PKG_PHOTO_MAX_SOURCE_SIZE=25*1024*1024;let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false,pkgPhotoRevision=0,pkgPhotoWorking=false,pkgPhotoStatus='';
