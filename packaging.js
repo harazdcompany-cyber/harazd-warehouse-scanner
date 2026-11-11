@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),cfg=window.HARAZD_CONFIG||{},db=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
+const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',netbox:'Нетбокс',transport_container:'Транспортний контейнер',other:'Інше'};
 let items=[],contents=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null,rackSwapBusy=false,rackDropHandled=false;
 let pkgBulkMode=false,pkgBulkBusy=false;const pkgBulkSelected=new Map();
 const PKG_PHOTO_BUCKET='packaging-photos',PKG_PHOTO_MAX_DIMENSION=1600,PKG_PHOTO_JPEG_QUALITY=.9,PKG_PHOTO_MAX_SOURCE_SIZE=25*1024*1024;let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false,pkgPhotoRevision=0,pkgPhotoWorking=false,pkgPhotoStatus='';
