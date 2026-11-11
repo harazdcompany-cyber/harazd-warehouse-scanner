@@ -461,3 +461,93 @@
   outline:2px solid #dfff00;
   outline-offset:3px;
 }
+
+/* My Page notifications: bell and private popover only. */
+#my-page .my-page-notifications-wrap{position:relative;margin-left:auto;z-index:15}
+#my-page #myPageNotificationToggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:40px;height:40px;padding:0 13px;
+  border:1px solid #486078;border-radius:11px;
+  background:#1d2e42;color:#eff5ff;font-size:13px;font-weight:650;cursor:pointer
+}
+#my-page #myPageNotificationToggle:hover{border-color:#91b3ca}
+#my-page .my-page-notification-count{
+  display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;
+  padding:0 5px;border-radius:99px;background:#dfff00;color:#142018;
+  font-size:11px;font-weight:800
+}
+#my-page .my-page-notification-count[hidden]{display:none!important}
+#my-page #myPageNotificationPanel{
+  position:absolute;top:calc(100% + 8px);right:0;
+  display:flex;flex-direction:column;gap:0;
+  width:min(420px,calc(100vw - 32px));max-height:500px;
+  overflow:hidden;border:1px solid #445b74;border-radius:16px;
+  background:#152337;box-shadow:0 18px 65px #050b17dd;z-index:25
+}
+#my-page #myPageNotificationPanel[hidden]{display:none!important}
+#my-page .my-page-notification-panel-head,
+#my-page .my-page-notification-panel-bottom{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;
+}
+#my-page .my-page-notification-panel-head{border-bottom:1px solid #32495f}
+#my-page .my-page-notification-panel-head strong{font-size:15px}
+#my-page .my-page-notification-panel-head button,
+#my-page .my-page-notification-panel-bottom button{
+  width:auto;height:auto;min-height:31px;padding:6px 10px;font-size:11px;
+  color:#dceefa;background:#22384f;border:1px solid #435f78;border-radius:8px
+}
+#my-page .my-page-notification-panel-head button:disabled{opacity:.45;cursor:default}
+#my-page .my-page-notification-panel-bottom{border-top:1px solid #32495f;justify-content:flex-end}
+#my-page .my-page-notification-list{overflow-y:auto;min-height:55px;padding:8px}
+#my-page .my-page-notification-list .my-page-empty{padding:10px;margin:0;font-size:12px}
+#my-page .my-page-notification-item{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:4px;width:100%;
+  text-align:left;border:1px solid #3a556d;border-radius:10px;
+  padding:10px 12px;margin-bottom:6px;background:#1f3448;color:#f1f7ff;
+  height:auto;cursor:pointer
+}
+#my-page .my-page-notification-item:last-child{margin-bottom:0}
+#my-page .my-page-notification-item:hover{border-color:#8eaac2}
+#my-page .my-page-notification-item.is-read{opacity:.68;background:#182839}
+#my-page .my-page-notification-item .my-page-notification-type{font-size:10px;font-weight:750}
+#my-page .my-page-notification-item .my-page-notification-type.type-task{color:#c7f944}
+#my-page .my-page-notification-item .my-page-notification-type.type-event{color:#66b4f6}
+#my-page .my-page-notification-item .my-page-notification-type.type-repair{color:#ffa45c}
+#my-page .my-page-notification-item strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+#my-page .my-page-notification-item small{font-size:11px;color:#a9c0d5;line-height:1.4}
+#my-page .my-page-notification-error{font-size:12px;color:#ffb2be;padding:10px;line-height:1.5;overflow-wrap:anywhere}
+/* My Page task checklists: compact progress and interactive points. */
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist{
+  padding:12px 0 2px;margin-top:12px;border-top:1px solid #344c62
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-summary{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:8px;font-size:12px;color:#c9d9e9
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-summary strong{font-size:12px}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-summary span{font-size:11px;color:#b5c8dd}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-track{
+  height:5px;overflow:hidden;margin:9px 0 12px;border-radius:99px;background:#3a4d5d
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-track span{
+  display:block;height:100%;border-radius:99px;background:#dfff00;transition:width .15s ease
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-items{display:grid;gap:9px}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-item{
+  display:flex;align-items:flex-start;gap:10px;min-width:0;font-size:12px;line-height:1.4;
+  color:#e1eaf3;font-weight:500;cursor:pointer
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-item input{
+  width:17px;height:17px;flex:0 0 17px;margin:0;
+  accent-color:#cfff36;cursor:pointer
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-item span{overflow-wrap:anywhere}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-item.is-done span{text-decoration:line-through;color:#9bb0c3}
+#my-page [aria-labelledby="myTasksHeading"] .my-task-checklist-item input:disabled{cursor:default;opacity:.65}
+#myTaskDialog .my-task-checklist-hint{font-size:11px;color:#a8bed2;font-weight:400}
+#myTaskDialog #myTaskChecklistHelp{display:block;margin-top:6px;color:#9fb7cd;line-height:1.4;font-size:11px}
+#myTaskDialog #myTaskChecklistDraft:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:520px){
+ #my-page .my-page-notifications-wrap{margin-left:0}
+ #my-page #myPageNotificationPanel{left:0;right:auto}
+}
