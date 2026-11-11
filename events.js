@@ -7,6 +7,7 @@
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
   let records = [], editingId = null, busy = false, activeDetailId = null;
+  let eventStaffReady = false, eventStaffRequestId = 0;
   const canCreate = () => typeof staffAllowed === 'function' && staffAllowed('events_create');
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
   const authorized = () => typeof session !== 'undefined' && !!session?.user?.id;
@@ -154,6 +155,33 @@
     render();
   }
 
+  async function loadEventStaff(record, requestId) {
+    const host = el('eventAssignedStaff');
+    eventStaffReady = false;
+    host.textContent = 'Завантаження призначень…';
+    if (!canEdit()) {
+      host.textContent = 'Призначати працівників можуть користувачі з правом редагування івентів.';
+      return;
+    }
+    try {
+      const [staff,assigned] = await Promise.all([
+        db.rpc('warehouse_event_assignable_staff'),
+        record ? db.from('warehouse_event_staff').select('user_id').eq('event_id',record.id) : Promise.resolve({data:[],error:null})
+      ]);
+      if (staff.error) throw staff.error;
+      if (assigned.error) throw assigned.error;
+      if (requestId !== eventStaffRequestId || !el('eventDialog').open) return;
+      const ids = new Set((assigned.data||[]).map(x=>x.user_id));
+      const people = staff.data || [];
+      host.innerHTML = people.length ? people.map(person => `<label><input type="checkbox" value="${safe(person.user_id)}" ${ids.has(person.user_id)?'checked':''}><span>${safe(person.full_name)}${person.position?` · ${safe(person.position)}`:''}</span></label>`).join('') : '<p class="muted">Немає активних працівників для призначення.</p>';
+      eventStaffReady = true;
+    } catch (err) {
+      if (requestId !== eventStaffRequestId) return;
+      host.textContent = 'Не вдалося завантажити список працівників. Спочатку виконайте SETUP_MY_PAGE_EVENT_ASSIGNMENTS.sql. Збереження івенту залишиться доступним без зміни призначень.';
+      console.warn('Event staff:',err);
+    }
+  }
+
   function open(record=null) {
     if (!(record ? canEdit() : canCreate())) return;
     editingId = record?.id || null;
@@ -166,6 +194,7 @@
     el('eventFormNotice').textContent = '';
     el('eventSave').disabled = false;
     el('eventDialog').showModal();
+    loadEventStaff(record,++eventStaffRequestId);
   }
 
   async function save(evt) {
@@ -197,8 +226,17 @@
     busy = true; el('eventSave').disabled = true; el('eventFormNotice').textContent = 'Збереження…';
     try {
       const operation = editingId ? db.from('warehouse_events').update(payload).eq('id',editingId) : db.from('warehouse_events').insert({...payload, created_by:session.user.id});
-      const {error} = await operation;
+      const {data:saved,error} = await operation.select('id').single();
       if (error) throw error;
+      if (eventStaffReady && canEdit()) {
+        const selected = [...el('eventAssignedStaff').querySelectorAll('input[type="checkbox"]:checked')].map(input=>input.value);
+        const {error:assignmentError} = await db.rpc('warehouse_set_event_staff',{p_event_id:saved.id,p_user_ids:selected});
+        if (assignmentError) {
+          el('eventFormNotice').textContent = 'Подію збережено, але призначення не оновлено: ' + assignmentError.message;
+          await load();
+          return;
+        }
+      }
       el('eventDialog').close();
       busy = false;
       await load();
@@ -214,6 +252,7 @@
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
+  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
 

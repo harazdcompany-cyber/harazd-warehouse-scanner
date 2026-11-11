@@ -28,6 +28,8 @@ function show(id){
  $$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
  if(id!=='scanner')stopScan();
  if(id==='personnel'&&session)staffLoad();
+ if(id==='my-page'&&session)window.harazdMyPage?.load();
+ if(id==='events'&&session)window.harazdEvents?.load();
  if(id==='repairs'&&session)repairLoad();
  // Load embedded modules only when opened. data-src alone does not load an iframe.
  if(id==='packaging'||id==='vehicles'){
