@@ -1,24 +1,32 @@
 -- HARAZD WAREHOUSE · Керування власними призначеними ремонтами зі сторінки «Моя сторінка».
 -- Виконати один раз у Supabase SQL Editor від імені адміністратора бази.
 -- Існуючі заявки, права менеджерів, фото та інші модулі не змінюються.
--- Заявки наразі прив'язані до ПІБ, тому для безпеки збіг ПІБ має бути унікальним.
+-- Для працівників перевіряється унікальний ПІБ; керівники з repairs_manage мають уже наявне право керувати всіма ремонтами.
 
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.warehouse_is_assigned_repair(p_job_id uuid)
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
- SELECT EXISTS (
-   SELECT 1 FROM public.repair_jobs j
-   JOIN public.warehouse_staff s ON s.user_id = (SELECT auth.uid())
-   WHERE j.id = p_job_id
-     AND s.status = 'active'
-     AND length(btrim(s.full_name)) > 0
-     AND lower(btrim(coalesce(j.assignee,''))) = lower(btrim(s.full_name))
-     AND (SELECT count(*) FROM public.warehouse_staff s2
-          WHERE s2.status = 'active'
-            AND lower(btrim(s2.full_name)) = lower(btrim(s.full_name))) = 1
- );
+ SELECT (SELECT auth.uid()) IS NOT NULL
+   AND EXISTS (
+     SELECT 1 FROM public.repair_jobs j
+     WHERE j.id = p_job_id
+       AND (
+         -- Managers with repairs_manage already have access to all repairs in the main module.
+         public.warehouse_can('repairs_manage')
+         OR EXISTS (
+           SELECT 1 FROM public.warehouse_staff s
+           WHERE s.user_id = (SELECT auth.uid())
+             AND s.status = 'active'
+             AND length(btrim(s.full_name)) > 0
+             AND lower(btrim(coalesce(j.assignee,''))) = lower(btrim(s.full_name))
+             AND (SELECT count(*) FROM public.warehouse_staff s2
+                  WHERE s2.status = 'active'
+                    AND lower(btrim(s2.full_name)) = lower(btrim(s.full_name))) = 1
+         )
+       )
+   );
 $$;
 REVOKE ALL ON FUNCTION public.warehouse_is_assigned_repair(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.warehouse_is_assigned_repair(uuid) TO authenticated;
