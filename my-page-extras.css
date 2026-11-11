@@ -251,3 +251,39 @@
     padding:13px 12px;
   }
 }
+
+/* Only the Edit/Delete pair inside "Мої завдання". */
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-left:auto;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions [data-my-task-edit]{
+  width:auto;
+  min-height:36px;
+  margin-left:0;
+  padding:7px 12px;
+  border:1px solid #526980;
+  border-radius:9px;
+  background:#22354a;
+  color:#e9f3ff;
+  font-size:12px;
+  font-weight:600;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions [data-my-task-edit]:hover{
+  border-color:#9bb8d3;
+  background:#2a4056;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions [data-my-task-delete]{
+  margin-left:0;
+}
+@media(max-width:440px){
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions{
+    margin-left:0;
+    width:100%;
+    justify-content:flex-end;
+  }
+}
