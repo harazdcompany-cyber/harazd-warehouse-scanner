@@ -27,6 +27,14 @@ dialog::backdrop {
   max-height:min(94dvh,1120px);
 }
 
+/* Equipment detail: the original sticky action footer used a different, darker
+   background (#151c27), leaving a visible band below the card content.
+   Match the modal surface without changing positioning or button controls. */
+#itemDialog:modal > .actions {
+  background:var(--harazd-card-surface)!important;
+  border-top:0!important;
+}
+
 /* Module dialogs live inside an iframe. The dialog::backdrop covers that frame,
    while this overlay blurs/dims the host sidebar and top bar as well. */
 body.harazd-packaging-card-open:has(#packaging:not(.hidden))::after,
