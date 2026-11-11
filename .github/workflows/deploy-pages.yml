@@ -1,0 +1,55 @@
+# HARAZD WAREHOUSE — publish static site via GitHub Actions.
+# First set Settings > Pages > Source to "GitHub Actions".
+name: Publish HARAZD WAREHOUSE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-harazd
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Publish website
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare static website files
+        shell: bash
+        run: |
+          mkdir -p _site
+          # Publish web assets only; do not expose .sql, Apps Script,
+          # source TypeScript, repository internals, or setup documents.
+          find . -maxdepth 1 -type f \( \
+            -iname '*.html' -o -iname '*.css' -o -iname '*.js' -o \
+            -iname '*.json' -o -iname '*.png' -o -iname '*.jpg' -o \
+            -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.svg' -o \
+            -iname '*.gif' -o -iname '*.ico' -o -iname '*.woff' -o \
+            -iname '*.woff2' \) -exec cp -t _site -- '{}' +
+          test -s _site/index.html
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
