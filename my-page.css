@@ -52,3 +52,28 @@
 /* Override the generic stacked labels in the event editor for checkbox rows. */
 .event-form-grid .my-event-staff-choices label{flex-direction:row;align-items:center}
 .event-form-grid .my-event-staff-choices label input{width:17px;height:17px;min-height:17px;margin:0;flex:0 0 17px}
+
+/* Self-service contact information and password dialogs. Scoped to My Page. */
+#my-page .my-page-account-actions{display:flex;gap:9px;flex-wrap:wrap;margin:-2px 0 18px}
+#my-page .my-page-account-actions button{padding:10px 12px;border:1px solid #3a526a;border-radius:10px;background:#1d2c3d;color:#edf5ff;font-size:13px;cursor:pointer}
+#my-page .my-page-account-actions button:hover:not(:disabled){border-color:#a3c4da}
+#my-page .my-page-account-actions button:disabled{opacity:.5;cursor:not-allowed}
+#my-page .my-page-about{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:12px 13px;border:1px solid #304052;background:#0d1723;color:#e9f2ff;border-radius:10px;font-size:13px;line-height:1.5}
+.my-page-dialog{width:min(600px,calc(100vw - 28px));max-width:none;max-height:min(90dvh,820px);overflow:auto;box-sizing:border-box;padding:24px;background:#172438;color:#f0f6ff;border:1px solid #3a5069;border-radius:20px;box-shadow:0 24px 90px #000b}
+.my-page-dialog::backdrop{background:rgba(2,8,17,.70);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.my-page-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+.my-page-dialog-head h2{font-size:22px;margin:0;line-height:1.25}
+.my-page-dialog-head button,.my-page-dialog-actions button{border:1px solid #3a526a;border-radius:10px;background:#1d2c3d;color:#f0f6ff;padding:11px 14px;cursor:pointer}
+.my-page-dialog-hint{font-size:13px;color:#aec3da;line-height:1.5;margin:0 0 18px}
+.my-page-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.my-page-form-grid label{min-width:0;display:flex;flex-direction:column;gap:7px;font-size:13px;color:#c8d7e8}
+.my-page-form-grid input,.my-page-form-grid textarea{background:#0b1521;color:#f5f8ff;box-sizing:border-box;border:1px solid #40566f;border-radius:10px;padding:12px 13px;width:100%;font:inherit;min-height:43px}
+.my-page-form-grid textarea{resize:vertical;min-height:95px}
+.my-page-form-wide{grid-column:1/-1}
+.my-page-password-fields{grid-template-columns:1fr}
+.my-page-dialog-feedback{margin:13px 0 0;color:#ffbcbd;font-size:13px;line-height:1.45;min-height:0}
+.my-page-dialog-feedback:empty{display:none}
+.my-page-dialog-actions{margin-top:20px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.my-page-dialog-actions button.primary{background:#dfff00;color:#111b22;border-color:#dfff00;font-weight:800}
+.my-page-dialog-actions button:disabled{opacity:.5;cursor:wait}
+@media(max-width:550px){.my-page-dialog{padding:17px}.my-page-form-grid{grid-template-columns:1fr}.my-page-form-wide{grid-column:auto}.my-page-dialog-head h2{font-size:18px}}

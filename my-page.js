@@ -1,4 +1,4 @@
-/* HARAZD WAREHOUSE — private employee dashboard. Read-only. */
+/* HARAZD WAREHOUSE — private employee dashboard and self-service account management. */
 (() => {
  'use strict';
  const el = id => document.getElementById(id);
@@ -15,21 +15,87 @@
  };
  const info = (label,value) => `<div class="my-page-field"><small>${safe(label)}</small><strong>${safe(value ?? '—')}</strong></div>`;
  let requestId = 0;
+ let currentUser = null, currentProfile = null, currentContact = null, contactsReady = false;
  function summary(repairs=[],events=[]) {
    const activeRepairs = repairs.filter(x => !['done','cancelled'].includes(x.status)).length;
    const d=new Date(); const today = [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
    const upcoming = events.filter(x => x.status !== 'done' && x.status !== 'cancelled' && String(x.event_end_date || x.event_date || '') >= today).length;
    el('myPageSummary').innerHTML = `<div><strong>${repairs.length}</strong><small>Мої ремонти</small></div><div><strong>${activeRepairs}</strong><small>Ремонти в роботі</small></div><div><strong>${events.length}</strong><small>Призначені події</small></div><div><strong>${upcoming}</strong><small>Майбутні та поточні</small></div>`;
  }
- function displayProfile(user, profile) {
+ function displayProfile(user, profile, contact = {}, ready = false) {
    const name = profile?.full_name || user?.user_metadata?.full_name || 'Працівник';
    const initials = name.split(/\s+/).slice(0,2).map(x => x[0] || '').join('').toUpperCase();
    const allowed = profile?.role === 'admin' ? ['Повний доступ адміністратора'] : Object.entries(permissions).filter(([key]) => profile?.permissions?.[key] === true).map(([,label])=>label);
    const status = profile ? (profile.status === 'active' ? 'Активний' : 'Неактивний') : 'Профіль працівника не призначено';
    el('myPageProfile').innerHTML = `<div class="my-page-identity"><span class="my-page-avatar">${safe(initials || '?')}</span><div><strong>${safe(name)}</strong><span>${safe(profile?.position || 'Посаду не вказано')}</span></div></div>
-   <div class="my-page-fields">${info('Email',profile?.email || user?.email)}${info('Роль',profile ? roles[profile.role] || profile.role : '—')}${info('Статус',status)}${info('Створено акаунт',prettyDate(user?.created_at))}${info('Створено профіль',prettyDate(profile?.created_at))}${info('ID користувача',user?.id)}</div>
-   <h3>Мої дозволи</h3><div class="my-page-permissions">${allowed.length ? allowed.map(x => `<span>${safe(x)}</span>`).join('') : '<p class="my-page-empty">Дозволи не призначено.</p>'}</div><p class="my-page-help">Паролі не відображаються. Зміни ролі та дозволів виконує адміністратор у розділі «Персонал».</p>`;
+   <div class="my-page-account-actions"><button type="button" id="myPageEditProfile" ${(!ready || !profile || profile.status !== 'active') ? 'disabled' : ''}>✎ Редагувати інформацію</button><button type="button" id="myPageChangePassword">Змінити пароль</button></div>
+   <div class="my-page-fields">${info('Email',user?.email || profile?.email)}${info('Роль',profile ? roles[profile.role] || profile.role : '—')}${info('Статус',status)}${info('Посада',profile?.position || '—')}${info('Телефон',contact?.phone || '—')}${info('Telegram',contact?.telegram || '—')}${info('Місто',contact?.city || '—')}${info('Дата народження',prettyDate(contact?.birth_date))}${info('Створено акаунт',prettyDate(user?.created_at))}${info('Останній вхід',prettyDate(user?.last_sign_in_at))}${info('Email підтверджено',user?.email_confirmed_at ? 'Так' : 'Ні')}${info('ID користувача',user?.id)}</div>
+   <h3>Про себе</h3><p class="my-page-about">${safe(contact?.about || 'Інформацію ще не додано.')}</p>
+   <h3>Мої дозволи</h3><div class="my-page-permissions">${allowed.length ? allowed.map(x => `<span>${safe(x)}</span>`).join('') : '<p class="my-page-empty">Дозволи не призначено.</p>'}</div><p class="my-page-help">${ready ? 'Особисті контактні дані доступні тільки вам. ' : 'Для редагування контактів виконайте SQL-оновлення. '}ПІБ, посаду, роль та дозволи змінює адміністратор в розділі «Персонал». Пароль ніколи не відображається.</p>`;
  }
+ function openContactEditor() {
+   if (!currentUser || !currentProfile || currentProfile.status !== 'active' || !contactsReady) return;
+   const form = el('myPageContactForm');
+   form.reset();
+   for (const key of ['phone','telegram','city','birth_date','about']) form.elements.namedItem(key).value = currentContact?.[key] || '';
+   el('myPageContactFeedback').textContent = '';
+   el('myPageContactDialog').showModal();
+ }
+ async function saveContact(event) {
+   event.preventDefault();
+   const form = event.currentTarget;
+   if (!contactsReady || !currentUser || !currentProfile || currentProfile.status !== 'active') return;
+   const btn = form.querySelector('button[type="submit"]');
+   const feedback = el('myPageContactFeedback');
+   const value = name => String(form.elements.namedItem(name).value || '').trim();
+   const values = {user_id:currentUser.id,phone:value('phone'),telegram:value('telegram'),city:value('city'),birth_date:value('birth_date') || null,about:value('about'),updated_at:new Date().toISOString()};
+   btn.disabled = true;
+   feedback.textContent = 'Зберігаємо…';
+   try {
+     const {data,error} = await db.from('warehouse_staff_contact').upsert(values,{onConflict:'user_id'}).select().single();
+     if (error) throw error;
+     currentContact = data;
+     displayProfile(currentUser,currentProfile,currentContact,true);
+     el('myPageContactDialog').close();
+     el('myPageNotice').textContent = 'Особисту інформацію збережено.';
+   } catch (error) {
+     feedback.textContent = 'Не вдалося зберегти: ' + (error?.message || error);
+   } finally {btn.disabled=false;}
+ }
+ function openPasswordDialog() {
+   if (!currentUser?.email) return;
+   el('myPagePasswordForm').reset();
+   el('myPagePasswordFeedback').textContent = '';
+   el('myPagePasswordDialog').showModal();
+ }
+ async function savePassword(event) {
+   event.preventDefault();
+   const form = event.currentTarget;
+   const feedback = el('myPagePasswordFeedback');
+   const button = form.querySelector('button[type="submit"]');
+   const previous = form.elements.namedItem('current_password').value;
+   const next = form.elements.namedItem('new_password').value;
+   const confirmation = form.elements.namedItem('confirm_password').value;
+   if (!currentUser?.email) { feedback.textContent='Сесія недоступна. Увійдіть повторно.';return; }
+   if (next.length < 8) {feedback.textContent='Новий пароль має містити щонайменше 8 символів.';return;}
+   if (next !== confirmation) {feedback.textContent='Підтвердження не збігається з новим паролем.';return;}
+   if (next === previous) {feedback.textContent='Новий пароль має відрізнятися від поточного.';return;}
+   button.disabled = true;
+   feedback.textContent='Перевіряємо поточний пароль…';
+   try {
+     const {data:verified,error:verifyError} = await db.auth.signInWithPassword({email:currentUser.email,password:previous});
+     if (verifyError || verified?.user?.id !== currentUser.id) throw Error('Не вдалося підтвердити поточний пароль. Перевірте його та спробуйте ще раз.');
+     feedback.textContent='Змінюємо пароль…';
+     const {error} = await db.auth.updateUser({password:next});
+     if (error) throw error;
+     form.reset();
+     el('myPagePasswordDialog').close();
+     el('myPageNotice').textContent='Пароль успішно змінено.';
+   } catch (error) {
+     feedback.textContent = error?.message || 'Не вдалося змінити пароль.';
+   } finally {button.disabled=false;}
+ }
+
  function repairView(data, equipmentById) {
    el('myRepairsCount').textContent = String(data.length);
    el('myPageRepairs').innerHTML = data.length ? data.map(job => {
@@ -49,6 +115,7 @@
    const key = ++requestId;
    if (!el('myPageProfile')) return;
    el('myPageNotice').textContent = 'Оновлюємо інформацію…';
+   currentUser=null;currentProfile=null;currentContact=null;contactsReady=false;
    el('myPageProfile').textContent = 'Завантаження профілю…';
    el('myPageRepairs').textContent = 'Завантаження призначених ремонтів…';
    el('myPageEvents').textContent = 'Завантаження призначених подій…';
@@ -64,9 +131,20 @@
      const {data:profile,error:profileError} = await db.from('warehouse_staff').select('*').eq('user_id',user.id).maybeSingle();
      if (profileError) throw profileError;
      if (key !== requestId) return;
-     displayProfile(user,profile);
+     let contact=null, contactWarning='';
+     try {
+       const result=await db.from('warehouse_staff_contact').select('phone,telegram,city,birth_date,about,updated_at').eq('user_id',user.id).maybeSingle();
+       if(result.error) throw result.error;
+       contact=result.data || {};
+       contactsReady=true;
+     } catch(error) {
+       contactWarning='Особисті контакти недоступні. Перевірте SETUP_MY_PAGE_CONTACTS.sql.';
+     }
+     if (key !== requestId) return;
+     currentUser=user;currentProfile=profile;currentContact=contact;
+     displayProfile(user,profile,contact,contactsReady);
      if (!profile || profile.status !== 'active') {
-       el('myPageNotice').textContent = 'Щоб бачити свої роботи, потрібен активний профіль працівника.';
+       el('myPageNotice').textContent = 'Щоб бачити свої роботи, потрібен активний профіль працівника.' + (contactWarning ? ' ' + contactWarning : '');
        el('myPageRepairs').innerHTML = '<p class="my-page-empty">Немає активного профілю працівника.</p>';
        el('myPageEvents').innerHTML = '<p class="my-page-empty">Немає активного профілю працівника.</p>';
        return;
@@ -108,7 +186,7 @@
      }
      if (key !== requestId) return;
      summary(repairs,events);
-     el('myPageNotice').textContent = warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : '';
+     el('myPageNotice').textContent = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
    } catch (error) {
      if (key !== requestId) return;
      el('myPageNotice').textContent = 'Не вдалося завантажити профіль: ' + (error?.message || error);
@@ -116,5 +194,14 @@
    }
  }
  el('myPageRefresh')?.addEventListener('click',load);
+ el('myPageProfile')?.addEventListener('click',event=>{
+   if(event.target.closest('#myPageEditProfile')) openContactEditor();
+   if(event.target.closest('#myPageChangePassword')) openPasswordDialog();
+ });
+ el('myPageContactForm')?.addEventListener('submit',saveContact);
+ el('myPagePasswordForm')?.addEventListener('submit',savePassword);
+ for(const [id,dialog] of [['myPageContactCancel','myPageContactDialog'],['myPagePasswordCancel','myPagePasswordDialog']]){
+   el(id)?.addEventListener('click',()=>el(dialog).close());
+ }
  window.harazdMyPage = {load};
 })();
