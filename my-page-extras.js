@@ -218,6 +218,7 @@
         ${task.details?`<p>${escapeHTML(task.details)}</p>`:''}
         <div class="my-page-task-meta"><span>До: ${escapeHTML(dateText(task.due_date))}</span>
           ${!own && assignee?`<span>Працівник: ${escapeHTML(assignee)}</span>`:''}</div>
+        ${window.harazdMyPageChecklist?.card(task)||''}
         <div class="my-page-task-controls">${own?`<label>Статус <select data-my-task-status="${escapeHTML(task.id)}"
           aria-label="Статус завдання">${Object.entries(taskStatuses).map(([key,text])=>`<option value="${key}" ${task.status===key?'selected':''}>${escapeHTML(text)}</option>`).join('')}</select></label>`:
           `<span class="my-page-task-readonly">${escapeHTML(taskStatuses[task.status]||task.status)}</span>`}
@@ -233,11 +234,16 @@
     const response=responses[0];
     if (response.error) {
       if(host)host.innerHTML='<p class="my-page-empty">Завдання недоступні. Спочатку виконайте SQL-оновлення.</p>';
-      tasks=[];renderCalendar();return;
+      tasks=[];window.harazdMyPageNotifications?.setTasks([]);renderCalendar();return;
     }
     tasks=response.data||[];
     staffOptions = manager && !responses[1]?.error ? responses[1].data||[] : [];
     staffNames = new Map(staffOptions.map(person=>[person.user_id,person.full_name]));
+    window.harazdMyPageNotifications?.setTasks(tasks.filter(task=>task.assignee_id===currentUser?.id));
+    try{
+      await window.harazdMyPageChecklist?.load(tasks,{user:currentUser,manager,refresh:displayTasks});
+    }catch(error){notice('Не вдалося завантажити чеклісти: '+(error?.message||error),true);}
+    if(request!==activeRequest)return;
     if (byId('myTaskNew')) byId('myTaskNew').hidden = !manager;
     displayTasks();
     renderCalendar();
@@ -272,6 +278,7 @@
       byId('myTaskDialogHint').textContent = 'Завдання побачить лише призначений працівник. Він зможе змінювати його статус.';
     }
     byId('myTaskFeedback').textContent = '';
+    window.harazdMyPageChecklist?.fillEditor(task);
     byId('myTaskDialog').showModal();
   }
   async function saveTask(event) {
@@ -281,6 +288,12 @@
     const title=field('title'),assignee_id=field('assignee_id');
     if (!title || title.length>160 || !staffOptions.some(person=>person.user_id===assignee_id)) {
       byId('myTaskFeedback').textContent='Вкажіть назву та активного працівника.';return;
+    }
+    const checklistDraft=byId('myTaskChecklistDraft');
+    const checklistItems=checklistDraft?.disabled?[]:
+      String(checklistDraft?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    if(checklistItems.length>30||checklistItems.some(x=>x.length>240)){
+      byId('myTaskFeedback').textContent='Максимум 30 пунктів чекліста по 240 символів.';return;
     }
     const editTask = editingTaskId ? tasks.find(task=>task.id===editingTaskId) : null;
     if (editingTaskId && (!editTask || editTask.created_by!==currentUser.id)) {
@@ -293,19 +306,26 @@
         title,details:field('details'),priority:field('priority')||'normal',
         assignee_id,due_date:field('due_date')||null
       };
+      let savedId=editTask?.id||null;
       if (editTask) {
         const {data,error} = await db.from('warehouse_personal_tasks')
           .update(changes).eq('id',editTask.id).eq('created_by',currentUser.id).select('id');
         if (error) throw error;
         if (!data?.length) throw Error('Не вдалося оновити завдання. Перевірте дозвіл на редагування.');
       } else {
-        const {error}=await db.from('warehouse_personal_tasks').insert({
+        const {data,error}=await db.from('warehouse_personal_tasks').insert({
           ...changes,status:'todo',created_by:currentUser.id
-        });
+        }).select('id').single();
         if (error) throw error;
+        savedId=data?.id;
+        if(!savedId)throw Error('Створено завдання без ідентифікатора. Оновіть сторінку.');
       }
+      let checklistError='';
+      try{await window.harazdMyPageChecklist?.saveDraft(savedId);}
+      catch(error){checklistError=error?.message||String(error);}
       byId('myTaskDialog').close();
-      notice(editTask ? 'Завдання оновлено.' : 'Завдання створено.');
+      notice(checklistError?'Завдання збережено, але чекліст не оновлено: '+checklistError:
+        editTask?'Завдання оновлено.':'Завдання створено.',Boolean(checklistError));
       await loadTasks(activeRequest);
     } catch(error) {
       byId('myTaskFeedback').textContent=error?.message||'Не вдалося зберегти завдання.';
@@ -533,6 +553,7 @@
     if (byId('myTaskNew')) byId('myTaskNew').hidden=!manager;
     if (!currentUser || currentProfile?.status!=='active') {
       if(byId('myTaskList')) byId('myTaskList').innerHTML='<p class="my-page-empty">Немає активного профілю працівника.</p>';
+      window.harazdMyPageNotifications?.setTasks([]);
       renderCalendar();return;
     }
     ensureAvatarControls();
