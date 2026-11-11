@@ -18,10 +18,7 @@
     return Number.isNaN(date.getTime()) ? String(iso) : date.toLocaleDateString('uk-UA');
   };
   const notice = (message, error = false) => {
-    const host = byId('myExtrasNotice');
-    if (!host) return;
-    host.textContent = message || '';
-    host.classList.toggle('is-error',error);
+    if (message && typeof toast === 'function') toast(message,error);
   };
   const managerAllowed = profile => Boolean(profile && profile.status==='active' && (profile.role==='admin' || profile.permissions?.personnel_manage === true));
   function initials() {
@@ -60,11 +57,12 @@
     if (remove) remove.hidden = !avatarPath || !isActive;
   }
   function avatarNotice(message, error = false) {
-    notice(message,error);
     const feedback = byId('myAvatarDialogFeedback');
-    if (feedback) {
+    if (feedback && byId('myPageContactDialog')?.open) {
       feedback.textContent = message || '';
       feedback.classList.toggle('is-error',error);
+    } else {
+      notice(message,error);
     }
   }
     async function paintAvatar(request) {
