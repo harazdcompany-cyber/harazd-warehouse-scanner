@@ -95,7 +95,7 @@ BEGIN
    RAISE EXCEPTION 'Немає доступу до ремонту' USING ERRCODE='42501';
  END IF;
  IF p_storage_path IS NULL
-    OR p_storage_path !~* ('^'||p_job_id::text||'/[0-9a-f-]{36}\\.(jpg|png|webp)$') THEN
+    OR p_storage_path !~* ('^'||p_job_id::text||'/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)$') THEN
    RAISE EXCEPTION 'Невірний шлях фотографії';
  END IF;
  IF (SELECT count(*) FROM public.repair_job_photos WHERE job_id=p_job_id) >= 10 THEN
