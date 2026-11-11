@@ -57,3 +57,10 @@
 .eqr-print-page{overflow:hidden;display:block;break-inside:avoid;page-break-inside:avoid}
 .eqr-print-page .eqr-label{width:100%;height:100%}
 @media print{html,body,.eqr-print-page,.eqr-label{margin:0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.eqr-print-page{page-break-inside:avoid}}
+
+/* Optional Code 128 barcode label. The existing QR layout stays unchanged. */
+.eqr-barcode-label{background:#fff;color:#111;border:0.35mm solid #111;grid-template-rows:minmax(0,3fr) minmax(0,1fr)}
+.eqr-barcode-label .eqr-qr-zone{border-bottom:0.22mm solid #111;padding:3%}
+.eqr-barcode-label .eqr-barcode-image{width:100%;height:auto;max-height:78%;aspect-ratio:auto;object-fit:contain;padding:0;image-rendering:auto;background:#fff}
+.eqr-barcode-label .eqr-equipment-code-only{font-size:clamp(9px,6cqw,38px);color:#111;white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.eqr-barcode-label.eqr-portrait{grid-template-rows:minmax(0,3fr) minmax(0,1fr)}

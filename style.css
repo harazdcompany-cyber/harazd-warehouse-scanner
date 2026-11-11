@@ -1174,3 +1174,9 @@ body *::-webkit-scrollbar {
   resize: vertical;
   overflow: auto;
 }
+
+/* Hardware barcode scanner uses standard keyboard-wedge input; no driver needed. */
+#scanner .scanner-hardware-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-8px 0 18px}
+#scanner .scanner-hardware-controls button{min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid #395169;background:#19293a;color:#edf4ff}
+#scanner .scanner-hardware-controls button:focus-visible{outline:2px solid #deff00;outline-offset:3px}
+#scanner .scanner-hardware-controls span{color:#a8bbd1;font-size:13px}

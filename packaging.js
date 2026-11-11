@@ -82,7 +82,7 @@ function pkgNestedThumb(p){
 }
 
 function render(){const q=$('search').value.toLowerCase(),kindFilter=$('kind').value,modeFilter=$('mode').value;const filtered=items.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!modeFilter||p.mode===modeFilter)&&[p.name,p.pk_id,p.model,p.location].join(' ').toLowerCase().includes(q));$('stats').innerHTML=`<div class="pkg-stat"><strong>${items.length}</strong>Всього</div><div class="pkg-stat"><strong>${items.filter(p=>!contents.some(c=>c.packaging_id===p.id)&&!items.some(c=>c.parent_id===p.id)).length}</strong>Порожні</div><div class="pkg-stat"><strong>${items.filter(p=>p.mode==='fixed').length}</strong>Постійні</div>`;$('list').innerHTML=filtered.length?filtered.map(p=>`<button class="pkg-card" data-id="${esc(p.id)}">${pkgCardPhoto(p)}<span class="pkg-id">${esc(p.pk_id)}</span><h3>${esc(p.name)}</h3><div class="pkg-muted">${esc(kind[p.kind])} · ${p.mode==='fixed'?'Постійна':'Змінна'} комплектація</div><div class="pkg-muted">${esc(p.location||'Розміщення не задано')}</div><div class="pkg-muted">Обладнання: ${pkgTreeContents(p.id).length} · Вкладень: ${items.filter(x=>x.parent_id===p.id).length}</div></button>`).join(''):'<p class="pkg-muted">Пакувань не знайдено.</p>'}
-async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('equipment').select('id,eq_id,name,model,description,weight,rack_units,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);equipment=check(results[2]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
+async function load(){if(!db){$('notice').classList.remove('hidden');$('notice').textContent='Не налаштовано Supabase';return}try{const auth=check(await db.auth.getUser());session=auth.user;if(!session){$('notice').classList.remove('hidden');$('notice').textContent='Спочатку увійдіть до HARAZD WAREHOUSE на головній сторінці.';return}const results=await Promise.all([db.from('packaging').select('*').order('pk_id'),db.from('packaging_contents').select('*'),db.from('equipment').select('id,eq_id,barcode,serial,name,model,description,weight,rack_units,quantity,repair_quantity,accounting_type,photo_url,category_id,subcategory_id,warehouse_id,zone,rack,shelf').limit(10000)]);items=check(results[0]);contents=check(results[1]);equipment=check(results[2]);render();const deepPk=new URLSearchParams(location.search).get('pk');if(deepPk){const deep=items.find(x=>x.pk_id===deepPk);if(deep)details(deep)}const picked=sessionStorage.getItem('harazd-packaging-picked');if(picked){sessionStorage.removeItem('harazd-packaging-picked');try{const data=JSON.parse(picked);const p=items.find(x=>x.id===data.packagingId);const eq=equipment.find(x=>x.id===data.equipmentId);if(p&&eq){details(p);await chooseEquipment(eq)}}catch(e){msg(e.message,true)}}}catch(e){$('notice').classList.remove('hidden');$('notice').textContent='Не вдалося завантажити пакування: '+e.message+' Перевірте, чи виконано SETUP_PACKAGING.sql.'}}
 async function edit(p){
  selected=p||null;const f=$('form');f.reset();$('formTitle').textContent=p?`Редагувати ${p.pk_id}`:'Нове пакування';
  if(p)for(const [k,v] of Object.entries(p)){const input=f.elements.namedItem(k);if(input&&v!=null)input.value=v}
@@ -291,7 +291,7 @@ async function loadHistory(id){try{const h=check(await db.from('packaging_histor
 function addDialog(){
  $('addMethod').showModal();
 }
-function findEq(code){const raw=String(code||'').trim();const normalized=raw.match(/EQ-\d+/i)?.[0]||raw;return equipment.find(x=>String(x.eq_id||'').toLowerCase()===normalized.toLowerCase())}
+function findEq(code){const raw=String(code||'').trim();const normalized=raw.match(/EQ-\d+/i)?.[0]||raw;const wanted=normalized.toUpperCase();return equipment.find(x=>[x.eq_id,x.barcode,x.serial].some(v=>v&&String(v).trim().toUpperCase()===wanted))}
 function pickerLookup(list,id,fallback='—'){return list.find(x=>x.id===id)?.name||fallback}
 function pickerAvailable(e,rows=contents){
  if(!e)return 0;
@@ -560,7 +560,7 @@ async function stopQr(){if(qrScanner){try{await qrScanner.stop()}catch(e){}try{q
 async function startQr(){
  $('addMethod').close();$('pkgScan').showModal();
  if(typeof Html5Qrcode==='undefined')return msg('Бібліотека сканування не завантажена',true);
- try{qrScanner=new Html5Qrcode('pkgReader');await qrScanner.start({facingMode:'environment'},{fps:10,qrbox:230},async code=>{
+ try{const formats=['QR_CODE','CODE_128','CODE_39'].map(k=>window.Html5QrcodeSupportedFormats?.[k]).filter(Number.isInteger);qrScanner=new Html5Qrcode('pkgReader',formats.length?{formatsToSupport:formats}:{});await qrScanner.start({facingMode:'environment'},{fps:10,qrbox:(width,height)=>({width:Math.max(90,Math.floor(width*.9)),height:Math.max(90,Math.floor(Math.min(height*.7,width*.65)))})},async code=>{
   const e=findEq(code);if(!e){msg('Код не знайдено на складі',true);return}
   await stopQr();$('pkgScan').close();await chooseEquipment(e);
  },()=>{});}catch(e){msg('Не вдалося запустити камеру: '+e.message,true)}
@@ -686,9 +686,9 @@ $('pkgMoveForm').onsubmit=async event=>{
 };
 
 async function reloadDetail(){const id=selected.id;await load();const p=items.find(x=>x.id===id);if(p)details(p)}
-$('pkgManual').onclick=()=>{$('pkgManualPanel').hidden=false;$('pkgEqId').focus()};
+$('pkgManual').onclick=()=>{$('pkgManualPanel').hidden=false;$('pkgEqId').focus()};$('pkgHardware').onclick=()=>{$('pkgManualPanel').hidden=false;$('pkgEqId').value='';$('pkgEqId').focus();msg('Сканер готовий. Відскануйте EQ-ID; якщо Enter не налаштований, натисніть «Знайти та додати».')};
 $('pkgEqConfirm').onclick=addById;
-$('pkgEqId').onkeydown=e=>{if(e.key==='Enter')addById()};
+$('pkgEqId').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addById()}};
 $('pkgWarehouse').onclick=chooseFromWarehouse;
 $('pkgCamera').onclick=startQr;
 $('pkgScanClose').onclick=async()=>{await stopQr();$('pkgScan').close()};
@@ -714,12 +714,27 @@ function labelWeight(p){
  };
  const total=walk(p.id);return valid?fmt(total)+' кг':'Не визначено';
 }
+function labelMode(){return $('pkgLabelCodeType')?.value==='barcode'?'barcode':'qr'}
 function labelHtml(p){
  const own=p.empty_weight_kg==null||p.empty_weight_kg===''?'Не визначено':fmt(p.empty_weight_kg)+' кг';
- return `<div class="pkg-label"><div class="pkg-label-qr" id="pkgLabelQr"></div><div class="pkg-label-right"><div class="pkg-label-brand"><img src="harazd-warehouse-label-logo.png" alt="HARAZD WAREHOUSE"></div><div class="pkg-label-identity"><div class="pkg-label-name">${esc(p.name)}</div><div class="pkg-label-id">${esc(p.pk_id)}</div></div><div class="pkg-label-weights"><div class="pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>КЕЙС</small><strong>${esc(own)}</strong></span></div>${p.mode==='fixed'?`<div class="pkg-label-total pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>ЗАГАЛЬНА</small><strong>${esc(labelWeight(p))}</strong></span></div>`:''}</div></div></div>`;
+ return `<div class="pkg-label${labelMode()==='barcode'?' pkg-label-has-barcode':''}"><div class="pkg-label-qr" id="pkgLabelQr"></div><div class="pkg-label-right"><div class="pkg-label-brand"><img src="harazd-warehouse-label-logo.png" alt="HARAZD WAREHOUSE"></div><div class="pkg-label-identity"><div class="pkg-label-name">${esc(p.name)}</div><div class="pkg-label-id">${esc(p.pk_id)}</div></div><div class="pkg-label-weights"><div class="pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>КЕЙС</small><strong>${esc(own)}</strong></span></div>${p.mode==='fixed'?`<div class="pkg-label-total pkg-label-weight"><span class="pkg-weight-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="8" r="4"/><path d="M14 14h12l8 20H6z"/></svg></span><span><small>ЗАГАЛЬНА</small><strong>${esc(labelWeight(p))}</strong></span></div>`:''}</div></div></div>`;
 }
 function labelUrl(p){const url=new URL('packaging.html',location.href);url.searchParams.set('pk',p.pk_id);return url.href}
-function openPkgLabel(p){if(!p)return;labelPackage=p;const dialog=$('pkgLabelDialog');$('pkgLabelName').textContent=p.pk_id+' · '+p.name;$('pkgLabelPreview').innerHTML=labelHtml(p);$('pkgLabelQr').replaceChildren();if(typeof QRCode==='undefined'){msg('Не завантажено бібліотеку QR. Перевірте підключення до інтернету.',true);return}new QRCode($('pkgLabelQr'),{text:labelUrl(p),width:256,height:256,correctLevel:QRCode.CorrectLevel.M});dialog.showModal();requestAnimationFrame(syncLabelPreviewSize)}
+function renderPkgCode(){
+ const p=labelPackage;if(!p)return;
+ $('pkgLabelPreview').innerHTML=labelHtml(p);
+ const slot=$('pkgLabelQr');slot.replaceChildren();
+ if(labelMode()==='barcode'){
+  try{if(!window.harazdCode128)throw Error('Не завантажено модуль Code 128');const img=document.createElement('img');img.src=window.harazdCode128.dataUrl(p.pk_id);img.alt='Штрихкод '+p.pk_id;img.className='pkg-barcode-image';slot.appendChild(img)}
+  catch(e){msg('Не вдалося згенерувати штрихкод: '+e.message,true);return}
+ }else{
+  if(typeof QRCode==='undefined'){msg('Не завантажено бібліотеку QR. Перевірте підключення до інтернету.',true);return}
+  new QRCode(slot,{text:labelUrl(p),width:256,height:256,correctLevel:QRCode.CorrectLevel.M});
+ }
+ requestAnimationFrame(syncLabelPreviewSize);
+}
+function openPkgLabel(p){if(!p)return;labelPackage=p;const dialog=$('pkgLabelDialog');$('pkgLabelName').textContent=p.pk_id+' · '+p.name;$('pkgLabelCodeType').value='qr';dialog.showModal();renderPkgCode()}
+
 // Preview and print use the SAME markup and the SAME packaging-label.css stylesheet.
 function labelSize(){
  const [w,h]=$('pkgLabelSize').value.split('x').map(Number);
@@ -732,17 +747,17 @@ function syncLabelPreviewSize(){
  if(!label)return;
  const [w,h]=labelSize();
  label.classList.toggle('pkg-label-vertical',h>w);
- const qr=label.querySelector('.pkg-label-qr canvas');
+ const qr=label.querySelector('.pkg-label-qr canvas, .pkg-label-qr img');
  if(!qr)return;
  const copy=label.cloneNode(true), slot=copy.querySelector('.pkg-label-qr');
- const qrImg=document.createElement('img');qrImg.src=qr.toDataURL('image/png');qrImg.alt='QR';slot.replaceChildren(qrImg);
+ const qrImg=document.createElement('img');qrImg.src=qr.tagName==='CANVAS'?qr.toDataURL('image/png'):qr.src;qrImg.alt=labelMode()==='barcode'?'Code 128':'QR';if(labelMode()==='barcode')qrImg.className='pkg-barcode-image';slot.replaceChildren(qrImg);
  const logo=copy.querySelector('.pkg-label-brand img');
  if(logo)logo.src=new URL(logo.getAttribute('src'),location.href).href;
  copy.removeAttribute('style');
  const frame=document.createElement('iframe');frame.className='pkg-label-preview-frame';frame.title='Точний попередній перегляд наклейки';
  const pxW=w*96/25.4,pxH=h*96/25.4;
  frame.style.width=pxW+'px';frame.style.height=pxH+'px';
- const cssUrl=new URL('packaging-label.css',location.href).href;
+ const cssUrl=new URL('packaging-label.css?v=49.72-code128',location.href).href;
  frame.srcdoc=`<!doctype html><html lang="uk"><head><meta charset="utf-8"><link rel="stylesheet" href="${cssUrl}"><style>html,body{margin:0;padding:0;overflow:hidden;background:#050505}.pkg-print-page{width:${w}mm;height:${h}mm}.pkg-print-page .pkg-label{width:100%;height:100%;aspect-ratio:auto!important}</style></head><body><div class="pkg-print-page">${copy.outerHTML}</div></body></html>`;
  let holder=preview.querySelector('.pkg-label-preview-holder');
  if(!holder){holder=document.createElement('div');holder.className='pkg-label-preview-holder';preview.appendChild(holder)}
@@ -751,39 +766,39 @@ function syncLabelPreviewSize(){
  fit();
  if(window.ResizeObserver){if(window.pkgLabelPreviewObserver)window.pkgLabelPreviewObserver.disconnect();window.pkgLabelPreviewObserver=new ResizeObserver(fit);window.pkgLabelPreviewObserver.observe(preview)}
 }
-$('pkgLabelSize').addEventListener('change',syncLabelPreviewSize);
+$('pkgLabelSize').addEventListener('change',syncLabelPreviewSize);$('pkgLabelCodeType').addEventListener('change',renderPkgCode);
 function printPkgLabel(){
  const p=labelPackage;if(!p)return;
  const [w,h]=labelSize(),copies=Math.min(100,Math.max(1,Math.floor(Number($('pkgLabelCopies').value)||1)));
  const preview=$('pkgLabelPreview').querySelector('.pkg-label');
- const qr=preview?.querySelector('.pkg-label-qr canvas');
- if(!preview||!qr){msg('QR-код ще не готовий',true);return}
- const qrData=qr.toDataURL('image/png');
+ const qr=preview?.querySelector('.pkg-label-qr canvas, .pkg-label-qr img');
+ if(!preview||!qr){msg('Код ще не готовий',true);return}
+ const qrData=qr.tagName==='CANVAS'?qr.toDataURL('image/png'):qr.src;
  const label=preview.cloneNode(true);
  label.classList.toggle('pkg-label-vertical',h>w);
  const qrSlot=label.querySelector('.pkg-label-qr');
  qrSlot.replaceChildren();
- const img=document.createElement('img');img.src=qrData;img.alt='QR';qrSlot.appendChild(img);
+ const img=document.createElement('img');img.src=qrData;img.alt=labelMode()==='barcode'?'Code 128':'QR';if(labelMode()==='barcode')img.className='pkg-barcode-image';qrSlot.appendChild(img);
  label.removeAttribute('style');
  const logo=label.querySelector('.pkg-label-brand img');
  if(logo)logo.src=new URL(logo.getAttribute('src'),location.href).href;
  const win=window.open('','_blank');if(!win){msg('Дозвольте спливні вікна для друку',true);return}
- const cssUrl=new URL('packaging-label.css',location.href).href;
+ const cssUrl=new URL('packaging-label.css?v=49.72-code128',location.href).href;
  const pages=Array.from({length:copies},()=>`<div class="pkg-print-page">${label.outerHTML}</div>`).join('');
- win.document.open();win.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>QR ${esc(p.pk_id)}</title><link rel="stylesheet" href="${cssUrl}"><style>@page{size:${w}mm ${h}mm;margin:0}html,body{margin:0;padding:0} .pkg-print-page{width:${w}mm;height:${h}mm;break-after:page;page-break-after:always}.pkg-print-page:last-child{break-after:auto;page-break-after:auto}</style></head><body>${pages}<script>window.addEventListener('load',async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));await document.fonts.ready;setTimeout(()=>window.print(),120)});<\/script></body></html>`);win.document.close();
+ win.document.open();win.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>${labelMode()==='barcode'?'Штрихкод':'QR'} ${esc(p.pk_id)}</title><link rel="stylesheet" href="${cssUrl}"><style>@page{size:${w}mm ${h}mm;margin:0}html,body{margin:0;padding:0} .pkg-print-page{width:${w}mm;height:${h}mm;break-after:page;page-break-after:always}.pkg-print-page:last-child{break-after:auto;page-break-after:auto}</style></head><body>${pages}<script>window.addEventListener('load',async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));await document.fonts.ready;setTimeout(()=>window.print(),120)});<\/script></body></html>`);win.document.close();
 }
 
 // Export the entire packaging label shown in the print preview.
 async function downloadPkgLabel(){
  const p=labelPackage;
  if(!p)return;
- if(!$('pkgLabelPreview').querySelector('.pkg-label-qr canvas')){msg('QR-код ще не готовий',true);return}
+ if(!$('pkgLabelPreview').querySelector('.pkg-label-qr canvas, .pkg-label-qr img')){msg('Код ще не готовий',true);return}
  const button=$('pkgLabelDownload');
  button.disabled=true;
  try{
   await window.harazdDownloadLabelPng(
    $('pkgLabelPreview .pkg-label-preview-frame'),'.pkg-print-page',
-   'HARAZD_LABEL_'+String(p.pk_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png');
+   'HARAZD_'+(labelMode()==='barcode'?'BARCODE_':'LABEL_')+String(p.pk_id).trim().replace(/[^a-zA-Z0-9_-]/g,'_')+'.png');
  }catch(e){console.error('Packaging label export:',e);msg('Не вдалося завантажити наклейку: '+(e?.message||e),true)}
  finally{button.disabled=false}
 }

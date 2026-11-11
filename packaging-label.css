@@ -125,3 +125,11 @@
  aspect-ratio:1;
  object-fit:contain;
 }
+
+/* Barcode mode leaves the existing QR sticker unchanged. */
+.pkg-label.pkg-label-has-barcode .pkg-label-qr img.pkg-barcode-image{
+  width:96%;height:auto;max-height:75%;aspect-ratio:auto;object-fit:contain;background:#fff;padding:1%;image-rendering:auto;
+}
+.pkg-label.pkg-label-vertical.pkg-label-has-barcode .pkg-label-qr img.pkg-barcode-image{
+  width:93%;height:auto;max-height:70%;aspect-ratio:auto;object-fit:contain;padding:1%;
+}
