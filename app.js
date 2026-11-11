@@ -7,7 +7,7 @@ document.addEventListener('submit',event=>{
  if(form?.id!=='staffForm')return;
  event.preventDefault();
  event.stopImmediatePropagation();
- Promise.resolve().then(()=>staffSave(event)).catch(err=>{
+ Promise.resolve().then(()=>staffSave(form)).catch(err=>{
   console.error('Personnel form:',err);
   toast('Помилка форми персоналу: '+(err?.message||String(err)),true);
  });
@@ -854,9 +854,9 @@ async function staffLoad(){if(!session)return;await staffLoadSelf();const {data,
 function staffRender(){const q=$('#staffSearch').value.trim().toLowerCase();const visible=staffProfiles.filter(x=>[x.full_name,x.email,x.position,x.role].some(v=>String(v||'').toLowerCase().includes(q)));const roleName={admin:'Адміністратор',manager:'Менеджер',warehouse:'Комірник',viewer:'Перегляд'};$('#staffList').innerHTML=visible.map(x=>`<div class="staff-card"><span class="staff-avatar">${esc((x.full_name||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase())}</span><div class="staff-person"><strong>${esc(x.full_name)}</strong><small>${esc(x.position||'Без посади')} · ${esc(x.email)}</small></div><div class="staff-meta"><strong>${esc(roleName[x.role]||x.role)}</strong><small>${x.status==='active'?'Активний':'Заблокований'}</small></div>${staffAllowed('personnel_manage')?`<button type="button" data-staff-edit="${esc(x.user_id)}">✎ Редагувати</button>`:''}</div>`).join('')||'<p class="muted">Працівників не знайдено.</p>'}
 function staffSetPreset(role){const s=new Set(STAFF_PRESETS[role]||[]);$$('#staffPermissions input[type=checkbox]').forEach(c=>c.checked=s.has(c.value))}
 function staffOpen(x=null){if(!staffAllowed('personnel_manage'))return;staffEditId=x?.user_id||null;staffCurrent=x;const f=$('#staffForm');f.reset();f.elements.email.value=x?.email||'';f.elements.email.readOnly=!!x;f.elements.full_name.value=x?.full_name||'';f.elements.position.value=x?.position||'';f.elements.role.value=x?.role||'viewer';f.elements.status.value=x?.status||'active';const selfAdmin=!!x&&x.user_id===session?.user?.id&&x.role==='admin';f.elements.role.disabled=selfAdmin;f.elements.status.disabled=selfAdmin;f.elements.role.title=selfAdmin?'Власну роль адміністратора змінювати заборонено':'';f.elements.status.title=selfAdmin?'Власний акаунт адміністратора не можна деактивувати':'';$('#staffDialogTitle').textContent=x?'Редагувати працівника':'Додати працівника';f.elements.password.required=!x;f.elements.password.value='';$('#staffPasswordNote').textContent=x?'Новий пароль (необов’язково): введіть, щоб змінити пароль працівника. Поточний пароль переглянути неможливо.':'Вкажіть початковий пароль від 8 символів. Пароль не зберігається у профілі персоналу.';$('#staffPermissions').innerHTML=STAFF_PERMISSIONS.map(([id,label,group])=>`<label class="staff-perm"><input type="checkbox" value="${id}"><span><small>${esc(group)}</small>${esc(label)}</span></label>`).join('');staffSetPreset(f.elements.role.value);if(x)$$('#staffPermissions input').forEach(c=>c.checked=x.permissions?.[c.value]===true);$('#staffDialog').showModal()}
-async function staffSave(e){
- e.preventDefault();if(!staffAllowed('personnel_manage'))return;
- const f=e.currentTarget;
+async function staffSave(form){
+ if(!staffAllowed('personnel_manage'))return;
+ const f=form;
  const payload={email:f.elements.email.value.trim().toLowerCase(),full_name:f.elements.full_name.value.trim(),position:f.elements.position.value.trim(),role:f.elements.role.value,status:f.elements.status.value,permissions:Object.fromEntries($$('#staffPermissions input').map(c=>[c.value,c.checked]))};
  const password=f.elements.password.value;
  if(staffEditId===session?.user?.id&&staffCurrent?.role==='admin'){payload.role='admin';payload.status='active'}
