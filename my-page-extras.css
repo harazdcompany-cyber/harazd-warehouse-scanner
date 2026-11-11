@@ -554,18 +554,18 @@
 }
 
 /* My Page task editor: add/confirm checklist points instead of multiline text. */
-#myTaskDialog .my-task-checklist-editor{display:grid;gap:12px;min-width:0}
+#myTaskDialog .my-task-checklist-editor{display:grid;gap:9px;min-width:0}
 #myTaskDialog .my-task-checklist-editor-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px 14px;flex-wrap:wrap}
 #myTaskDialog .my-task-checklist-editor-head strong{font-size:14px;color:#d9e5f1}
 #myTaskDialog .my-task-checklist-editor-head small{font-size:11px;color:#9fb7cd;line-height:1.4}
-#myTaskDialog .my-task-checklist-editor-rows{display:grid;gap:8px}
+#myTaskDialog .my-task-checklist-editor-rows{display:grid;gap:7px}
 #myTaskDialog .my-task-checklist-editor-empty{margin:0;padding:12px 14px;border:1px dashed #3f566b;border-radius:10px;color:#9bb1c7;font-size:12px;line-height:1.5}
-#myTaskDialog .my-task-checklist-editor-item{display:flex;align-items:center;gap:11px;min-width:0;padding:11px 12px;border:1px solid #3b5369;border-radius:10px;background:#0e1a2a}
-#myTaskDialog .my-task-checklist-editor-title{flex:1;min-width:0;color:#eef5ff;font-size:13px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
-#myTaskDialog .my-task-checklist-editor-checkbox{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;color:#b9cde0;font-size:12px;font-weight:500;cursor:pointer}
-#myTaskDialog .my-task-checklist-editor-checkbox input{flex:0 0 17px;width:17px;height:17px;margin:0;accent-color:#ceff35;cursor:pointer}
+#myTaskDialog .my-task-checklist-editor-item{display:grid;grid-template-columns:minmax(0,1fr) auto 34px 34px;align-items:center;gap:9px;min-height:52px;min-width:0;padding:8px 11px;border:1px solid #3b5369;border-radius:10px;background:#0e1a2a}
+#myTaskDialog .my-task-checklist-editor-title{min-width:0;color:#eef5ff;font-size:13px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+#myTaskDialog .my-task-checklist-editor-checkbox{display:inline-flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:7px;flex:0 0 auto;width:auto;margin:0;color:#b9cde0;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;cursor:pointer}
+#myTaskDialog .my-task-checklist-editor-checkbox input{flex:0 0 17px;width:17px;height:17px;min-height:17px;margin:0;padding:0;accent-color:#ceff35;cursor:pointer}
 #myTaskDialog .my-task-checklist-editor-checkbox input:disabled{cursor:not-allowed;opacity:.5}
-#myTaskDialog .my-task-checklist-editor-item button{flex:0 0 34px;width:34px;height:34px;min-height:34px;padding:0;display:grid;place-items:center;background:#213248;border:1px solid #486079;border-radius:8px;color:#d8e7f8;font-size:19px;cursor:pointer}
+#myTaskDialog .my-task-checklist-editor-item button{width:34px;height:34px;min-height:34px;padding:0;display:grid;place-items:center;background:#213248;border:1px solid #486079;border-radius:8px;color:#d8e7f8;font-size:19px;cursor:pointer}
 #myTaskDialog .my-task-checklist-editor-item button:hover{border-color:#9bb8d3;background:#2c435d}
 #myTaskDialog .my-task-checklist-add-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 #myTaskDialog .my-task-checklist-add-row[hidden]{display:none!important}
@@ -578,9 +578,22 @@
 #myTaskDialog .my-task-checklist-add-button:disabled{opacity:.5;cursor:not-allowed}
 #myTaskDialog .my-task-checklist-add-button[hidden]{display:none!important}
 @media(max-width:540px){
-  #myTaskDialog .my-task-checklist-editor-item{flex-wrap:wrap;gap:8px;padding:10px}
-  #myTaskDialog .my-task-checklist-editor-title{flex:1 1 100%}
-  #myTaskDialog .my-task-checklist-editor-checkbox{margin-right:auto}
+  #myTaskDialog .my-task-checklist-editor-item{grid-template-columns:minmax(0,1fr) 34px 34px;gap:8px;padding:9px 10px}
+  #myTaskDialog .my-task-checklist-editor-title{grid-column:1/-1}
+  #myTaskDialog .my-task-checklist-editor-checkbox{grid-column:1;justify-self:start}
   #myTaskDialog .my-task-checklist-add-row input{flex-basis:100%}
   #myTaskDialog .my-task-checklist-add-row button{flex:1 1 120px}
+}
+
+/* Task dialog only: reduce tall blank spaces and keep Save visible when scrolling. */
+#myTaskDialog{width:min(680px,calc(100vw - 28px));max-height:90dvh;padding:22px 24px}
+#myTaskDialog .my-page-dialog-hint{margin-bottom:14px}
+#myTaskDialog .my-page-form-grid{gap:12px 16px}
+#myTaskDialog textarea[name="details"]{min-height:76px}
+#myTaskDialog .my-page-dialog-actions{position:sticky;bottom:-22px;z-index:2;margin-top:14px;padding:12px 0 0;border-top:1px solid #33485d;background:#172438}
+#myTaskDialog .my-task-checklist-editor-item:has(input[type="checkbox"]:checked) .my-task-checklist-editor-title{color:#9eb3c5;text-decoration:line-through}
+@media(max-width:550px){
+  #myTaskDialog{padding:17px}
+  #myTaskDialog .my-page-dialog-actions{bottom:-17px}
+  #myTaskDialog .my-page-form-grid{gap:12px}
 }
