@@ -23,6 +23,22 @@ $$;
 REVOKE ALL ON FUNCTION public.warehouse_is_assigned_repair(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.warehouse_is_assigned_repair(uuid) TO authenticated;
 
+-- Отримання актуальних полів ремонту для безпечного редагування без втрати нотаток.
+CREATE OR REPLACE FUNCTION public.warehouse_get_my_repair(p_job_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $
+DECLARE result jsonb;
+BEGIN
+ IF NOT public.warehouse_is_assigned_repair(p_job_id) THEN
+   RAISE EXCEPTION 'Немає доступу до ремонту' USING ERRCODE='42501';
+ END IF;
+ SELECT to_jsonb(j) INTO result FROM public.repair_jobs j WHERE j.id=p_job_id;
+ RETURN result;
+END;
+$;
+REVOKE ALL ON FUNCTION public.warehouse_get_my_repair(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.warehouse_get_my_repair(uuid) TO authenticated;
+
 -- Контрольоване оновлення: не можна змінити обладнання, призначеного працівника,
 -- дату заявки, термін, вартість або видалити заявку.
 CREATE OR REPLACE FUNCTION public.warehouse_update_my_repair(
