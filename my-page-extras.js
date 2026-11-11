@@ -289,11 +289,11 @@
     if (!title || title.length>160 || !staffOptions.some(person=>person.user_id===assignee_id)) {
       byId('myTaskFeedback').textContent='Вкажіть назву та активного працівника.';return;
     }
-    const checklistDraft=byId('myTaskChecklistDraft');
-    const checklistItems=checklistDraft?.disabled?[]:
-      String(checklistDraft?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-    if(checklistItems.length>30||checklistItems.some(x=>x.length>240)){
-      byId('myTaskFeedback').textContent='Максимум 30 пунктів чекліста по 240 символів.';return;
+    try {
+      window.harazdMyPageChecklist?.validateDraft();
+    } catch(error) {
+      byId('myTaskFeedback').textContent=error?.message||'Перевірте пункти чекліста.';
+      return;
     }
     const editTask = editingTaskId ? tasks.find(task=>task.id===editingTaskId) : null;
     if (editingTaskId && (!editTask || editTask.created_by!==currentUser.id)) {
@@ -308,10 +308,15 @@
       };
       let savedId=editTask?.id||null;
       if (editTask) {
-        const {data,error} = await db.from('warehouse_personal_tasks')
-          .update(changes).eq('id',editTask.id).eq('created_by',currentUser.id).select('id');
-        if (error) throw error;
-        if (!data?.length) throw Error('Не вдалося оновити завдання. Перевірте дозвіл на редагування.');
+        // Editing only the checklist must not require unnecessary UPDATE on the task itself.
+        const taskFieldsChanged=Object.entries(changes).some(([key,value])=>
+          String(value??'')!==String(editTask[key]??''));
+        if(taskFieldsChanged){
+          const {data,error} = await db.from('warehouse_personal_tasks')
+            .update(changes).eq('id',editTask.id).eq('created_by',currentUser.id).select('id');
+          if (error) throw error;
+          if (!data?.length) throw Error('Не вдалося оновити завдання. Перевірте дозвіл на редагування.');
+        }
       } else {
         const {data,error}=await db.from('warehouse_personal_tasks').insert({
           ...changes,status:'todo',created_by:currentUser.id
