@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS warehouse_task_checklist_task_idx
 ALTER TABLE public.warehouse_task_checklist ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.warehouse_task_checklist FROM anon, authenticated;
 GRANT SELECT, INSERT, DELETE ON public.warehouse_task_checklist TO authenticated;
+GRANT UPDATE(title,position) ON public.warehouse_task_checklist TO authenticated;
 
 DROP POLICY IF EXISTS warehouse_checklist_read ON public.warehouse_task_checklist;
 CREATE POLICY warehouse_checklist_read ON public.warehouse_task_checklist
@@ -48,6 +49,24 @@ FOR INSERT TO authenticated WITH CHECK (
 DROP POLICY IF EXISTS warehouse_checklist_delete ON public.warehouse_task_checklist;
 CREATE POLICY warehouse_checklist_delete ON public.warehouse_task_checklist
 FOR DELETE TO authenticated USING (
+ EXISTS (
+   SELECT 1 FROM public.warehouse_personal_tasks t
+   WHERE t.id=task_id AND t.created_by=(SELECT auth.uid())
+     AND public.warehouse_can('personnel_manage')
+ )
+);
+
+DROP POLICY IF EXISTS warehouse_checklist_update_creator ON public.warehouse_task_checklist;
+CREATE POLICY warehouse_checklist_update_creator ON public.warehouse_task_checklist
+FOR UPDATE TO authenticated
+USING (
+ EXISTS (
+   SELECT 1 FROM public.warehouse_personal_tasks t
+   WHERE t.id=task_id AND t.created_by=(SELECT auth.uid())
+     AND public.warehouse_can('personnel_manage')
+ )
+)
+WITH CHECK (
  EXISTS (
    SELECT 1 FROM public.warehouse_personal_tasks t
    WHERE t.id=task_id AND t.created_by=(SELECT auth.uid())
