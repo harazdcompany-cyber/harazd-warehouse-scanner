@@ -364,3 +364,63 @@
  #my-page .my-calendar-list-title,#my-page .my-calendar-list-stage{grid-column:1/-1}
  #my-page [aria-labelledby="myTasksHeading"] #myTaskFilter{flex:1 1 120px}
 }
+
+/* My Page / My Tasks: title on top, both filters and action on a single row. */
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  gap:13px;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head h2{
+  align-self:flex-start;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) max-content;
+  align-items:center;
+  justify-content:stretch;
+  flex-wrap:nowrap;
+  gap:10px;
+  width:100%;
+  min-width:0;
+}
+#my-page [aria-labelledby="myTasksHeading"] #myTaskFilter,
+#my-page [aria-labelledby="myTasksHeading"] #myTaskSort{
+  display:block;
+  flex:none;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  height:40px;
+  box-sizing:border-box;
+}
+#my-page [aria-labelledby="myTasksHeading"] #myTaskNew{
+  flex:none;
+  justify-self:end;
+  width:auto;
+  max-width:none;
+  min-height:40px;
+  white-space:nowrap;
+}
+@media(max-width:620px){
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    justify-content:flex-start;
+    padding-bottom:4px;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskFilter,
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskSort{
+    flex:0 0 128px;
+    width:128px;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskNew{
+    flex:0 0 auto;
+    width:auto;
+    white-space:nowrap;
+  }
+}
