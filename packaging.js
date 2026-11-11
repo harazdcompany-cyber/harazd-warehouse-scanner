@@ -4,12 +4,31 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const kind={rack:'Рек',case:'Кейс',box:'Ящик',pallet:'Палета',other:'Інше'};
 let items=[],contents=[],equipment=[],selected=null,session=null,pkgPickerRefs={categories:[],subcategories:[],warehouses:[]},pkgPickerView=localStorage.getItem('harazd-packaging-picker-view')==='table'?'table':'cards',pkgRenderedGroups=[],rackPendingStart=null,rackMovingId=null,rackSwapBusy=false,rackDropHandled=false;
 let pkgBulkMode=false,pkgBulkBusy=false;const pkgBulkSelected=new Map();
-const PKG_PHOTO_BUCKET='packaging-photos',PKG_PHOTO_MAX_DIMENSION=1600,PKG_PHOTO_JPEG_QUALITY=.9,PKG_PHOTO_MAX_SOURCE_SIZE=25*1024*1024;let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false;
-function pkgPhotoReset(){if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
-function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;if(!url)return;const img=document.createElement('img');img.alt='Фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);}
+const PKG_PHOTO_BUCKET='packaging-photos',PKG_PHOTO_MAX_DIMENSION=1600,PKG_PHOTO_JPEG_QUALITY=.9,PKG_PHOTO_MAX_SOURCE_SIZE=25*1024*1024;let pkgPhotoFile=null,pkgPhotoObjectUrl=null,pkgPhotoRemoved=false,pkgPhotoRevision=0,pkgPhotoWorking=false,pkgPhotoStatus='';
+function pkgPhotoReset(){pkgPhotoRevision++;pkgPhotoWorking=false;pkgPhotoStatus='';if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;$('pkgPhotoFile').value='';$('pkgPhotoCapture').value='';$('pkgPhotoUrl').value='';pkgPhotoPreview();}
+function pkgPhotoPreview(){const wrap=$('pkgPhotoPreview');wrap.replaceChildren();const url=pkgPhotoObjectUrl||(!pkgPhotoRemoved?$('pkgPhotoUrl').value.trim():'');$('pkgPhotoRemove').hidden=!url;wrap.classList.toggle('pkg-photo-result-active',!!url);if(!url)return;const img=document.createElement('img');img.alt='Попередній перегляд фото пакування';img.src=url;img.onerror=()=>{img.remove();};wrap.append(img);if(pkgPhotoStatus){const status=document.createElement('span');status.className='pkg-photo-result-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent=pkgPhotoStatus;wrap.append(status);}}
 function pkgPhotoLoadImage(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Не вдалося відкрити фото'))};img.src=url;})}
 async function pkgPhotoPrepare(file){if(!file)return null;if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Доступні лише JPG, PNG, WEBP');if(file.size>PKG_PHOTO_MAX_SOURCE_SIZE)throw Error('Фото має бути до 25 МБ');const img=await pkgPhotoLoadImage(file);const sourceWidth=Number(img.naturalWidth||img.width||0),sourceHeight=Number(img.naturalHeight||img.height||0);if(!sourceWidth||!sourceHeight)throw Error('Не вдалося визначити розмір фото');const scale=Math.min(1,PKG_PHOTO_MAX_DIMENSION/Math.max(sourceWidth,sourceHeight));const width=Math.max(1,Math.round(sourceWidth*scale)),height=Math.max(1,Math.round(sourceHeight*scale));const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)throw Error('Не вдалося підготувати фото');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);ctx.drawImage(img,0,0,width,height);const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Не вдалося підготувати фото')),'image/jpeg',PKG_PHOTO_JPEG_QUALITY));const baseName=String(file.name||'packaging-photo').replace(/\.[^.]+$/,'').replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-+|-+$/g,'')||'packaging-photo';return new File([blob],baseName+'.jpg',{type:'image/jpeg',lastModified:Date.now()})}
-async function pkgPhotoChoose(file){if(!file)return;try{const prepared=await pkgPhotoPrepare(file);if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoFile=prepared;pkgPhotoObjectUrl=URL.createObjectURL(prepared);pkgPhotoRemoved=false;$('pkgPhotoUrl').value='';pkgPhotoPreview();}catch(error){msg(error?.message||'Не вдалося підготувати фото',true)}}
+async function pkgPhotoChoose(file){
+ if(!file)return;
+ // Display the chosen photo immediately, then replace it with the actual JPEG that will be saved.
+ const revision=++pkgPhotoRevision,sourcePreview=URL.createObjectURL(file);
+ if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);
+ pkgPhotoObjectUrl=sourcePreview;pkgPhotoFile=null;pkgPhotoRemoved=false;pkgPhotoWorking=true;pkgPhotoStatus='Обробляємо фото…';$('pkgPhotoUrl').value='';pkgPhotoPreview();
+ try{
+  const prepared=await pkgPhotoPrepare(file);
+  if(revision!==pkgPhotoRevision)return;
+  const resultPreview=URL.createObjectURL(prepared);
+  URL.revokeObjectURL(pkgPhotoObjectUrl);
+  pkgPhotoFile=prepared;pkgPhotoObjectUrl=resultPreview;pkgPhotoWorking=false;
+  pkgPhotoStatus=`Готове фото · ${Math.round(prepared.size/1024)} КБ`;pkgPhotoPreview();
+ }catch(error){
+  if(revision!==pkgPhotoRevision)return;
+  if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);
+  pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=true;pkgPhotoWorking=false;pkgPhotoStatus='';pkgPhotoPreview();
+  msg(error?.message||'Не вдалося підготувати фото',true);
+ }
+}
 async function pkgPhotoUpload(file){const path=crypto.randomUUID()+'.jpg';const {error}=await db.storage.from(PKG_PHOTO_BUCKET).upload(path,file,{contentType:'image/jpeg',upsert:false});if(error)throw Error('Не вдалося завантажити фото: '+error.message);return db.storage.from(PKG_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;}
 
 function msg(t,bad=false){$('toast').textContent=t;$('toast').style.cssText=`display:block;padding:15px;background:${bad?'#69303a':'#253d39'};border-radius:12px;color:white`;clearTimeout(msg.timer);msg.timer=setTimeout(()=>$('toast').style.display='none',5500)}
@@ -72,7 +91,7 @@ for(const [id,level] of [['pkgEditWarehouse','warehouse'],['pkgEditZone','zone']
 
 function num(f,key){const s=f.elements.namedItem(key).value;return s===''?null:Number(s)}
 async function save(e){
- e.preventDefault();const f=e.target;
+ e.preventDefault();if(pkgPhotoWorking)return msg('Зачекайте завершення обробки фото',true);const f=e.target;
  const warehouse_id=$('pkgEditWarehouse').value,location_id=$('pkgEditPlace').value;
  const place=pkgLocationNodes.find(n=>n.id===location_id);
  if(!place||place.kind!=='place'||place.warehouse_id!==warehouse_id)return msg('Оберіть місце зберігання у вибраному складі',true);
@@ -655,7 +674,7 @@ $('pkgCamera').onclick=startQr;
 $('pkgScanClose').onclick=async()=>{await stopQr();$('pkgScan').close()};
 $('pkgScan').addEventListener('close',stopQr);
 $('addMethod').addEventListener('close',()=>{$('pkgManualPanel').hidden=true;$('pkgEqId').value='' });
-$('pkgLabelDownload').onclick=downloadPkgLabel;$('pkgLabelPrint').onclick=printPkgLabel;$('pkgLabelClose').onclick=()=>$('pkgLabelDialog').close();$('pkgPhotoPick').onclick=()=>$('pkgPhotoFile').click();$('pkgPhotoCamera').onclick=()=>$('pkgPhotoCapture').click();for(const id of ['pkgPhotoFile','pkgPhotoCapture'])$(id).onchange=async e=>{const file=e.target.files?.[0];e.target.value='';await pkgPhotoChoose(file)};$('pkgPhotoUrl').addEventListener('input',()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;pkgPhotoPreview();});$('pkgPhotoRemove').onclick=()=>{if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=true;$('pkgPhotoUrl').value='';pkgPhotoPreview();};$('add').onclick=()=>edit(null);$('form').onsubmit=save;for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>el.closest('dialog').close();for(const id of ['search','kind','mode'])$(id).addEventListener(id==='search'?'input':'change',render);$('list').onclick=e=>{const b=e.target.closest('[data-id]');if(b){const p=items.find(x=>x.id===b.dataset.id);if(p)details(p)}};
+$('pkgLabelDownload').onclick=downloadPkgLabel;$('pkgLabelPrint').onclick=printPkgLabel;$('pkgLabelClose').onclick=()=>$('pkgLabelDialog').close();$('pkgPhotoPick').onclick=()=>$('pkgPhotoFile').click();$('pkgPhotoCamera').onclick=()=>$('pkgPhotoCapture').click();for(const id of ['pkgPhotoFile','pkgPhotoCapture'])$(id).onchange=async e=>{const file=e.target.files?.[0];e.target.value='';await pkgPhotoChoose(file)};$('pkgPhotoUrl').addEventListener('input',()=>{pkgPhotoRevision++;pkgPhotoWorking=false;pkgPhotoStatus='';if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=false;pkgPhotoPreview();});$('pkgPhotoRemove').onclick=()=>{pkgPhotoRevision++;pkgPhotoWorking=false;pkgPhotoStatus='';if(pkgPhotoObjectUrl)URL.revokeObjectURL(pkgPhotoObjectUrl);pkgPhotoObjectUrl=null;pkgPhotoFile=null;pkgPhotoRemoved=true;$('pkgPhotoUrl').value='';pkgPhotoPreview();};$('add').onclick=()=>edit(null);$('form').onsubmit=save;for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>el.closest('dialog').close();for(const id of ['search','kind','mode'])$(id).addEventListener(id==='search'?'input':'change',render);$('list').onclick=e=>{const b=e.target.closest('[data-id]');if(b){const p=items.find(x=>x.id===b.dataset.id);if(p)details(p)}};
 
 // QR labels: independent print workflow, no changes to stored package records.
 let labelPackage=null;
