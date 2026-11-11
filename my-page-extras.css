@@ -74,3 +74,180 @@
 #myPageContactDialog .my-page-photo-editor-feedback.is-error{color:#ffb9bf}
 #myPageContactDialog .my-page-photo-editor-feedback:empty{display:none}
 @media(max-width:430px){#myPageContactDialog .my-page-photo-editor{align-items:flex-start;gap:10px;padding:11px}#myPageContactDialog .my-page-photo-editor-preview{width:58px;height:58px;flex-basis:58px;font-size:19px}}
+
+/* My Page / Tasks: compact toolbar and tidy task cards.
+   Scoped to this section; calendar, events and account are untouched. */
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  column-gap:16px;
+  row-gap:12px;
+  margin-bottom:17px;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head h2{
+  margin:0;
+  min-width:0;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{
+  width:auto;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:nowrap;
+  gap:10px;
+}
+#my-page [aria-labelledby="myTasksHeading"] #myTaskFilter{
+  flex:0 0 152px;
+  width:152px;
+  min-width:0;
+  height:40px;
+  padding:0 12px;
+  background:#0d1928;
+  color:#e5eef9;
+  border:1px solid #39516a;
+  border-radius:10px;
+  font-size:13px;
+}
+#my-page [aria-labelledby="myTasksHeading"] #myTaskNew{
+  flex:0 0 auto;
+  width:auto;
+  min-height:40px;
+  padding:9px 15px;
+  border-radius:10px!important;
+  font-size:13px;
+  white-space:nowrap;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-list{gap:10px}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task{
+  padding:15px 17px;
+  border:1px solid #354d65;
+  border-radius:13px;
+  background:#182739;
+  transition:border-color .15s ease;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task:hover{border-color:#526d86}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-line{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-line strong{
+  font-size:15px;
+  line-height:1.4;
+  font-weight:750;
+  letter-spacing:0;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-priority{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border:1px solid #3c5265;
+  border-radius:999px;
+  background:#253b49;
+  color:#c9dfeb;
+  font-size:11px;
+  line-height:1.2;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-priority.priority-high{
+  border-color:#684248;
+  background:#432a32;
+  color:#ffbdc5;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-priority.priority-low{
+  border-color:#3d614f;
+  background:#223c34;
+  color:#a4e1c4;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-meta{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:7px 18px;
+  font-size:12px;
+  line-height:1.45;
+  color:#9db8d3;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task p{
+  margin:9px 0 0;
+  font-size:13px;
+  line-height:1.55;
+  color:#c1d1e2;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-controls{
+  margin-top:13px;
+  padding-top:11px;
+  border-top:1px solid #30465a;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-controls label{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  color:#aac0d6;
+  font-size:12px;
+  font-weight:600;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-controls select{
+  width:140px;
+  min-width:0;
+  height:36px;
+  min-height:36px;
+  margin:0;
+  padding:6px 10px;
+  color:#f0f7ff;
+  background:#0d1928;
+  border:1px solid #39516a;
+  border-radius:9px;
+  font-size:12px;
+  font-weight:500;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-controls [data-my-task-delete]{
+  width:auto;
+  min-height:36px;
+  margin-left:auto;
+  padding:7px 12px;
+  border:1px solid #49576c;
+  border-radius:9px;
+  background:transparent;
+  color:#ffb7c2;
+  font-size:12px;
+  font-weight:600;
+}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-controls [data-my-task-delete]:hover{
+  background:#3b2734;
+  border-color:#b36c7c;
+}
+@media(max-width:820px){
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head{
+    grid-template-columns:minmax(0,1fr);
+    align-items:stretch;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{
+    justify-content:flex-start;
+  }
+}
+@media(max-width:440px){
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{
+    flex-wrap:wrap;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskFilter{
+    flex:1 1 125px;
+    width:auto;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskNew{
+    flex:1 1 auto;
+    white-space:normal;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-task{
+    padding:13px 12px;
+  }
+}
