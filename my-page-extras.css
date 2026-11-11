@@ -424,3 +424,40 @@
     white-space:nowrap;
   }
 }
+
+/* My Page calendar: clickable type filters, replacing the static legend only. */
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-legend{
+  gap:8px;
+}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-type-filter{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:auto;
+  min-height:33px;
+  margin:0;
+  padding:7px 12px;
+  border:1px solid #536a76;
+  border-radius:9px;
+  background:#23363e;
+  color:#e7f1fa;
+  font-size:12px;
+  line-height:1.2;
+  font-weight:650;
+  white-space:nowrap;
+  cursor:pointer;
+}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-type-filter.is-inactive{
+  background:#111d2b;
+  border-color:#304557;
+  color:#91a7bb;
+  opacity:.6;
+}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-type-filter:hover{
+  border-color:#8eacbd;
+}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-type-filter:focus-visible{
+  outline:2px solid #dfff00;
+  outline-offset:3px;
+}
