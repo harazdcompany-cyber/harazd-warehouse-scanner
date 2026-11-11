@@ -52,7 +52,7 @@
      displayProfile(currentUser,currentProfile,currentContact,true);
      window.harazdMyPageExtras?.restoreAvatar?.();
      el('myPageContactDialog').close();
-     el('myPageNotice').textContent = 'Особисту інформацію збережено.';
+     if (typeof toast === 'function') toast('Особисту інформацію збережено.');
    } catch (error) {
      feedback.textContent = 'Не вдалося зберегти: ' + (error?.message || error);
    } finally {btn.disabled=false;}
@@ -85,7 +85,7 @@
      if (error) throw error;
      form.reset();
      el('myPagePasswordDialog').close();
-     el('myPageNotice').textContent='Пароль успішно змінено.';
+     if (typeof toast === 'function') toast('Пароль успішно змінено.');
    } catch (error) {
      feedback.textContent = error?.message || 'Не вдалося змінити пароль.';
    } finally {button.disabled=false;}
@@ -109,7 +109,6 @@
  async function load() {
    const key = ++requestId;
    if (!el('myPageProfile')) return;
-   el('myPageNotice').textContent = 'Оновлюємо інформацію…';
    currentUser=null;currentProfile=null;currentContact=null;contactsReady=false;
    el('myPageProfile').textContent = 'Завантаження профілю…';
    el('myPageRepairs').textContent = 'Завантаження призначених ремонтів…';
@@ -139,7 +138,7 @@
      displayProfile(user,profile,contact,contactsReady);
      window.harazdMyPageExtras?.load({user,profile});
      if (!profile || profile.status !== 'active') {
-       el('myPageNotice').textContent = 'Щоб бачити свої роботи, потрібен активний профіль працівника.' + (contactWarning ? ' ' + contactWarning : '');
+       if (typeof toast === 'function') toast('Щоб бачити свої роботи, потрібен активний профіль працівника.' + (contactWarning ? ' ' + contactWarning : ''),true);
        el('myPageRepairs').innerHTML = '<p class="my-page-empty">Немає активного профілю працівника.</p>';
        el('myPageEvents').innerHTML = '<p class="my-page-empty">Немає активного профілю працівника.</p>';
        return;
@@ -181,10 +180,11 @@
      }
      if (key !== requestId) return;
      window.harazdMyPageExtras?.setAppointments({repairs,events});
-     el('myPageNotice').textContent = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
+     const warningMessage = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
+     if (warningMessage && typeof toast === 'function') toast(warningMessage,true);
    } catch (error) {
      if (key !== requestId) return;
-     el('myPageNotice').textContent = 'Не вдалося завантажити профіль: ' + (error?.message || error);
+     if (typeof toast === 'function') toast('Не вдалося завантажити профіль: ' + (error?.message || error),true);
      el('myPageProfile').innerHTML = '<p class="my-page-empty">Дані профілю недоступні.</p>';
    }
  }
