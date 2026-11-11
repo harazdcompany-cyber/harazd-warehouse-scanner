@@ -50,6 +50,7 @@
      if (error) throw error;
      currentContact = data;
      displayProfile(currentUser,currentProfile,currentContact,true);
+     window.harazdMyPageExtras?.restoreAvatar?.();
      el('myPageContactDialog').close();
      el('myPageNotice').textContent = 'Особисту інформацію збережено.';
    } catch (error) {
@@ -136,6 +137,7 @@
      if (key !== requestId) return;
      currentUser=user;currentProfile=profile;currentContact=contact;
      displayProfile(user,profile,contact,contactsReady);
+     window.harazdMyPageExtras?.load({user,profile});
      if (!profile || profile.status !== 'active') {
        el('myPageNotice').textContent = 'Щоб бачити свої роботи, потрібен активний профіль працівника.' + (contactWarning ? ' ' + contactWarning : '');
        el('myPageRepairs').innerHTML = '<p class="my-page-empty">Немає активного профілю працівника.</p>';
@@ -166,7 +168,7 @@
      if (assignmentResponse.status === 'fulfilled' && !assignmentResponse.value.error) {
        const ids = [...new Set((assignmentResponse.value.data||[]).map(x=>x.event_id))];
        if (ids.length) {
-         const {data,error} = await db.from('warehouse_events').select('id,name,client,location,status,event_date,event_end_date,setup_date,teardown_date').in('id',ids).order('event_date',{ascending:true});
+         const {data,error} = await db.from('warehouse_events').select('*').in('id',ids).order('event_date',{ascending:true});
          if (error) {
            warnings.push('події');
            el('myPageEvents').innerHTML = '<p class="my-page-empty">Не вдалося отримати призначені події. Перевірте дозволи доступу.</p>';
@@ -178,6 +180,7 @@
        warnings.push('події');
      }
      if (key !== requestId) return;
+     window.harazdMyPageExtras?.setAppointments({repairs,events});
      el('myPageNotice').textContent = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
    } catch (error) {
      if (key !== requestId) return;
