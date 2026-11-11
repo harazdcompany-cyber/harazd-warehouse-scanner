@@ -140,6 +140,7 @@
      if (key !== requestId) return;
      currentUser=user;currentProfile=profile;currentContact=contact;
      displayProfile(user,profile,contact,contactsReady);
+     window.harazdMyPageNotifications?.load({user,profile});
      window.harazdMyPageExtras?.load({user,profile});
      if (!profile || profile.status !== 'active') {
        if (typeof toast === 'function') toast('Щоб бачити свої роботи, потрібен активний профіль працівника.' + (contactWarning ? ' ' + contactWarning : ''),true);
@@ -185,6 +186,7 @@
      }
      if (key !== requestId) return;
      window.harazdMyPageExtras?.setAppointments({repairs,events});
+     window.harazdMyPageNotifications?.setAssignments({repairs,events});
      const warningMessage = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
      if (warningMessage && typeof toast === 'function') toast(warningMessage,true);
    } catch (error) {
