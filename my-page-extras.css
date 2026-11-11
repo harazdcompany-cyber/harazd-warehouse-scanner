@@ -287,3 +287,80 @@
     justify-content:flex-end;
   }
 }
+
+/* My Page: typed calendar markers and month/week/list views. */
+#my-page{--my-cal-task:#c7f944;--my-cal-event:#66b4f6;--my-cal-repair:#ffa45c}
+#my-page [aria-labelledby="myCalendarHeading"] .my-page-extra-head{align-items:center;gap:12px}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch{display:inline-flex;align-items:center;padding:3px;gap:3px;border:1px solid #3b5269;border-radius:11px;background:#0d1827}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch button{min-height:32px;padding:7px 11px;border:0;border-radius:8px;background:transparent;color:#aebfd2;font-size:12px;white-space:nowrap}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch button.is-active{background:#31453d;color:#dfff94;font-weight:700}
+#my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch button:focus-visible{outline:2px solid #dcff5c;outline-offset:2px}
+#my-page [aria-labelledby="myCalendarHeading"] #myCalendarTitle{min-width:175px;max-width:210px;white-space:nowrap;font-size:12px}
+#my-page .my-calendar-day{overflow:hidden;min-height:58px;padding:8px;gap:3px}
+#my-page .my-calendar-day-number{font-variant-numeric:tabular-nums}
+#my-page .my-calendar-day-count{position:absolute;top:7px;right:7px;color:#a8bed1;font-size:10px;line-height:1.3}
+#my-page .my-calendar-indicators{position:absolute;bottom:8px;left:8px;right:6px;display:flex;align-items:center;gap:4px}
+#my-page .my-calendar-day .my-calendar-indicators i{display:block;width:8px;height:8px;min-width:8px;min-height:8px;border:0;border-radius:50%;box-shadow:none}
+#my-page .my-calendar-indicators .type-task,#my-page .my-calendar-legend .type-task{background:var(--my-cal-task)!important}
+#my-page .my-calendar-indicators .type-event,#my-page .my-calendar-legend .type-event{background:var(--my-cal-event)!important}
+#my-page .my-calendar-indicators .type-repair,#my-page .my-calendar-legend .type-repair{background:var(--my-cal-repair)!important}
+#my-page .my-calendar-legend{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;margin-top:12px;color:#aebfd3;font-size:11px}
+#my-page .my-calendar-legend span{display:inline-flex;align-items:center;gap:7px}
+#my-page .my-calendar-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+#my-page .my-calendar-grid.is-week .my-calendar-day{min-height:86px}
+#my-page .my-calendar-grid.is-list{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+#my-page .my-calendar-list-item{display:grid;grid-template-columns:92px 70px minmax(0,1fr);align-items:center;gap:8px 12px;min-width:0;padding:12px;border:1px solid #354d65;border-radius:10px;background:#111f30;color:#e7f1fc;text-align:left;font-size:12px}
+#my-page .my-calendar-list-item:hover{border-color:#819db9;background:#1d3045}
+#my-page .my-calendar-list-item.is-selected{border-color:#cdff48;background:#243738}
+#my-page .my-calendar-list-date{font-variant-numeric:tabular-nums;color:#b5cce1;white-space:nowrap}
+#my-page .my-calendar-list-kind{font-weight:700;font-size:11px}
+#my-page .my-calendar-list-kind.type-task{color:var(--my-cal-task)}
+#my-page .my-calendar-list-kind.type-event{color:var(--my-cal-event)}
+#my-page .my-calendar-list-kind.type-repair{color:var(--my-cal-repair)}
+#my-page .my-calendar-list-title{min-width:0;overflow-wrap:anywhere;font-weight:650;font-size:13px}
+#my-page .my-calendar-list-stage{grid-column:3;min-width:0;overflow-wrap:anywhere;color:#a4b9cd;font-size:11px;line-height:1.4}
+#my-page .my-calendar-agenda-count{font-size:11px;font-weight:500;color:#a7c0d6;margin-left:6px}
+#my-page .my-calendar-agenda-item{display:grid;gap:6px;padding:12px 14px}
+#my-page .my-calendar-agenda-top{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+#my-page .my-calendar-entry-type{font-size:11px;font-weight:750}
+#my-page .my-calendar-entry-type.type-task{color:var(--my-cal-task)}
+#my-page .my-calendar-entry-type.type-event{color:var(--my-cal-event)}
+#my-page .my-calendar-entry-type.type-repair{color:var(--my-cal-repair)}
+#my-page .my-calendar-entry-stage{font-size:11px;color:#a7bfd6}
+#my-page .my-calendar-agenda-item strong{line-height:1.4}
+#my-page .my-calendar-agenda-item small{margin:0}
+#my-page .my-calendar-agenda-item p{margin:0;color:#b9cddd;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#my-page .my-calendar-open{justify-self:start;width:auto;min-height:32px;margin-top:3px;padding:6px 12px;border-radius:8px;border:1px solid #506984;background:#23374e;color:#ebf5ff;font-size:12px;font-weight:650}
+#my-page .my-calendar-open:hover{border-color:#a0c1da;background:#2d4560}
+/* My Page task filtering, sorting and overdue state. */
+#my-page [aria-labelledby="myTasksHeading"] #myTaskSort{flex:0 0 142px;width:142px;height:40px;min-width:0;padding:0 10px;border:1px solid #39516a;border-radius:10px;background:#0d1928;color:#e5eef9;font-size:13px}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{flex-wrap:wrap;gap:9px}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-labels{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:7px}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task.is-overdue{border-left:3px solid #e8878d;border-color:#a55764}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task-overdue{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid #a55764;border-radius:999px;background:#472934;color:#ffb9c1;font-size:11px;font-weight:750;line-height:1.2}
+#my-page [aria-labelledby="myTasksHeading"] .my-page-task.is-overdue .my-page-task-meta{color:#ffb4bd}
+@media(max-width:1250px){
+ #my-page [aria-labelledby="myCalendarHeading"] .my-page-extra-head{align-items:flex-start;flex-direction:column}
+ #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-toolbar{width:100%;justify-content:space-between}
+ #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head{grid-template-columns:minmax(0,1fr)}
+ #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions{justify-content:flex-start}
+}
+@media(max-width:650px){
+ #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-toolbar{align-items:flex-start;flex-direction:column}
+ #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-controls{width:100%;justify-content:space-between;gap:5px}
+ #my-page [aria-labelledby="myCalendarHeading"] #myCalendarTitle{min-width:0;flex:1}
+ #my-page .my-calendar-grid.is-week .my-calendar-day{min-height:55px}
+ #my-page .my-calendar-day{min-height:50px;padding:5px}
+ #my-page .my-calendar-day-count{top:4px;right:4px;font-size:9px}
+ #my-page .my-calendar-indicators{bottom:5px;left:5px;gap:3px}
+ #my-page .my-calendar-day .my-calendar-indicators i{width:6px;height:6px;min-width:6px;min-height:6px}
+ #my-page .my-calendar-list-item{grid-template-columns:85px 70px minmax(0,1fr);gap:6px;padding:10px}
+ #my-page [aria-labelledby="myTasksHeading"] #myTaskSort{flex:1 1 145px;width:auto}
+}
+@media(max-width:410px){
+ #my-page .my-calendar-list-item{grid-template-columns:88px minmax(0,1fr)}
+ #my-page .my-calendar-list-kind{grid-column:2}
+ #my-page .my-calendar-list-title,#my-page .my-calendar-list-stage{grid-column:1/-1}
+ #my-page [aria-labelledby="myTasksHeading"] #myTaskFilter{flex:1 1 120px}
+}

@@ -13,6 +13,7 @@
   const now = new Date();
   const localISO = date => [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
   let selectedDay = localISO(now);
+  let calendarView = 'month', calendarItems = [];
   const dateText = iso => {
     if (!iso) return 'Без дати';
     const date = new Date(String(iso).slice(0,10)+'T12:00:00');
@@ -178,15 +179,41 @@
     const host=byId('myTaskList');
     if (!host) return;
     const filter=byId('myTaskFilter')?.value || 'open';
-    const filtered=tasks.filter(t=>filter==='all' || (filter==='open' ? t.status!=='done' : t.status==='done'));
-    if (!filtered.length) {host.innerHTML='<p class="my-page-empty">Завдань за вибраним фільтром немає.</p>';return;}
+    const sort=byId('myTaskSort')?.value || 'due';
+    const today=localISO(new Date());
+    const ranks={high:0,normal:1,low:2};
+    const compareDue=(a,b)=>{
+      const ad=a.due_date||'9999-12-31',bd=b.due_date||'9999-12-31';
+      return ad.localeCompare(bd);
+    };
+    const filtered=tasks.filter(t=>filter==='all' || (filter==='open' ? t.status!=='done' : t.status==='done')).slice();
+    filtered.sort((a,b)=>{
+      if (filter==='all' && (a.status==='done')!==(b.status==='done')) return a.status==='done'?1:-1;
+      if (sort==='priority') {
+        const diff=(ranks[a.priority]??1)-(ranks[b.priority]??1);
+        if(diff) return diff;
+      } else if (sort==='newest') {
+        const diff=(b.created_at||'').localeCompare(a.created_at||'');
+        if(diff) return diff;
+      }
+      return compareDue(a,b)||(ranks[a.priority]??1)-(ranks[b.priority]??1)||
+        (b.created_at||'').localeCompare(a.created_at||'');
+    });
+    if (!filtered.length) {
+      host.innerHTML='<p class="my-page-empty">Завдань за вибраним фільтром немає.</p>';
+      return;
+    }
     host.innerHTML=filtered.map(task=>{
-      const own = task.assignee_id===currentUser?.id;
-      const assignee = staffNames.get(task.assignee_id);
-      const label = priorities[task.priority]||'Звичайний';
-      return `<div class="my-page-task ${task.status==='done'?'is-done':''}" data-task-id="${escapeHTML(task.id)}">
+      const own=task.assignee_id===currentUser?.id;
+      const assignee=staffNames.get(task.assignee_id);
+      const label=priorities[task.priority]||'Звичайний';
+      const overdue=task.status!=='done' && Boolean(task.due_date && task.due_date<today);
+      return `<div class="my-page-task ${task.status==='done'?'is-done':''} ${overdue?'is-overdue':''}" data-task-id="${escapeHTML(task.id)}">
         <div class="my-page-task-line"><strong>${escapeHTML(task.title)}</strong>
-          <span class="my-page-task-priority priority-${escapeHTML(task.priority)}">${escapeHTML(label)}</span></div>
+          <span class="my-page-task-labels">
+            ${overdue?'<span class="my-page-task-overdue">Прострочено</span>':''}
+            <span class="my-page-task-priority priority-${escapeHTML(task.priority)}">${escapeHTML(label)}</span>
+          </span></div>
         ${task.details?`<p>${escapeHTML(task.details)}</p>`:''}
         <div class="my-page-task-meta"><span>До: ${escapeHTML(dateText(task.due_date))}</span>
           ${!own && assignee?`<span>Працівник: ${escapeHTML(assignee)}</span>`:''}</div>
@@ -196,7 +223,7 @@
           ${manager && task.created_by===currentUser?.id?`<span class="my-page-task-actions"><button type="button" data-my-task-edit="${escapeHTML(task.id)}">Редагувати</button><button type="button" data-my-task-delete="${escapeHTML(task.id)}">Видалити</button></span>`:''}</div></div>`;
     }).join('');
   }
-  async function loadTasks(request) {
+    async function loadTasks(request) {
     const host=byId('myTaskList');if(host)host.innerHTML='<p class="my-page-empty">Завантаження завдань…</p>';
     const queries=[db.from('warehouse_personal_tasks').select('id,assignee_id,created_by,title,details,priority,status,due_date,created_at').order('created_at',{ascending:false}).limit(150)];
     if (manager) queries.push(db.from('warehouse_staff').select('user_id,full_name').eq('status','active').order('full_name'));
@@ -292,7 +319,7 @@
       const {error}=await db.rpc('warehouse_set_my_task_status',{p_task_id:id,p_status:status});
       if(error)throw error;
       task.status=status;displayTasks();renderCalendar();
-      notice('Статус завдання змінено.');
+      notice(status==='done' ? 'Завдання завершено. Переглянути його можна у фільтрі «Завершені».' : 'Статус завдання змінено.');
     }catch(error){select.value=old;notice(error?.message||'Помилка зміни статусу.',true);}
     finally {select.disabled=false;}
   }
@@ -305,78 +332,194 @@
     tasks=tasks.filter(x=>x.id!==id);
     displayTasks();renderCalendar();notice('Завдання видалено.');
   }
+  function startOfWeek(date) {
+  const value=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);
+  value.setDate(value.getDate()-((value.getDay()+6)%7));
+  return value;
+}
   function calendarEntries() {
-    const result=[];
-    const add = (date,type,title,description,status='') => {
-      if (date && /^\d{4}-\d{2}-\d{2}$/.test(String(date).slice(0,10))) result.push({
-        date:String(date).slice(0,10),type,title,description,status
-      });
-    };
-    for (const task of tasks) {
-      if (task.assignee_id === currentUser?.id) add(task.due_date,'task',task.title,'Термін завдання · '+(taskStatuses[task.status]||task.status),task.status);
-    }
-    for (const repair of repairs) {
-      add(repair.due_on,'repair',repair.problem || 'Ремонт обладнання','Термін ремонту');
-    }
-    for (const event of events) {
-      const period=(start,end,label)=>{
-        if (!start) return;
-        const initial=new Date(String(start).slice(0,10)+'T12:00:00');
-        const limit=end ? new Date(String(end).slice(0,10)+'T12:00:00') : initial;
-        if(Number.isNaN(initial.getTime()) || Number.isNaN(limit.getTime())) return;
-        for(let i=0,dt=new Date(initial);i<90 && dt<=limit;i++,dt.setDate(dt.getDate()+1))
-          add(localISO(dt),'event',event.name||'Подія',label+(event.location?' · '+event.location:''));
-      };
-      period(event.warehouse_start_date,event.warehouse_end_date,'Складські роботи до події');
-      period(event.setup_date,event.setup_end_date,'Монтаж');
-      period(event.event_date,event.event_end_date,'Подія');
-      period(event.teardown_date,event.teardown_end_date,'Демонтаж');
-      period(event.post_warehouse_start_date,event.post_warehouse_end_date,'Складські роботи після події');
-    }
-    return result;
+  const result=[],seen=new Set();
+  const add=(date,type,title,description,meta={})=>{
+    const iso=String(date||'').slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    const key=[iso,type,meta.id||'',meta.stage||''].join('|');
+    if(seen.has(key))return;
+    seen.add(key);
+    result.push({date:iso,type,title,description,id:meta.id||'',stage:meta.stage||'',status:meta.status||'',detail:meta.detail||''});
+  };
+  for(const task of tasks) {
+    if(task.assignee_id!==currentUser?.id)continue;
+    add(task.due_date,'task',task.title,'Статус: '+(taskStatuses[task.status]||task.status||'—')+
+      ' · Пріоритет: '+(priorities[task.priority]||'Звичайний'),
+      {id:task.id,status:task.status,stage:'Завдання',detail:task.details||''});
   }
+  const repairStatus={new:'Новий',pending:'Очікує',in_progress:'В ремонті',progress:'В ремонті',done:'Завершено',cancelled:'Скасовано'};
+  for(const repair of repairs) {
+    add(repair.due_on,'repair',repair.problem||'Ремонт обладнання',
+      'Термін виконання ремонту · '+(repairStatus[repair.status]||repair.status||'Статус не вказано'),
+      {id:repair.id,stage:'Ремонт',status:repair.status});
+  }
+  for(const event of events) {
+    const period=(start,end,stage)=>{
+      if (!start) return;
+      const initial=new Date(String(start).slice(0,10)+'T12:00:00');
+      const last=end?new Date(String(end).slice(0,10)+'T12:00:00'):initial;
+      if(Number.isNaN(initial.getTime())||Number.isNaN(last.getTime()))return;
+      for(let i=0,dt=new Date(initial);i<90&&dt<=last;i++,dt.setDate(dt.getDate()+1)) {
+        add(localISO(dt),'event',event.name||'Подія',
+          stage+(event.location?' · '+event.location:''),
+          {id:event.id,stage,detail:event.client?'Замовник: '+event.client:''});
+      }
+    };
+    period(event.warehouse_start_date,event.warehouse_end_date,'Складські роботи до події');
+    period(event.setup_date,event.setup_end_date,'Монтаж');
+    period(event.event_date,event.event_end_date,'Подія');
+    period(event.teardown_date,event.teardown_end_date,'Демонтаж');
+    period(event.post_warehouse_start_date,event.post_warehouse_end_date,'Складські роботи після події');
+  }
+  return result;
+}
   function renderCalendar() {
-    const grid=byId('myCalendarGrid'),title=byId('myCalendarTitle'),agenda=byId('myCalendarAgenda');
-    if (!grid || !title || !agenda) return;
-    title.textContent=new Intl.DateTimeFormat('uk-UA',{month:'long',year:'numeric'}).format(month);
-    const entries=calendarEntries();
-    const grouped=new Map();
-    for (const entry of entries) {
-      if (!grouped.has(entry.date)) grouped.set(entry.date,[]);
-      grouped.get(entry.date).push(entry);
+  const grid=byId('myCalendarGrid'),title=byId('myCalendarTitle'),agenda=byId('myCalendarAgenda');
+  if(!grid||!title||!agenda)return;
+  const entries=calendarEntries();
+  calendarItems=entries;
+  const grouped=new Map();
+  for(let i=0;i<entries.length;i++){
+    const entry=entries[i];
+    if(!grouped.has(entry.date))grouped.set(entry.date,[]);
+    grouped.get(entry.date).push({item:entry,index:i});
+  }
+  const viewButtons=document.querySelectorAll('#my-page [data-my-calendar-view]');
+  for(const button of viewButtons){
+    const active=button.dataset.myCalendarView===calendarView;
+    button.setAttribute('aria-pressed',String(active));
+    button.classList.toggle('is-active',active);
+  }
+  const current=new Date(selectedDay+'T12:00:00');
+  if(calendarView==='week'){
+    const first=startOfWeek(current),last=new Date(first);
+    last.setDate(last.getDate()+6);
+    title.textContent=dateText(localISO(first))+' – '+dateText(localISO(last));
+  } else title.textContent=new Intl.DateTimeFormat('uk-UA',{month:'long',year:'numeric'}).format(month);
+  grid.className='my-calendar-grid is-'+calendarView;
+  grid.replaceChildren();
+  const types=['task','event','repair'];
+  const names={task:'Завдання',event:'Події',repair:'Ремонти'};
+  const addDay=(date,outside=false)=>{
+    const iso=localISO(date),dayItems=grouped.get(iso)||[];
+    const kinds=[...new Set(dayItems.map(({item})=>item.type))];
+    const button=document.createElement('button');
+    button.type='button';
+    button.dataset.myCalendarDate=iso;
+    button.className='my-calendar-day'+(outside?' is-outside':'')+
+      (iso===selectedDay?' is-selected':'')+
+      (iso===localISO(new Date())?' is-today':'');
+    button.setAttribute('aria-label',dateText(iso)+(dayItems.length?' — робіт: '+dayItems.length:''));
+    button.innerHTML='<span class="my-calendar-day-number">'+date.getDate()+'</span>'+
+      (dayItems.length?'<span class="my-calendar-day-count">'+dayItems.length+'</span>':'')+
+      (kinds.length?'<span class="my-calendar-indicators" aria-hidden="true">'+
+        types.filter(type=>kinds.includes(type)).map(type=>'<i class="type-'+type+'"></i>').join('')+'</span>':'');
+    grid.append(button);
+  };
+  const weekdayNames=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+  if(calendarView==='month'||calendarView==='week'){
+    for(const day of weekdayNames){
+      const label=document.createElement('span');
+      label.className='my-calendar-weekday';
+      label.textContent=day;
+      grid.append(label);
     }
-    const start=new Date(month.getFullYear(),month.getMonth(),1);
-    start.setDate(1-((start.getDay()+6)%7));
-    const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
-    grid.innerHTML=weekdays.map(text=>`<span class="my-calendar-weekday">${text}</span>`).join('');
-    for (let i=0;i<42;i++) {
-      const day=new Date(start);day.setDate(start.getDate()+i);
-      const iso=localISO(day),count=(grouped.get(iso)||[]).length;
-      const button=document.createElement('button');button.type='button';
-      button.dataset.myCalendarDate=iso;
-      button.className='my-calendar-day'+(day.getMonth()!==month.getMonth()?' is-outside':'')+
-        (iso===selectedDay?' is-selected':'')+(iso===localISO(new Date())?' is-today':'');
-      button.setAttribute('aria-label',dateText(iso)+(count?' — записів: '+count:''));
-      button.innerHTML='<span>'+day.getDate()+'</span>'+(count?'<i aria-hidden="true">'+Math.min(count,9)+(count>9?'+':'')+'</i>':'');
+    const first=calendarView==='week'?startOfWeek(current):startOfWeek(new Date(month.getFullYear(),month.getMonth(),1));
+    const count=calendarView==='week'?7:42;
+    for(let i=0;i<count;i++){
+      const date=new Date(first);
+      date.setDate(first.getDate()+i);
+      addDay(date,calendarView==='month'&&date.getMonth()!==month.getMonth());
+    }
+  } else {
+    const prefix=localISO(month).slice(0,7);
+    const monthEntries=entries.map((item,index)=>({item,index})).filter(({item})=>item.date.slice(0,7)===prefix);
+    monthEntries.sort((a,b)=>a.item.date.localeCompare(b.item.date)||types.indexOf(a.item.type)-types.indexOf(b.item.type));
+    if(!monthEntries.length){
+      const message=document.createElement('p');
+      message.className='my-page-empty';
+      message.textContent='На цей місяць немає призначених робіт.';
+      grid.append(message);
+    }
+    for(const {item,index} of monthEntries){
+      const button=document.createElement('button');
+      button.type='button';
+      button.dataset.myCalendarDate=item.date;
+      button.className='my-calendar-list-item'+(item.date===selectedDay?' is-selected':'');
+      button.innerHTML='<span class="my-calendar-list-date">'+escapeHTML(dateText(item.date))+'</span>'+
+        '<span class="my-calendar-list-kind type-'+item.type+'">'+names[item.type]+'</span>'+
+        '<span class="my-calendar-list-title">'+escapeHTML(item.title)+'</span>'+
+        '<span class="my-calendar-list-stage">'+escapeHTML(item.description)+'</span>';
+      button.setAttribute('aria-label',dateText(item.date)+': '+item.title);
       grid.append(button);
     }
-    const chosen=grouped.get(selectedDay)||[];
-    agenda.innerHTML='<h3>'+escapeHTML(dateText(selectedDay))+'</h3>'+
-      (chosen.length?chosen.map(item=>`<div class="my-calendar-agenda-item type-${escapeHTML(item.type)}">
-        <strong>${escapeHTML(item.title)}</strong><small>${escapeHTML(item.description)}</small></div>`).join(''):
-        '<p class="my-page-empty">На цей день немає призначених робіт.</p>');
   }
-  function setAppointments(data) {
+  const chosen=grouped.get(selectedDay)||[];
+  agenda.innerHTML='<h3>'+escapeHTML(dateText(selectedDay))+
+    ' <span class="my-calendar-agenda-count">'+chosen.length+(chosen.length===1?' робота':' робіт')+'</span></h3>'+
+    (chosen.length?chosen.map(({item,index})=>{
+      const kind=names[item.type]||'Робота';
+      return '<article class="my-calendar-agenda-item type-'+item.type+'">'+
+        '<div class="my-calendar-agenda-top"><span class="my-calendar-entry-type type-'+item.type+'">'+kind+'</span>'+
+        (item.stage?'<span class="my-calendar-entry-stage">'+escapeHTML(item.stage)+'</span>':'')+'</div>'+
+        '<strong>'+escapeHTML(item.title)+'</strong>'+
+        '<small>'+escapeHTML(item.description)+'</small>'+
+        (item.detail?'<p>'+escapeHTML(item.detail)+'</p>':'')+
+        (item.id?'<button type="button" class="my-calendar-open" data-my-calendar-open="'+index+'">Відкрити</button>':'')+
+        '</article>';
+    }).join(''):'<p class="my-page-empty">На цей день немає призначених робіт.</p>');
+}
+  function openCalendarEntry(index) {
+  const item=calendarItems[index];
+  if(!item)return;
+  let target=null;
+  if(item.type==='task'){
+    const filter=byId('myTaskFilter');
+    if(filter){
+      if(item.status==='done')filter.value='done';
+      else if(filter.value==='done')filter.value='open';
+    }
+    displayTasks();
+    target=Array.from(document.querySelectorAll('#myTaskList [data-task-id]'))
+      .find(element=>element.dataset.taskId===item.id);
+    if(!target&&filter){filter.value='all';displayTasks();target=Array.from(document.querySelectorAll('#myTaskList [data-task-id]')).find(element=>element.dataset.taskId===item.id);}
+  }else{
+    const container=byId(item.type==='repair'?'myPageRepairs':'myPageEvents');
+    const field=item.type==='repair'?'myRepairId':'myEventId';
+    target=Array.from(container?.querySelectorAll('details')||[]).find(element=>element.dataset[field]===item.id);
+    if(target)target.open=true;
+    if(!target)target=container;
+  }
+  if(target){
+    target.scrollIntoView({behavior:'smooth',block:'center'});
+    if(!target.hasAttribute('tabindex'))target.setAttribute('tabindex','-1');
+    target.focus({preventScroll:true});
+  }
+}
+    function setAppointments(data) {
     repairs=Array.isArray(data?.repairs)?data.repairs:[];
     events=Array.isArray(data?.events)?data.events:[];
     renderCalendar();
   }
   function changeMonth(delta) {
+  if(calendarView==='week'){
+    const day=new Date(selectedDay+'T12:00:00');
+    day.setDate(day.getDate()+delta*7);
+    selectedDay=localISO(day);
+    month=new Date(day.getFullYear(),day.getMonth(),1);
+  }else{
     month=new Date(month.getFullYear(),month.getMonth()+delta,1);
-    selectedDay=localISO(new Date(month.getFullYear(),month.getMonth(),1));
-    renderCalendar();
+    selectedDay=localISO(month);
   }
-  async function load(context) {
+  renderCalendar();
+}
+    async function load(context) {
     const request=++activeRequest;
     currentUser=context?.user||null;currentProfile=context?.profile||null;
     avatarPath='';tasks=[];repairs=[];events=[];staffNames=new Map();staffOptions=[];
@@ -399,11 +542,19 @@
       if (task) openTaskForm(task);
     }
     else if (event.target.closest('[data-my-task-delete]')) deleteTask(event.target.closest('[data-my-task-delete]').dataset.myTaskDelete);
+    else if (event.target.closest('[data-my-calendar-view]')) {
+      calendarView=event.target.closest('[data-my-calendar-view]').dataset.myCalendarView;
+      renderCalendar();
+    }
+    else if (event.target.closest('[data-my-calendar-open]')) openCalendarEntry(Number(event.target.closest('[data-my-calendar-open]').dataset.myCalendarOpen));
     else if (event.target.closest('[data-my-calendar-shift]')) changeMonth(Number(event.target.closest('[data-my-calendar-shift]').dataset.myCalendarShift));
     else if (event.target.closest('#myCalendarToday')) {
       const now=new Date();month=new Date(now.getFullYear(),now.getMonth(),1);selectedDay=localISO(now);renderCalendar();
     } else if (event.target.closest('[data-my-calendar-date]')) {
-      selectedDay=event.target.closest('[data-my-calendar-date]').dataset.myCalendarDate;renderCalendar();
+      selectedDay=event.target.closest('[data-my-calendar-date]').dataset.myCalendarDate;
+      const date=new Date(selectedDay+'T12:00:00');
+      month=new Date(date.getFullYear(),date.getMonth(),1);
+      renderCalendar();
     }
   });
   root?.addEventListener('change',event=>{
@@ -411,6 +562,7 @@
     if (select) updateTaskStatus(select.dataset.myTaskStatus,select.value,select);
   });
   byId('myTaskFilter')?.addEventListener('change',displayTasks);
+  byId('myTaskSort')?.addEventListener('change',displayTasks);
   byId('myAvatarPick')?.addEventListener('click',()=>byId('myAvatarFile')?.click());
   byId('myAvatarRemove')?.addEventListener('click',removeAvatar);
   byId('myPageProfile')?.addEventListener('click',event=>{
