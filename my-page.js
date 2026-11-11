@@ -96,7 +96,10 @@
    el('myPageRepairs').innerHTML = data.length ? data.map(job => {
      const equipment = equipmentById.get(String(job.equipment_id)) || {};
      const label = repairStatuses[job.status] || job.status || '—';
-     return `<details class="my-page-entry"><summary><span class="my-page-entry-main"><strong>${safe(equipment.name || job.problem || 'Ремонт обладнання')}</strong><small>${safe(equipment.eq_id || 'Обладнання')} · до ${safe(prettyDate(job.due_on))}</small></span><span class="my-page-state ${job.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Проблема',job.problem || '—')}${info('Початок',prettyDate(job.created_at))}${info('Термін',prettyDate(job.due_on))}${info('Завершено',prettyDate(job.completed_on))}${info('Призначено',job.assignee || '—')}</div></details>`;
+     const photoUrl = String(equipment.photo_url || '').trim();
+     const hasPhoto = /^https:\/\/[^\s"'<>]+$/i.test(photoUrl);
+     const photo = hasPhoto ? `<span class="my-page-repair-photo"><img src="${safe(photoUrl)}" alt="Фото: ${safe(equipment.name || 'обладнання')}" loading="lazy" referrerpolicy="no-referrer"></span>` : '';
+     return `<details class="my-page-entry"><summary><span class="my-page-repair-identity">${photo}<span class="my-page-entry-main"><strong>${safe(equipment.name || job.problem || 'Ремонт обладнання')}</strong><small>${safe(equipment.eq_id || 'Обладнання')} · до ${safe(prettyDate(job.due_on))}</small></span></span><span class="my-page-state ${job.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Проблема',job.problem || '—')}${info('Початок',prettyDate(job.created_at))}${info('Термін',prettyDate(job.due_on))}${info('Завершено',prettyDate(job.completed_on))}${info('Призначено',job.assignee || '—')}</div></details>`;
    }).join('') : '<p class="my-page-empty">Наразі вам не призначено ремонтів.</p>';
  }
  function eventView(data) {
@@ -155,7 +158,7 @@
        const ids = [...new Set(repairs.map(x=>x.equipment_id).filter(Boolean))];
        let equipmentById = new Map();
        if(ids.length) {
-         const {data,error} = await db.from('equipment').select('id,name,eq_id').in('id',ids);
+         const {data,error} = await db.from('equipment').select('id,name,eq_id,photo_url').in('id',ids);
          if (!error) equipmentById = new Map((data||[]).map(x => [String(x.id),x]));
        }
        if(key !== requestId) return;
@@ -188,6 +191,12 @@
      el('myPageProfile').innerHTML = '<p class="my-page-empty">Дані профілю недоступні.</p>';
    }
  }
+ // Hide a broken equipment image without leaving an empty thumbnail.
+ el('myPageRepairs')?.addEventListener('error',event=>{
+   if (event.target instanceof HTMLImageElement && event.target.closest('.my-page-repair-photo')) {
+     event.target.closest('.my-page-repair-photo').remove();
+   }
+ },true);
  el('myPageProfile')?.addEventListener('click',event=>{
    if(event.target.closest('#myPageEditProfile')) openContactEditor();
    if(event.target.closest('#myPageChangePassword')) openPasswordDialog();
