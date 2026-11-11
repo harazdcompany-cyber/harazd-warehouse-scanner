@@ -129,6 +129,28 @@ CREATE POLICY warehouse_my_repair_photo_upload ON storage.objects
 FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id='repair-photos'
+  AND name ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)
+     '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    THEN public.warehouse_is_assigned_repair(split_part(name,'/',1)::uuid)
+    ELSE false END
+);
+
+-- При збої запису метаданих можна прибрати лише власний щойно завантажений файл.
+DROP POLICY IF EXISTS warehouse_my_repair_photo_cleanup ON storage.objects;
+CREATE POLICY warehouse_my_repair_photo_cleanup ON storage.objects
+FOR DELETE TO authenticated
+USING (
+  bucket_id='repair-photos'
+  AND owner_id=(SELECT auth.uid())::text
+  AND CASE WHEN split_part(name,'/',1) ~*
+     '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    THEN public.warehouse_is_assigned_repair(split_part(name,'/',1)::uuid)
+    ELSE false END
+);
+
+NOTIFY pgrst,'reload schema';
+COMMIT;
+
   AND CASE WHEN split_part(name,'/',1) ~*
      '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     THEN public.warehouse_is_assigned_repair(split_part(name,'/',1)::uuid)
