@@ -99,7 +99,7 @@
      const photoUrl = String(equipment.photo_url || '').trim();
      const hasPhoto = /^https:\/\/[^\s"'<>]+$/i.test(photoUrl);
      const photo = hasPhoto ? `<span class="my-page-repair-photo"><img src="${safe(photoUrl)}" alt="Фото: ${safe(equipment.name || 'обладнання')}" loading="lazy" referrerpolicy="no-referrer"></span>` : '';
-     return `<details class="my-page-entry" data-my-repair-id="${safe(job.id || '')}"><summary><span class="my-page-repair-identity">${photo}<span class="my-page-entry-main"><strong>${safe(equipment.name || job.problem || 'Ремонт обладнання')}</strong><small>${safe(equipment.eq_id || 'Обладнання')} · до ${safe(prettyDate(job.due_on))}</small></span></span><span class="my-page-state ${job.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Проблема',job.problem || '—')}${info('Початок',prettyDate(job.created_at))}${info('Термін',prettyDate(job.due_on))}${info('Завершено',prettyDate(job.completed_on))}${info('Призначено',job.assignee || '—')}</div></details>`;
+     return `<details class="my-page-entry" data-my-repair-id="${safe(job.id || '')}"><summary><span class="my-page-repair-identity">${photo}<span class="my-page-entry-main"><strong>${safe(equipment.name || job.problem || 'Ремонт обладнання')}</strong><small>${safe(equipment.eq_id || 'Обладнання')} · до ${safe(prettyDate(job.due_on))}</small></span></span><span class="my-page-state ${job.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Проблема',job.problem || '—')}${info('Початок',prettyDate(job.created_at))}${info('Термін',prettyDate(job.due_on))}${info('Завершено',prettyDate(job.completed_on))}${info('Призначено',job.assignee || '—')}</div><div class="my-page-repair-action-row"><button type="button" data-my-repair-manage="${safe(job.id || '')}">Керувати ремонтом</button></div></details>`;
    }).join('') : '<p class="my-page-empty">Наразі вам не призначено ремонтів.</p>';
  }
  function eventView(data) {
@@ -112,6 +112,7 @@
  async function load() {
    const key = ++requestId;
    if (!el('myPageProfile')) return;
+   window.harazdMyPageRepairs?.reset();
    currentUser=null;currentProfile=null;currentContact=null;contactsReady=false;
    el('myPageProfile').textContent = 'Завантаження профілю…';
    el('myPageRepairs').textContent = 'Завантаження призначених ремонтів…';
@@ -163,6 +164,7 @@
        }
        if(key !== requestId) return;
        repairView(repairs,equipmentById);
+       window.harazdMyPageRepairs?.setRepairs({repairs,equipmentById,user,profile});
      } else {
        el('myPageRepairs').innerHTML = '<p class="my-page-empty">Не вдалося завантажити особисті ремонти. Перевірте SQL-оновлення.</p>';
        warnings.push('ремонти');

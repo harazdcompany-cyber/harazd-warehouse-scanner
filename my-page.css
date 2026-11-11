@@ -84,3 +84,73 @@
 #my-page #myPageRepairs .my-page-repair-photo{display:block;flex:0 0 66px;width:66px;height:66px;overflow:hidden;border-radius:11px;border:1px solid #41556e;background:#0d1723}
 #my-page #myPageRepairs .my-page-repair-photo img{display:block;width:100%;height:100%;object-fit:cover}
 @media(max-width:600px){#my-page #myPageRepairs .my-page-repair-identity{gap:10px}#my-page #myPageRepairs .my-page-repair-photo{flex-basis:56px;width:56px;height:56px}}
+
+/* My Page: assigned repair actions only. Other sections unchanged. */
+#my-page #myPageRepairs .my-page-repair-action-row{
+  display:flex;align-items:center;justify-content:flex-end;
+  padding:10px 13px;border-top:1px solid #304456;
+}
+#my-page #myPageRepairs .my-page-repair-action-row button{
+  width:auto;min-height:36px;padding:8px 13px;
+  border:1px solid #526982;border-radius:9px;background:#23364b;
+  color:#edf5ff;font-size:12px;font-weight:700;cursor:pointer;
+}
+#my-page #myPageRepairs .my-page-repair-action-row button:hover{
+  border-color:#a2bed5;background:#2c435e;
+}
+#myPageRepairDialog{width:min(640px,calc(100vw - 24px));max-height:min(90dvh,880px)}
+#myPageRepairDialog .my-page-form-grid select{
+  width:100%;min-height:43px;padding:10px 12px;
+  border:1px solid #40566f;border-radius:10px;
+  background:#0b1521;color:#f5f8ff;font:inherit;
+}
+#myPageRepairDialog #myPageRepairCompletionWrap[hidden],
+#myPageRepairDialog #myPageRepairFinish[hidden]{display:none!important}
+#myPageRepairDialog .my-page-repair-photos{
+  border-top:1px solid #304459;padding-top:15px;margin-top:18px;
+}
+#myPageRepairDialog .my-page-repair-photo-heading{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+#myPageRepairDialog .my-page-repair-photo-heading strong{font-size:14px;color:#edf5ff}
+#myPageRepairDialog .my-page-repair-photo-heading small{font-size:11px;color:#a6bfd5}
+#myPageRepairDialog .my-page-repair-photo-add{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:auto;margin-top:12px;padding:10px 13px;
+  border:1px dashed #667d95;border-radius:10px;
+  background:#213247;color:#e8f5ff;font-size:12px;cursor:pointer;
+}
+#myPageRepairDialog .my-page-repair-photo-add:hover{border-color:#d1ed7f}
+#myPageRepairDialog .my-page-repair-photo-list{
+  display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;margin-top:12px;
+}
+#myPageRepairDialog .my-page-repair-photo-thumb{
+  position:relative;display:block;width:76px;height:76px;
+  border:1px solid #40576e;border-radius:10px;
+  overflow:hidden;background:#0a1523;
+}
+#myPageRepairDialog .my-page-repair-photo-thumb:hover{border-color:#b7d761}
+#myPageRepairDialog .my-page-repair-photo-thumb img{
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+#myPageRepairDialog .my-page-repair-photo-thumb span{
+  position:absolute;right:3px;bottom:3px;padding:2px 5px;
+  border-radius:5px;background:#dfff00;color:#101828;font-size:10px;font-weight:800;
+}
+#myPageRepairDialog .my-page-repair-photo-count{
+  width:100%;font-size:11px;color:#a8bed5;margin-top:4px;
+}
+#myPageRepairDialog .my-page-repair-photo-list .my-page-empty{
+  margin:0;font-size:12px;
+}
+#myPageRepairDialog .my-page-dialog-feedback{color:#bad2e7;overflow-wrap:anywhere}
+#myPageRepairDialog .my-page-dialog-feedback.is-error{color:#ffb9bf}
+#myPageRepairDialog #myPageRepairFinish{
+  margin-right:auto;color:#dfff9d;border-color:#537755;background:#253b2d;
+}
+#myPageRepairDialog #myPageRepairFinish:hover{border-color:#b2d66b}
+#myPageRepairDialog .my-page-repair-dialog-actions{gap:9px;flex-wrap:wrap}
+@media(max-width:520px){
+  #myPageRepairDialog .my-page-dialog-actions button{flex:1 1 140px}
+  #myPageRepairDialog .my-page-repair-photo-thumb{width:64px;height:64px}
+}
