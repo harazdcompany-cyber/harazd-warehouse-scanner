@@ -334,7 +334,7 @@
   async function load(context) {
     const request=++activeRequest;
     currentUser=context?.user||null;currentProfile=context?.profile||null;
-    avatarPath='';tasks=[];staffNames=new Map();staffOptions=[];
+    avatarPath='';tasks=[];repairs=[];events=[];staffNames=new Map();staffOptions=[];
     manager=managerAllowed(currentProfile);
     if (byId('myTaskNew')) byId('myTaskNew').hidden=!manager;
     if (!currentUser || currentProfile?.status!=='active') {
@@ -367,5 +367,5 @@
   });
   byId('myTaskForm')?.addEventListener('submit',saveTask);
   byId('myTaskCancel')?.addEventListener('click',()=>byId('myTaskDialog').close());
-  window.harazdMyPageExtras={load,setAppointments,decorateStaffList};
+  window.harazdMyPageExtras={load,setAppointments,decorateStaffList,restoreAvatar:()=>paintAvatar(activeRequest)};
 })();
