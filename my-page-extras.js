@@ -14,6 +14,7 @@
   const localISO = date => [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
   let selectedDay = localISO(now);
   let calendarView = 'month', calendarItems = [];
+  const calendarTypes = new Set(['task','event','repair']);
   const dateText = iso => {
     if (!iso) return 'Без дати';
     const date = new Date(String(iso).slice(0,10)+'T12:00:00');
@@ -382,8 +383,13 @@
   function renderCalendar() {
   const grid=byId('myCalendarGrid'),title=byId('myCalendarTitle'),agenda=byId('myCalendarAgenda');
   if(!grid||!title||!agenda)return;
-  const entries=calendarEntries();
+  const entries=calendarEntries().filter(item=>calendarTypes.has(item.type));
   calendarItems=entries;
+  for(const button of document.querySelectorAll('#my-page [data-my-calendar-type]')) {
+    const enabled=calendarTypes.has(button.dataset.myCalendarType);
+    button.setAttribute('aria-pressed',String(enabled));
+    button.classList.toggle('is-inactive',!enabled);
+  }
   const grouped=new Map();
   for(let i=0;i<entries.length;i++){
     const entry=entries[i];
@@ -545,6 +551,14 @@
     else if (event.target.closest('[data-my-calendar-view]')) {
       calendarView=event.target.closest('[data-my-calendar-view]').dataset.myCalendarView;
       renderCalendar();
+    }
+    else if (event.target.closest('[data-my-calendar-type]')) {
+      const type=event.target.closest('[data-my-calendar-type]').dataset.myCalendarType;
+      if (['task','event','repair'].includes(type)) {
+        if (calendarTypes.has(type)) calendarTypes.delete(type);
+        else calendarTypes.add(type);
+        renderCalendar();
+      }
     }
     else if (event.target.closest('[data-my-calendar-open]')) openCalendarEntry(Number(event.target.closest('[data-my-calendar-open]').dataset.myCalendarOpen));
     else if (event.target.closest('[data-my-calendar-shift]')) changeMonth(Number(event.target.closest('[data-my-calendar-shift]').dataset.myCalendarShift));
