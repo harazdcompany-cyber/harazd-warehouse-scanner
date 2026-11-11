@@ -16,12 +16,6 @@
  const info = (label,value) => `<div class="my-page-field"><small>${safe(label)}</small><strong>${safe(value ?? '—')}</strong></div>`;
  let requestId = 0;
  let currentUser = null, currentProfile = null, currentContact = null, contactsReady = false;
- function summary(repairs=[],events=[]) {
-   const activeRepairs = repairs.filter(x => !['done','cancelled'].includes(x.status)).length;
-   const d=new Date(); const today = [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-   const upcoming = events.filter(x => x.status !== 'done' && x.status !== 'cancelled' && String(x.event_end_date || x.event_date || '') >= today).length;
-   el('myPageSummary').innerHTML = `<div><strong>${repairs.length}</strong><small>Мої ремонти</small></div><div><strong>${activeRepairs}</strong><small>Ремонти в роботі</small></div><div><strong>${events.length}</strong><small>Призначені події</small></div><div><strong>${upcoming}</strong><small>Майбутні та поточні</small></div>`;
- }
  function displayProfile(user, profile, contact = {}, ready = false) {
    const name = profile?.full_name || user?.user_metadata?.full_name || 'Працівник';
    const initials = name.split(/\s+/).slice(0,2).map(x => x[0] || '').join('').toUpperCase();
@@ -121,7 +115,6 @@
    el('myPageEvents').textContent = 'Завантаження призначених подій…';
    el('myRepairsCount').textContent = '0';
    el('myEventsCount').textContent = '0';
-   summary();
    try {
      if (typeof db === 'undefined' || !db) throw Error('З’єднання з Supabase не налаштоване');
      const {data:auth,error:authError} = await db.auth.getUser();
@@ -185,7 +178,6 @@
        warnings.push('події');
      }
      if (key !== requestId) return;
-     summary(repairs,events);
      el('myPageNotice').textContent = [contactWarning, warnings.length ? 'Не всі дані завантажені: '+warnings.join(', ')+'.' : ''].filter(Boolean).join(' ');
    } catch (error) {
      if (key !== requestId) return;
@@ -193,7 +185,6 @@
      el('myPageProfile').innerHTML = '<p class="my-page-empty">Дані профілю недоступні.</p>';
    }
  }
- el('myPageRefresh')?.addEventListener('click',load);
  el('myPageProfile')?.addEventListener('click',event=>{
    if(event.target.closest('#myPageEditProfile')) openContactEditor();
    if(event.target.closest('#myPageChangePassword')) openPasswordDialog();
