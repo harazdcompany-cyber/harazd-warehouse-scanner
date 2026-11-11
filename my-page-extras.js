@@ -8,6 +8,7 @@
   const taskStatuses = {todo:'Очікує',in_progress:'В роботі',done:'Завершено'};
   let currentUser = null, currentProfile = null, manager = false;
   let tasks = [], staffNames = new Map(), staffOptions = [], repairs = [], events = [];
+  let editingTaskId = null;
   let activeRequest = 0, avatarPath = '', month = new Date(new Date().getFullYear(),new Date().getMonth(),1);
   const now = new Date();
   const localISO = date => [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
@@ -192,7 +193,7 @@
         <div class="my-page-task-controls">${own?`<label>Статус <select data-my-task-status="${escapeHTML(task.id)}"
           aria-label="Статус завдання">${Object.entries(taskStatuses).map(([key,text])=>`<option value="${key}" ${task.status===key?'selected':''}>${escapeHTML(text)}</option>`).join('')}</select></label>`:
           `<span class="my-page-task-readonly">${escapeHTML(taskStatuses[task.status]||task.status)}</span>`}
-          ${manager && task.created_by===currentUser?.id?`<button type="button" data-my-task-delete="${escapeHTML(task.id)}">Видалити</button>`:''}</div></div>`;
+          ${manager && task.created_by===currentUser?.id?`<span class="my-page-task-actions"><button type="button" data-my-task-edit="${escapeHTML(task.id)}">Редагувати</button><button type="button" data-my-task-delete="${escapeHTML(task.id)}">Видалити</button></span>`:''}</div></div>`;
     }).join('');
   }
   async function loadTasks(request) {
@@ -213,18 +214,36 @@
     displayTasks();
     renderCalendar();
   }
-  function openTaskForm() {
-    if (!manager || !currentUser) return;
-    const form=byId('myTaskForm');if(!form)return;
+  function openTaskForm(task = null) {
+    if (!manager || !currentUser || (task && task.created_by !== currentUser.id)) return;
+    const form = byId('myTaskForm');
+    if (!form) return;
     form.reset();
-    const select=form.elements.namedItem('assignee_id');
+    editingTaskId = task?.id || null;
+    const select = form.elements.namedItem('assignee_id');
     select.replaceChildren();
     for (const staff of staffOptions) {
-      const option=document.createElement('option');option.value=staff.user_id;option.textContent=staff.full_name;
+      const option = document.createElement('option');
+      option.value = staff.user_id;
+      option.textContent = staff.full_name;
       select.append(option);
     }
-    if (staffOptions.some(staff=>staff.user_id===currentUser.id)) select.value=currentUser.id;
-    byId('myTaskFeedback').textContent='';
+    if (task) {
+      form.elements.namedItem('title').value = task.title || '';
+      form.elements.namedItem('details').value = task.details || '';
+      form.elements.namedItem('priority').value = task.priority || 'normal';
+      form.elements.namedItem('due_date').value = task.due_date || '';
+      select.value = task.assignee_id;
+      byId('myTaskTitle').textContent = 'Редагувати завдання';
+      byId('myTaskSubmit').textContent = 'Зберегти зміни';
+      byId('myTaskDialogHint').textContent = 'Змініть інформацію про завдання. Статус працівник змінює окремо в картці.';
+    } else {
+      if (staffOptions.some(staff=>staff.user_id===currentUser.id)) select.value=currentUser.id;
+      byId('myTaskTitle').textContent = 'Призначити завдання';
+      byId('myTaskSubmit').textContent = 'Призначити';
+      byId('myTaskDialogHint').textContent = 'Завдання побачить лише призначений працівник. Він зможе змінювати його статус.';
+    }
+    byId('myTaskFeedback').textContent = '';
     byId('myTaskDialog').showModal();
   }
   async function saveTask(event) {
@@ -235,19 +254,34 @@
     if (!title || title.length>160 || !staffOptions.some(person=>person.user_id===assignee_id)) {
       byId('myTaskFeedback').textContent='Вкажіть назву та активного працівника.';return;
     }
+    const editTask = editingTaskId ? tasks.find(task=>task.id===editingTaskId) : null;
+    if (editingTaskId && (!editTask || editTask.created_by!==currentUser.id)) {
+      byId('myTaskFeedback').textContent='Немає доступу до редагування цього завдання.';return;
+    }
     const submit=form.querySelector('button[type=submit]');
     submit.disabled=true;
     try {
-      const {error}=await db.from('warehouse_personal_tasks').insert({
-        title,details:field('details'),priority:field('priority')||'normal',status:'todo',
-        assignee_id,created_by:currentUser.id,due_date:field('due_date')||null
-      });
-      if (error) throw error;
+      const changes = {
+        title,details:field('details'),priority:field('priority')||'normal',
+        assignee_id,due_date:field('due_date')||null
+      };
+      if (editTask) {
+        const {data,error} = await db.from('warehouse_personal_tasks')
+          .update(changes).eq('id',editTask.id).eq('created_by',currentUser.id).select('id');
+        if (error) throw error;
+        if (!data?.length) throw Error('Не вдалося оновити завдання. Перевірте дозвіл на редагування.');
+      } else {
+        const {error}=await db.from('warehouse_personal_tasks').insert({
+          ...changes,status:'todo',created_by:currentUser.id
+        });
+        if (error) throw error;
+      }
       byId('myTaskDialog').close();
-      notice('Завдання створено.');
+      notice(editTask ? 'Завдання оновлено.' : 'Завдання створено.');
       await loadTasks(activeRequest);
-    } catch(error) {byId('myTaskFeedback').textContent=error?.message||'Не вдалося створити завдання.';}
-    finally {submit.disabled=false;}
+    } catch(error) {
+      byId('myTaskFeedback').textContent=error?.message||'Не вдалося зберегти завдання.';
+    } finally {submit.disabled=false;}
   }
   async function updateTaskStatus(id,status,select) {
     const task=tasks.find(t=>t.id===id);
@@ -359,6 +393,11 @@
   const root=byId('my-page');
   root?.addEventListener('click',event=>{
     if (event.target.closest('#myTaskNew')) openTaskForm();
+    else if (event.target.closest('[data-my-task-edit]')) {
+      const id=event.target.closest('[data-my-task-edit]').dataset.myTaskEdit;
+      const task=tasks.find(item=>item.id===id);
+      if (task) openTaskForm(task);
+    }
     else if (event.target.closest('[data-my-task-delete]')) deleteTask(event.target.closest('[data-my-task-delete]').dataset.myTaskDelete);
     else if (event.target.closest('[data-my-calendar-shift]')) changeMonth(Number(event.target.closest('[data-my-calendar-shift]').dataset.myCalendarShift));
     else if (event.target.closest('#myCalendarToday')) {
@@ -386,5 +425,6 @@
   });
   byId('myTaskForm')?.addEventListener('submit',saveTask);
   byId('myTaskCancel')?.addEventListener('click',()=>byId('myTaskDialog').close());
+  byId('myTaskDialog')?.addEventListener('close',()=>{editingTaskId=null;});
   window.harazdMyPageExtras={load,setAppointments,decorateStaffList,restoreAvatar:()=>paintAvatar(activeRequest)};
 })();
