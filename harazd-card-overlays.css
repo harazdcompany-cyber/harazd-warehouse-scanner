@@ -1,0 +1,59 @@
+/* HARAZD WAREHOUSE — unified elevated cards over blurred background.
+   Visual changes only: preserve dialog structure, sizes, controls, events, and scrolling. */
+:root { --harazd-card-surface:#182337; --harazd-card-border:#3e516a; }
+
+/* Use the same surface on detailed cards and other opened application dialogs.
+   Do not paint over full-screen image viewers. */
+dialog:modal:not(:is(#equipmentPhotoLightbox,#repairPhotoViewer)) {
+  background:var(--harazd-card-surface)!important;
+  color:#edf3fa!important;
+  border:1px solid var(--harazd-card-border)!important;
+  border-radius:23px!important;
+  box-shadow:0 28px 100px rgba(0,0,0,.65)!important;
+}
+
+/* A true modal overlay, not a dark opaque sheet. Applies to native <dialog>
+   popups on Warehouse, Packaging, Events, Personnel, Repairs and Vehicles. */
+dialog::backdrop {
+  background:rgba(2,7,15,.76)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+}
+
+/* Keep each module's detail layout and width; only unify its frame.
+   Existing section styles, action buttons, form controls and sticky footers remain. */
+:is(#itemDialog,#eventDetailsDialog,#details,#vehicleDialog):modal {
+  outline:none;
+  max-height:min(94dvh,1120px);
+}
+
+/* Module dialogs live inside an iframe. The dialog::backdrop covers that frame,
+   while this overlay blurs/dims the host sidebar and top bar as well. */
+body.harazd-packaging-card-open:has(#packaging:not(.hidden))::after,
+body.harazd-vehicles-card-open:has(#vehicles:not(.hidden))::after {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:700;
+  pointer-events:auto;
+  background:rgba(2,7,15,.34);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+}
+body.harazd-packaging-card-open #packaging:not(.hidden),
+body.harazd-vehicles-card-open #vehicles:not(.hidden) {
+  position:relative;
+  z-index:701;
+}
+
+@media (max-width:650px) {
+  dialog:modal:not(:is(#equipmentPhotoLightbox,#repairPhotoViewer)) {
+    border-radius:18px!important;
+    max-height:calc(100dvh - 18px);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  dialog::backdrop {background:rgba(2,7,15,.88)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.harazd-packaging-card-open:has(#packaging:not(.hidden))::after,
+  body.harazd-vehicles-card-open:has(#vehicles:not(.hidden))::after {backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(2,7,15,.72)}
+}
