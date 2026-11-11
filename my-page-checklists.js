@@ -18,14 +18,14 @@
     const ids=[...new Set(taskList.map(t=>t.id).filter(Boolean))];
     const records=[];
     let error=null;
-    for(let start=0;start<ids.length;start+=60){
+    for(let start=0;start<ids.length;start+=25){
       const {data,error:err}=await db.from(TABLE)
         .select('id,task_id,title,position,done')
-        .in('task_id',ids.slice(start,start+60))
+        .in('task_id',ids.slice(start,start+25))
         .order('position',{ascending:true}).limit(1000);
       if(serial!==loadSerial)return;
       if(err){error=err;break;}
-      records.push(...data||[]);
+      records.push(...(data||[]));
     }
     if(error){
       if(help)help.textContent='Чеклісти недоступні. Виконайте SETUP_MY_PAGE_NOTIFICATIONS_CHECKLISTS.sql.';
