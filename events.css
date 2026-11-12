@@ -337,3 +337,12 @@
   #eventDetailsDialog .event-view > .event-view-section:has(.event-period-cards) {order:2;}
   #eventDetailsDialog .event-view > .event-load-section {order:3;}
 }
+
+/* Phone: omit duplicated details beneath the event title. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-view-hero .event-view-meta,
+  #eventDetailsDialog .event-view-hero .event-view-client,
+  #eventDetailsDialog .event-view-hero .event-view-status {
+    display:none;
+  }
+}
