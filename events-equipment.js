@@ -629,8 +629,8 @@ async function loadInventory() {
         <td class="event-manifest-id">${escapeHtml(eq.eq_id || '—')}</td>
         <td class="event-manifest-photo-cell"><div class="event-manifest-photo">${photo}</div></td>
         <td><strong>${escapeHtml(eq.name || 'Обладнання')}</strong>${eq.model ? `<small>${escapeHtml(eq.model)}</small>` : ''}</td>
-        <td class="event-manifest-qty"><input type="number" aria-label="Кількість: ${escapeHtml(eq.name || 'Обладнання')}" min="1" max="999999" step="1" value="${Number(entry.quantity) || 1}" data-inline-qty="${escapeHtml(entry.equipment_id)}" ${canEdit() ? '' : 'disabled'}></td>
-        <td class="event-manifest-action">${canEdit() ? `<button type="button" class="event-equip-delete" data-inline-remove="${escapeHtml(entry.equipment_id)}">Видалити</button>` : '—'}</td>
+        <td class="event-manifest-qty">${state.readOnly ? escapeHtml(Number(entry.quantity) || 1) : `<input type="number" aria-label="Кількість: ${escapeHtml(eq.name || 'Обладнання')}" min="1" max="999999" step="1" value="${Number(entry.quantity) || 1}" data-inline-qty="${escapeHtml(entry.equipment_id)}" ${canEdit() ? '' : 'disabled'}>`}</td>
+        ${state.readOnly ? '' : `<td class="event-manifest-action">${canEdit() ? `<button type="button" class="event-equip-delete" data-inline-remove="${escapeHtml(entry.equipment_id)}">Видалити</button>` : '—'}</td>`}
       </tr>`;
     }).join('');
     state.host.innerHTML = `
@@ -640,8 +640,8 @@ async function loadInventory() {
       </div>
       <div class="event-manifest-scroll">
         <table class="event-manifest-table">
-          <thead><tr><th>№</th><th>EQ-ID</th><th>Фото</th><th>Найменування / модель</th><th>Кількість</th><th></th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="6" class="event-manifest-empty">Лист погрузки порожній. Додайте необхідне обладнання.</td></tr>'}</tbody>
+          <thead><tr><th>№</th><th>EQ-ID</th><th>Фото</th><th>Найменування / модель</th><th>Кількість</th>${state.readOnly ? '' : '<th></th>'}</tr></thead>
+          <tbody>${rows || `<tr><td colspan="${state.readOnly ? 5 : 6}" class="event-manifest-empty">Лист погрузки порожній.</td></tr>`}</tbody>
         </table>
       </div>
       <p class="muted event-load-notice" data-inline-notice role="status" aria-live="polite"></p>`;
@@ -651,6 +651,7 @@ async function loadInventory() {
     state.controller = new AbortController();
     const signal = state.controller.signal;
     state.host.addEventListener('click', e => {
+      if (state.readOnly) return;
       if (e.target.closest('[data-inline-open-picker]')) {
         open(state.id);
         return;
@@ -662,6 +663,7 @@ async function loadInventory() {
       }
     }, {signal});
     state.host.addEventListener('change', e => {
+      if (state.readOnly) return;
       const field = e.target.closest('[data-inline-qty]');
       if (!field) return;
       const id = field.dataset.inlineQty;
@@ -674,11 +676,11 @@ async function loadInventory() {
       updateInline(current => db.from('warehouse_event_equipment').update({quantity:qty}).eq('event_id', current.id).eq('equipment_id', id));
     }, {signal});
   }
-  async function mountInline(id, host) {
+  async function mountInline(id, host, options = {}) {
     if (!authorized() || !id || !host) return;
     unmountInline();
     const token = ++inlineToken;
-    inlineState = {id, host, inventory:[], plan:[], busy:false, controller:null};
+    inlineState = {id, host, readOnly:!!options.readOnly, inventory:[], plan:[], busy:false, controller:null};
     bindInlineHost(inlineState);
     host.textContent = 'Завантаження листа погрузки…';
     try {
@@ -703,7 +705,7 @@ async function loadInventory() {
   };
   async function updateInline(action) {
     const state = inlineState;
-    if (!state || state.busy || !canEdit() || !authorized()) return;
+    if (!state || state.readOnly || state.busy || !canEdit() || !authorized()) return;
     state.busy = true;
     inlineMessage('Збереження…');
     try {
