@@ -20,7 +20,16 @@ let locationNodes=[],locationReady=false;
 let session=null,items=[],categories=[],subcategories=[],warehouses=[],editing=null,selected=null,scanner=null,scanBusy=false;
 function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className=error?'error':'';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',5500)}
 const LAST_PAGE_KEY='harazd-last-page-v47';
-function savedPage(){const id=sessionStorage.getItem(LAST_PAGE_KEY);return $$('.page').some(p=>p.id===id)?id:'warehouse'}
+function savedPage(){
+ // On phones, start on the personal page while honoring explicit navigation links.
+ if(window.matchMedia('(max-width: 650px)').matches){
+  let linkedPage='';
+  try{linkedPage=decodeURIComponent(location.hash.slice(1))}catch(_){}
+  const linkedPages=new Set(['warehouse','add','scanner','categories','personnel','events','repairs']);
+  return linkedPages.has(linkedPage)?linkedPage:'my-page';
+ }
+ const id=sessionStorage.getItem(LAST_PAGE_KEY);return $$('.page').some(p=>p.id===id)?id:'warehouse'
+}
 function show(id){
  if(!$$('.page').some(p=>p.id===id))id='warehouse';
  sessionStorage.setItem(LAST_PAGE_KEY,id);
