@@ -149,3 +149,15 @@
 .event-manifest-photo img{width:100%;height:100%;object-fit:contain}
 .event-manifest-photo-empty{font-size:28px;line-height:1;color:#7690a8}
 @media(max-width:760px){.event-manifest-photo{width:52px;height:52px}.event-manifest-photo-cell{width:60px}}
+
+/* Phone: omit repeated event date, customer and footer location on overview cards. */
+@media (max-width:650px) {
+  #events .event-card > .event-card-meta > span:first-child,
+  #events .event-card > .event-client,
+  #events .event-card > .event-card-foot > small {
+    display:none;
+  }
+  #events .event-card > .event-card-foot > .event-card-actions {
+    margin-left:auto;
+  }
+}
