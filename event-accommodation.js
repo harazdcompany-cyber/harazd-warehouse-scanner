@@ -10,6 +10,26 @@
   };
   const hasData = record => Boolean(record && (record.hotel_name || record.check_in || record.check_out || record.address || record.guest_count != null));
 
+  function fallbackCopy(text, host) {
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.readOnly = true;
+    field.tabIndex = -1;
+    field.setAttribute('aria-hidden', 'true');
+    Object.assign(field.style, {position:'fixed',top:'0',left:'0',width:'1px',height:'1px',opacity:'0'});
+    (host.closest('dialog') || document.body).appendChild(field);
+    try {
+      field.focus({preventScroll:true});
+      field.select();
+      field.setSelectionRange(0, field.value.length);
+      return document.execCommand('copy');
+    } catch (_) {
+      return false;
+    } finally {
+      field.remove();
+    }
+  }
+
   function mount(eventId, host) {
     const request = ++detailGeneration;
     const current = () => request === detailGeneration && host.isConnected;
@@ -25,9 +45,24 @@
         host.innerHTML = `<div class="event-accommodation-grid">
           <div><small>Назва готелю</small><strong>${safe(data.hotel_name || '—')}</strong></div>
           <div><small>Термін проживання</small><strong>${safe(stay)}</strong></div>
-          <div><small>Адреса помешкання</small><strong>${safe(data.address || '—')}</strong></div>
+          <div><small>Адреса помешкання</small><div class="event-accommodation-address"><strong>${safe(data.address || '—')}</strong>${data.address ? '<button type="button" class="event-accommodation-copy" data-accommodation-copy aria-label="Скопіювати адресу" title="Скопіювати адресу"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></button>' : ''}</div><span class="event-accommodation-copy-status" role="status" aria-live="polite"></span></div>
           <div><small>Кількість осіб</small><strong>${data.guest_count == null ? '—' : safe(data.guest_count)}</strong></div>
         </div>`;
+        const copy = host.querySelector('[data-accommodation-copy]');
+        if (copy) copy.addEventListener('click', async () => {
+          let copied = false;
+          try {
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(String(data.address));
+              copied = true;
+            }
+          } catch (_) { /* Fall back to selection-based copy. */ }
+          if (!copied) copied = fallbackCopy(String(data.address), host);
+          if (current()) {
+            const status = host.querySelector('.event-accommodation-copy-status');
+            if (status) status.textContent = copied ? 'Адресу скопійовано' : 'Не вдалося скопіювати адресу';
+          }
+        });
       }).catch(error => {
         if (!current()) return;
         host.textContent = error?.code === '42P01' || error?.code === 'PGRST205'
