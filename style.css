@@ -1202,3 +1202,21 @@ body *::-webkit-scrollbar {
     font-size:11px;
   }
 }
+
+/* Phone only: compact logo row with a separate, non-overlapping menu row. */
+@media (max-width:650px) {
+  body > .sidebar .brand {
+    flex:0 0 auto;
+    min-height:44px;
+    margin:0 0 6px;
+    padding:4px 90px 4px 5px;
+  }
+  body > .sidebar .brand .brand-logo {
+    width:30px;
+    height:36px;
+    object-fit:contain;
+  }
+  body > .sidebar #nav {
+    flex:0 0 auto;
+  }
+}
