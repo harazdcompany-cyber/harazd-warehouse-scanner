@@ -314,3 +314,22 @@ body *::-webkit-scrollbar {
   #vehicleDialog .docrow {flex-wrap:wrap;gap:8px;}
   #vehicleDialog .docrow > div {min-width:0;max-width:100%;}
 }
+
+/* Mobile embedded editor: the parent provides the full-screen backdrop. */
+@media (max-width:650px) {
+  html.harazd-embedded.harazd-vehicle-dialog-open .shell {visibility:hidden;}
+  html.harazd-embedded.harazd-vehicle-dialog-open #vehicleDialog {
+    position:fixed;
+    inset:10px;
+    width:calc(100% - 20px);
+    max-width:calc(100% - 20px);
+    max-height:calc(100% - 20px);
+    margin:auto;
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  html.harazd-embedded.harazd-vehicle-dialog-open #vehicleDialog::backdrop {
+    background:transparent;
+  }
+}
