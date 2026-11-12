@@ -473,3 +473,11 @@
   #eventDetailsDialog .event-detail-staff-person > span {color:#9fb6cc;font-weight:400;}
   #eventDetailsDialog .event-detail-staff-unavailable {color:#9fb6cc;font-size:12px;}
 }
+
+/* Phone: personnel is a separate section after main information. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-view > .event-detail-staff {order:2;margin:0;}
+  #eventDetailsDialog .event-view > .event-view-section:has(.event-period-cards) {order:3;}
+  #eventDetailsDialog .event-view > .event-load-section {order:4;}
+  #eventDetailsDialog .event-detail-staff > h3 {margin:0 0 5px;}
+}
