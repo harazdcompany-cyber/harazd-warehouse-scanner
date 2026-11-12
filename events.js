@@ -313,10 +313,15 @@
     el('eventDialogTitle').textContent = record ? 'Редагувати івент' : 'Новий івент';
     el('eventFormNotice').textContent = '';
     el('eventEditAddEquipment').hidden = !record || !canEdit();
-    const quoteHost = el('eventQuoteEditor');
-    quoteHost.hidden = !record || !canEdit();
+    const quoteButton = el('eventQuoteOpen');
+    quoteButton.hidden = !record || !canEdit();
     window.harazdEventQuote?.unmount();
-    if (record && canEdit()) window.harazdEventQuote?.mount(record.id, quoteHost, record);
+    quoteButton.onclick = () => {
+      if (!editingId || !canEdit() || !window.harazdEventQuote) return;
+      el('eventQuoteEventName').textContent = form.elements.name.value || record?.name || '';
+      el('eventQuoteDialog').showModal();
+      window.harazdEventQuote.mount(editingId, el('eventQuoteEditor'), record, form);
+    };
     el('eventSave').disabled = false;
     el('eventDialog').showModal();
     loadEventStaff(record,++eventStaffRequestId);
@@ -412,6 +417,10 @@
   el('eventEditAddEquipment').addEventListener('click', () => {
     if (editingId && canEdit()) window.harazdEventEquipment?.open(editingId);
   });
+  el('eventQuoteClose').addEventListener('click',()=>{if (!window.harazdEventQuote?.isSaving()) el('eventQuoteDialog').close();});
+  el('eventQuoteDialog').addEventListener('cancel',event=>{if(window.harazdEventQuote?.isSaving())event.preventDefault();});
+  el('eventQuoteDialog').addEventListener('close',()=>window.harazdEventQuote?.unmount());
+  el('eventQuoteAddEquipment').addEventListener('click',()=>{if(editingId && canEdit() && !window.harazdEventQuote?.isSaving()) window.harazdEventEquipment?.open(editingId);});
   el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventQuote?.unmount();window.harazdEventVehicles?.unmountEditor();window.harazdEventAccommodation?.unmountEditor();});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
@@ -470,3 +479,4 @@
 
   window.harazdEvents = {load, openDetails};
 })();
+
