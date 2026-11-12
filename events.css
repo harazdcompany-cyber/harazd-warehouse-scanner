@@ -733,3 +733,45 @@
   #eventDetailsDialog .event-accommodation-grid small {color:#9fb6cc;font-size:12px;}
   #eventDetailsDialog .event-accommodation-grid strong {color:#eff5ff;font-size:14px;line-height:1.3;overflow-wrap:anywhere;}
 }
+
+
+/* Phone: copy the accommodation address without changing its text. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-accommodation-grid .event-accommodation-address {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 40px;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    min-width:0;
+  }
+  #eventDetailsDialog .event-accommodation-address strong {min-width:0;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-accommodation-copy {
+    display:grid;
+    place-items:center;
+    width:40px;
+    height:40px;
+    min-width:40px;
+    min-height:40px;
+    margin:0;
+    padding:9px;
+    border:1px solid #40566f;
+    border-radius:10px;
+    background:#1b2b3c;
+    color:#eaf2ff;
+    cursor:pointer;
+  }
+  #eventDetailsDialog .event-accommodation-copy svg {
+    display:block;
+    width:20px;
+    height:20px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  #eventDetailsDialog .event-accommodation-copy-status {font-size:12px;line-height:1.3;color:#b8cae0;}
+  #eventDetailsDialog .event-accommodation-copy-status:empty {display:none;}
+}
+
