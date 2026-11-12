@@ -1353,3 +1353,61 @@ body *::-webkit-scrollbar {
     white-space:nowrap;
   }
 }
+
+/* Phone: repair card metadata beside the photo, description beneath. */
+@media (max-width:650px) {
+  #repairs .repair-row-main {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) clamp(64px,23vw,88px);
+    align-items:start;
+    gap:8px 10px;
+    width:100%;
+    min-width:0;
+  }
+  #repairs .repair-row-info {display:contents;}
+  #repairs .repair-row-main > .repair-photo {
+    grid-column:2;
+    grid-row:1;
+    width:100%;
+    height:auto;
+    aspect-ratio:1 / 1;
+    min-width:0;
+  }
+  #repairs .repair-kicker-line {
+    display:grid;
+    grid-template-columns:max-content max-content;
+    align-content:start;
+    justify-content:start;
+    gap:5px 6px;
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    min-height:0;
+    font-size:clamp(9px,2.7vw,12px);
+    line-height:1.25;
+  }
+  #repairs .repair-kicker-line > span:first-child {
+    grid-column:1 / -1;
+    overflow-wrap:anywhere;
+  }
+  #repairs .repair-kicker-line .repair-kicker-divider {display:none;}
+  #repairs .repair-kicker-line > .repair-tag {
+    grid-column:1 / -1;
+    justify-self:start;
+    max-width:100%;
+    font-size:clamp(10px,2.8vw,11px);
+    white-space:normal;
+    line-height:1.2;
+  }
+  #repairs .repair-row-info > h3,
+  #repairs .repair-row-info > p,
+  #repairs .repair-row-info > small {
+    grid-column:1 / -1;
+    min-width:0;
+    margin:0;
+    overflow-wrap:anywhere;
+  }
+  #repairs .repair-row-info > h3 {grid-row:2;}
+  #repairs .repair-row-info > p {grid-row:3;}
+  #repairs .repair-row-info > small {grid-row:4;font-size:12px;line-height:1.35;}
+}
