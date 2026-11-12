@@ -1180,3 +1180,6 @@ body *::-webkit-scrollbar {
 #scanner .scanner-hardware-controls button{min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid #395169;background:#19293a;color:#edf4ff}
 #scanner .scanner-hardware-controls button:focus-visible{outline:2px solid #deff00;outline-offset:3px}
 #scanner .scanner-hardware-controls span{color:#a8bbd1;font-size:13px}
+
+/* Hide email and sign-out control in the website top bar, on all screen sizes. */
+main > header #userPanel { display: none !important; }
