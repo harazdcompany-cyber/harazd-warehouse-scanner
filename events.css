@@ -921,8 +921,8 @@
 #eventQuoteDialog .event-quote-scroll th {color:#a9bfd4;font-weight:600;}
 #eventQuoteDialog .event-quote-scroll td small {display:block;color:#a9bfd4;}
 #eventQuoteDialog .event-quote-scroll input {width:90px;min-width:0;min-height:38px;padding:7px;background:#0b1521;border:1px solid #40566f;border-radius:8px;color:#f5f8ff;box-sizing:border-box;}
-#eventQuoteDialog .event-quote-scroll td:nth-child(2) input {display:block;width:200px;margin-top:6px;}
-#eventQuoteDialog .event-quote-scroll td:nth-child(4) input {width:65px;}
+#eventQuoteDialog .event-quote-scroll td:nth-child(3) input {display:block;width:200px;margin:0;}
+#eventQuoteDialog .event-quote-scroll td:nth-child(5) input {width:65px;}
 #eventQuoteDialog .event-quote-totals {display:flex;justify-content:flex-end;gap:16px;flex-wrap:wrap;padding-top:14px;color:#c7d8e9;}
 #eventQuoteDialog .event-quote-totals strong {color:#f5f8ff;}
 #eventQuoteDialog .event-quote-editor [data-quote-notice] {margin:8px 0 0;font-size:12px;color:#a9bfd4;}
