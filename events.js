@@ -315,13 +315,13 @@
     el('eventDialog').showModal();
     loadEventStaff(record,++eventStaffRequestId);
     const vehicleEditor = el('eventAssignedVehicles');
-    if (vehicleEditor && window.matchMedia('(max-width:650px)').matches && window.harazdEventVehicles) {
+    if (vehicleEditor && window.harazdEventVehicles) {
       window.harazdEventVehicles.mountEditor(record?.id || null, vehicleEditor);
     } else {
       window.harazdEventVehicles?.unmountEditor();
     }
     const accommodationEditor = el('eventAccommodationEditor');
-    if (accommodationEditor && window.matchMedia('(max-width:650px)').matches && window.harazdEventAccommodation) {
+    if (accommodationEditor && window.harazdEventAccommodation) {
       window.harazdEventAccommodation.mountEditor(record?.id || null, accommodationEditor);
     } else {
       window.harazdEventAccommodation?.unmountEditor();
