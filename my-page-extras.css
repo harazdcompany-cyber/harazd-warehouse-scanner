@@ -1050,3 +1050,33 @@
     line-height:1.45;
   }
 }
+
+/* Phone only: password dialog footer buttons fill a single row with equal widths. */
+@media (max-width:650px) {
+  #myPagePasswordDialog .my-page-dialog-actions {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:stretch;
+    gap:10px;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  #myPagePasswordDialog .my-page-dialog-actions > button {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    height:100%;
+    margin:0;
+    padding:10px 8px;
+    box-sizing:border-box;
+    text-align:center;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
