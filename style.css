@@ -1523,3 +1523,8 @@ body *::-webkit-scrollbar {
     overflow-wrap:anywhere;
   }
 }
+
+/* Phone: show only the assignee on repair cards. */
+@media (max-width:650px) {
+  #repairs .repair-row .repair-card-cost {display:none;}
+}
