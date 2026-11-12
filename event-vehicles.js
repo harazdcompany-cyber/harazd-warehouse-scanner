@@ -3,6 +3,7 @@
   'use strict';
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let generation = 0;
+  let editorGeneration = 0, editor = null;
 
   function mount(eventId, host, canEdit) {
     const request = ++generation;
@@ -13,8 +14,6 @@
 
     function render() {
       if (!current()) return;
-      const assignedIds = new Set(assignments.map(row => String(row.vehicle_id)));
-      const available = vehicles.filter(vehicle => !assignedIds.has(String(vehicle.id)));
       const rows = assignments.map(row => {
         const v = vehicles.find(item => String(item.id) === String(row.vehicle_id));
         if (!v) return '<p class="event-vehicles-message">Дані автомобіля недоступні.</p>';
@@ -26,11 +25,10 @@
         const matching = !id && driverName ? staff.find(person => String(person.full_name || '').trim() === driverName) : null;
         const selected = found ? id : matching ? String(matching.user_id) : driverName ? '__existing__' : '';
         const options = `<option value="">Не призначено</option>` + (selected === '__existing__' ? `<option value="__existing__" selected>${safe(driverName)}</option>` : '') + staff.map(person => `<option value="${safe(person.user_id)}" ${selected === String(person.user_id) ? 'selected' : ''}>${safe(person.full_name)}</option>`).join('');
-        const driver = canEdit && staffAvailable ? `<label class="event-vehicle-driver-label">Водій<select data-event-vehicle-driver="${safe(v.id)}" aria-label="Водій автомобіля ${safe(vehicleName(v))}" ${busy ? 'disabled' : ''}>${options}</select></label>` : `<div class="event-vehicle-driver">${safe(driverName || 'Водія не призначено')}</div>`;
-        return `<div class="event-vehicle-row">${avatar}<div class="event-vehicle-info"><strong>${safe(vehicleName(v))}</strong>${driver}</div>${canEdit ? `<button type="button" class="event-vehicle-remove" data-event-vehicle-remove="${safe(v.id)}" aria-label="Прибрати ${safe(vehicleName(v))} з івенту" ${busy ? 'disabled' : ''}>✕</button>` : ''}</div>`;
+        const driver = canEdit && staffAvailable ? `<label class="event-vehicle-driver-label"><select data-event-vehicle-driver="${safe(v.id)}" aria-label="Водій автомобіля ${safe(vehicleName(v))}" ${busy ? 'disabled' : ''}>${options}</select></label>` : `<div class="event-vehicle-driver">${safe(driverName || 'Не призначено')}</div>`;
+        return `<div class="event-vehicle-row">${avatar}<div class="event-vehicle-info"><strong>${safe(vehicleName(v))}</strong>${driver}</div></div>`;
       }).join('');
-      const picker = canEdit ? `<div class="event-vehicle-picker"><label for="eventVehiclePick">Вибрати автомобіль</label><div class="event-vehicle-picker-actions"><select id="eventVehiclePick" ${!available.length || busy ? 'disabled' : ''}><option value="">${available.length ? 'Оберіть автомобіль' : 'Немає доступних автомобілів'}</option>${available.map(v => `<option value="${safe(v.id)}">${safe(vehicleName(v))}${v.plate ? ` · ${safe(v.plate)}` : ''}</option>`).join('')}</select><button type="button" data-event-vehicle-add ${!available.length || busy ? 'disabled' : ''}>Додати</button></div></div>` : '';
-      host.innerHTML = `<div class="event-vehicles-list">${rows || '<p class="event-vehicles-message">Автомобілі ще не додано.</p>'}</div>${picker}<p class="event-vehicles-notice" role="status"></p>`;
+      host.innerHTML = `<div class="event-vehicles-list">${rows || '<p class="event-vehicles-message">Автомобілі ще не додано.</p>'}</div><p class="event-vehicles-notice" role="status"></p>`;
       host.querySelectorAll('.event-vehicle-photo img').forEach(img => img.addEventListener('error', () => { const box=img.parentElement; if (box) { box.classList.add('event-vehicle-photo-empty'); box.textContent='▤'; } }, {once:true}));
       if (canEdit && !staffAvailable) say('Не вдалося завантажити список водіїв.');
     }
@@ -75,21 +73,6 @@
       }
     }
 
-    host.addEventListener('click', event => {
-      const add = event.target.closest('[data-event-vehicle-add]');
-      const remove = event.target.closest('[data-event-vehicle-remove]');
-      if (add) {
-        const id = host.querySelector('#eventVehiclePick')?.value;
-        const vehicle = vehicles.find(item => String(item.id) === String(id));
-        if (!vehicle) { say('Оберіть автомобіль.'); return; }
-        const driverName = String(vehicle.driver || '').trim();
-        const person = staff.find(item => String(item.full_name || '').trim() === driverName);
-        mutate(() => db.from('warehouse_event_vehicles').insert({event_id:eventId,vehicle_id:vehicle.id,driver_user_id:person?.user_id || null,driver_name:driverName || null}).select('vehicle_id'));
-      } else if (remove) {
-        const id = remove.dataset.eventVehicleRemove;
-        mutate(() => db.from('warehouse_event_vehicles').delete().eq('event_id',eventId).eq('vehicle_id',id).select('vehicle_id'));
-      }
-    });
     host.addEventListener('change', event => {
       const control = event.target.closest('[data-event-vehicle-driver]');
       if (!control || !canEdit) return;
@@ -103,5 +86,39 @@
     load();
   }
 
-  window.harazdEventVehicles = {mount, unmount:() => {generation++;}};
+  function mountEditor(eventId, host) {
+    const request = ++editorGeneration;
+    editor = {request, eventId:eventId || null, host, ready:false, touched:false};
+    host.textContent = 'Завантаження автомобілів…';
+    Promise.all([
+      db.from('fleet_vehicles').select('id,make,model,plate').order('make'),
+      eventId ? db.from('warehouse_event_vehicles').select('vehicle_id').eq('event_id',eventId) : Promise.resolve({data:[]})
+    ]).then(([fleet, assigned]) => {
+      if (fleet.error) throw fleet.error;
+      if (assigned.error) throw assigned.error;
+      if (!editor || editor.request !== request || !host.isConnected) return;
+      const selected = new Set((assigned.data || []).map(item => String(item.vehicle_id)));
+      const vehicles = fleet.data || [];
+      host.innerHTML = vehicles.length ? vehicles.map(vehicle => `<label class="event-edit-vehicle"><input type="checkbox" value="${safe(vehicle.id)}" ${selected.has(String(vehicle.id)) ? 'checked' : ''}><span>${safe([vehicle.make,vehicle.model].filter(Boolean).join(' '))}${vehicle.plate ? ` · ${safe(vehicle.plate)}` : ''}</span></label>`).join('') : '<p class="event-vehicles-message">Автомобілів не знайдено.</p>';
+      editor.ready = true;
+    }).catch(error => {
+      if (!editor || editor.request !== request || !host.isConnected) return;
+      host.textContent = 'Не вдалося завантажити автомобілі. Збереження події доступне без зміни автомобілів.';
+      console.warn('Event vehicle editor:', error);
+    });
+  }
+
+  async function saveEditor(eventId) {
+    const state = editor;
+    if (!state || !state.ready || !state.touched) return;
+    const ids = [...state.host.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value);
+    const result = await db.rpc('warehouse_set_event_vehicles', {p_event_id:eventId,p_vehicle_ids:ids});
+    if (result.error) throw result.error;
+    if (editor === state) {state.eventId = eventId; state.touched = false;}
+  }
+
+  document.addEventListener('change', event => {
+    if (editor && editor.ready && editor.host.contains(event.target) && event.target.matches('input[type="checkbox"]')) editor.touched = true;
+  });
+  window.harazdEventVehicles = {mount, unmount:() => {generation++;}, mountEditor, saveEditor, unmountEditor:() => {editorGeneration++;editor=null;}};
 })();
