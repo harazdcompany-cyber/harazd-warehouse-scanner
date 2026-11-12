@@ -897,3 +897,15 @@
   #eventDetailsDialog #eventDetailsEdit {top:16px;right:70px;}
   #eventDetailsDialog .event-view-hero-main {padding-right:175px;}
 }
+
+/* Highlight event header actions on hover and keyboard focus. */
+@media (hover:hover) {
+  #eventDetailsDialog #eventDetailsEdit:hover,
+  #eventDetailsDialog #eventDetailsClose:hover {
+    border-color:#baff19;background:#2a3c35;color:#d5ff72;
+  }
+}
+#eventDetailsDialog #eventDetailsEdit:focus-visible,
+#eventDetailsDialog #eventDetailsClose:focus-visible {
+  outline:2px solid #baff19;outline-offset:2px;
+}
