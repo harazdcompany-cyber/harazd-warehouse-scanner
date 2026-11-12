@@ -1096,3 +1096,8 @@
     line-height:1.2;
   }
 }
+
+/* Phone only: remove the explanatory note below the personal profile. */
+@media (max-width:650px) {
+  #my-page #myPageProfile > .my-page-help {display:none;}
+}
