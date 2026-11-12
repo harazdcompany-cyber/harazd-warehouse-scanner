@@ -864,7 +864,7 @@
   #eventDialog .event-vehicle-editor-list {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;overflow:visible;}
   #eventDialog .event-edit-vehicle {display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:8px;min-width:0;padding:10px;border:1px solid #304456;border-radius:10px;background:#101b29;}
   #eventDialog .event-edit-vehicle:has(.hd-select.hd-open) {position:relative;z-index:2100;}
-  #eventDialog .event-edit-vehicle-choice {display:flex;align-items:center;gap:10px;min-width:0;}
+  #eventDialog .event-edit-vehicle-choice {display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;}
   #eventDialog .event-edit-vehicle-choice input {width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:0;accent-color:#baff19;}
   #eventDialog .event-edit-vehicle-choice span {min-width:0;overflow-wrap:anywhere;}
   #eventDialog .event-edit-vehicle-driver {display:flex;flex-direction:column;gap:5px;min-width:0;color:#a9bfd4;font-size:12px;}
