@@ -10,7 +10,7 @@
     const current = () => request === generation && host.isConnected;
     host.textContent = 'Завантаження автомобілів…';
     Promise.all([
-      db.from('fleet_vehicles').select('id,make,model,photo_url').order('make'),
+      db.from('fleet_vehicles').select('id,make,model,plate,photo_url').order('make'),
       db.from('warehouse_event_vehicles').select('vehicle_id,driver_user_id,driver_name').eq('event_id', eventId)
     ]).then(([fleet, assigned]) => {
       if (fleet.error) throw fleet.error;
@@ -22,7 +22,7 @@
         if (!v) return '<p class="event-vehicles-message">Дані автомобіля недоступні.</p>';
         const photo = /^https?:\/\/[^\s"'<>]+$/i.test(String(v.photo_url || '')) ? v.photo_url : '';
         const avatar = photo ? `<span class="event-vehicle-photo"><img src="${safe(photo)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>` : '<span class="event-vehicle-photo event-vehicle-photo-empty" aria-hidden="true">▤</span>';
-        return `<div class="event-vehicle-row">${avatar}<div class="event-vehicle-info"><strong>${safe(vehicleName(v))}</strong><small>${safe(row.driver_name || 'Не призначено')}</small></div></div>`;
+        return `<div class="event-vehicle-row">${avatar}<div class="event-vehicle-info"><strong>${safe(vehicleName(v))}${v.plate ? ` · ${safe(v.plate)}` : ''}</strong><small>${safe(row.driver_name || 'Не призначено')}</small></div></div>`;
       }).join('');
       host.innerHTML = `<div class="event-vehicles-list">${rows || '<p class="event-vehicles-message">Автомобілі ще не додано.</p>'}</div>`;
       host.querySelectorAll('.event-vehicle-photo img').forEach(img => img.addEventListener('error', () => {
