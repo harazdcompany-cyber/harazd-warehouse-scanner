@@ -876,3 +876,24 @@
   #eventDialog .event-accommodation-editor-fields label {display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13px;}
   #eventDialog .event-accommodation-editor-fields input {width:100%;min-width:0;max-width:100%;min-height:40px;box-sizing:border-box;}
 }
+
+/* Event details: edit and close actions in the heading. */
+#eventDetailsDialog #eventDetailsEdit[hidden] {display:none;}
+#eventDetailsDialog #eventDetailsClose {
+  display:grid;place-items:center;box-sizing:border-box;
+  width:44px;height:44px;min-height:44px;padding:0;
+  border:1px solid #40556e;border-radius:12px;
+  background:#101b29;color:#eff5ff;font-size:21px;line-height:1;
+}
+#eventDetailsDialog #eventDetailsEdit {
+  position:absolute;top:28px;right:86px;z-index:2;
+  display:flex;align-items:center;justify-content:center;
+  width:auto;height:44px;min-height:44px;padding:0 14px;
+  border:1px solid #526982;border-radius:12px;
+  background:#203148;color:#eff5ff;font-size:13px;font-weight:700;white-space:nowrap;
+}
+#eventDetailsDialog .event-view-hero-main {padding-right:190px;}
+@media (max-width:650px) {
+  #eventDetailsDialog #eventDetailsEdit {top:16px;right:70px;}
+  #eventDetailsDialog .event-view-hero-main {padding-right:175px;}
+}
