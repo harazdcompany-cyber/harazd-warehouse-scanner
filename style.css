@@ -1220,3 +1220,42 @@ body *::-webkit-scrollbar {
     flex:0 0 auto;
   }
 }
+
+/* Phone shell: stable independent logo/menu rows, including focus and touch states. */
+@media (max-width:650px) {
+  body > .sidebar {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto 48px;
+    align-content:start;
+    height:auto;
+    min-height:0;
+  }
+  body > .sidebar .brand {
+    position:static;
+    transform:none;
+  }
+  body > .sidebar #nav {
+    display:flex;
+    align-items:center;
+    height:48px;
+    min-height:48px;
+    max-height:48px;
+    margin:0;
+    padding:2px 0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+  }
+  body > .sidebar #nav::-webkit-scrollbar {display:none;}
+  body > .sidebar #nav > button {
+    flex:0 0 auto;
+    width:auto;
+    height:44px;
+    min-height:44px;
+    max-height:44px;
+    margin:0;
+    transform:none;
+  }
+}
