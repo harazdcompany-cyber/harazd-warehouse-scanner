@@ -161,3 +161,34 @@
     margin-left:auto;
   }
 }
+
+/* Event card location label and full-width actions on phones. */
+#events .event-card-location-label {display:none;}
+@media (max-width:650px) {
+  #events .event-card-location-icon {display:none;}
+  #events .event-card-location-label {display:inline;}
+  #events .event-card > .event-card-foot > .event-card-actions {
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    gap:8px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+  }
+  #events .event-card-actions > button {
+    flex:1 1 0;
+    width:0;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    min-height:40px;
+    margin:0;
+    padding:8px 6px;
+    line-height:1.2;
+    text-align:center;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
