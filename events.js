@@ -7,7 +7,7 @@
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
   let records = [], editingId = null, busy = false, activeDetailId = null;
-  let eventStaffReady = false, eventStaffRequestId = 0;
+  let eventStaffReady = false, eventStaffRequestId = 0, detailStaffRequestId = 0;
   const canCreate = () => typeof staffAllowed === 'function' && staffAllowed('events_create');
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
   const authorized = () => typeof session !== 'undefined' && !!session?.user?.id;
@@ -76,6 +76,7 @@
             <div><small>Місто / локація</small><strong>${safe(e.location || '—')}</strong></div>
           </div>
           <div class="event-detail-notes${notes ? '' : ' is-empty'}"><small>Примітки</small><p>${notes ? safe(notes) : '—'}</p></div>
+          <div class="event-detail-staff"><small>Призначені працівники</small><div id="eventDetailsStaff" aria-live="polite">Завантаження…</div></div>
         </section>
 
         <section class="event-view-section event-load-section">
@@ -103,14 +104,46 @@
     title.textContent = record.name || 'Івент';
     body.innerHTML = detailMarkup(record);
     if (!dialog.open) dialog.showModal();
+    loadDetailStaff(record.id, ++detailStaffRequestId);
     const host = el('eventDetailsEquipment');
     if (host) window.harazdEventEquipment?.mountInline(record.id, host);
+  }
+
+  async function loadDetailStaff(eventId, requestId) {
+    const host = el('eventDetailsStaff');
+    if (!host) return;
+    try {
+      const [staff, assigned] = await Promise.all([
+        db.rpc('warehouse_event_assignable_staff'),
+        db.from('warehouse_event_staff').select('user_id').eq('event_id', eventId)
+      ]);
+      if (staff.error) throw staff.error;
+      if (assigned.error) throw assigned.error;
+      if (requestId !== detailStaffRequestId || activeDetailId !== eventId ||
+          !el('eventDetailsDialog')?.open || el('eventDetailsStaff') !== host) return;
+      const assignedIds = new Set((assigned.data || []).map(row => String(row.user_id)));
+      if (!assignedIds.size) {
+        host.textContent = 'Працівників не призначено';
+        return;
+      }
+      const people = (staff.data || []).filter(person => assignedIds.has(String(person.user_id)));
+      const missing = Math.max(0, assignedIds.size - new Set(people.map(person => String(person.user_id))).size);
+      host.innerHTML = people.map(person =>
+        `<div class="event-detail-staff-person">${safe(person.full_name || 'Працівник')}${person.position ? ` <span>· ${safe(person.position)}</span>` : ''}</div>`
+      ).join('') + (missing ? '<div class="event-detail-staff-unavailable">Деякі призначені працівники недоступні.</div>' : '');
+    } catch (error) {
+      if (requestId !== detailStaffRequestId || activeDetailId !== eventId ||
+          !el('eventDetailsDialog')?.open || el('eventDetailsStaff') !== host) return;
+      host.textContent = 'Не вдалося завантажити призначених працівників';
+      console.warn('Event detail staff:', error);
+    }
   }
 
   function closeDetails() {
     const dialog = el('eventDetailsDialog');
     window.harazdEventEquipment?.unmountInline();
     activeDetailId = null;
+    detailStaffRequestId++;
     if (dialog?.open) dialog.close();
   }
 
