@@ -346,3 +346,12 @@
     display:none;
   }
 }
+
+/* Phone: remove loading-list caption, edit action and item totals from event details. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-load-section .event-load-caption,
+  #eventDetailsDialog .event-load-section .event-view-actions,
+  #eventDetailsDialog .event-load-section .event-loading-summary {
+    display:none;
+  }
+}
