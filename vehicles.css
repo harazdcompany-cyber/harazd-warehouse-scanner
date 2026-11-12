@@ -333,3 +333,31 @@ body *::-webkit-scrollbar {
     background:transparent;
   }
 }
+
+/* Phone: equal-width vehicle actions with delete on the left. */
+@media (max-width:650px) {
+  #vehicleDialog #vehicleForm > .actions {
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    gap:10px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+  #vehicleDialog #vehicleForm > .actions > button {
+    flex:1 1 0;
+    width:0;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    margin:0;
+    padding:8px 6px;
+    font-size:clamp(11px,3.3vw,14px);
+    line-height:1.25;
+    text-align:center;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  #vehicleDialog #vehicleForm > .actions > #deleteVehicle {order:-1;}
+}
