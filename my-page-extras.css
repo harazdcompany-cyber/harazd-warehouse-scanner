@@ -1080,3 +1080,19 @@
     overflow-wrap:anywhere;
   }
 }
+
+/* Phone only: center the page title and notification button on the same axis. */
+@media (max-width:650px) {
+  #my-page .my-page-heading {
+    align-items:center;
+  }
+  #my-page .my-page-heading > div:first-child,
+  #my-page .my-page-notifications-wrap {
+    display:flex;
+    align-items:center;
+  }
+  #my-page #myPageTitle {
+    margin:0;
+    line-height:1.2;
+  }
+}
