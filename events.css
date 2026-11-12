@@ -944,3 +944,7 @@
 #eventQuoteDialog .event-quote-editor {width:100%;}
 @media (hover:hover) {#eventQuoteDialog button:not(:disabled):hover {border-color:#baff19;}}
 @media (max-width:650px) {#eventQuoteDialog .event-quote-shell {padding:16px;} #eventQuoteDialog .event-quote-window-head {flex-wrap:wrap;gap:12px;} #eventQuoteDialog .event-quote-window-actions {width:100%;} #eventQuoteDialog #eventQuoteAddEquipment {flex:1;min-width:0;} #eventQuoteDialog .event-quote-scroll {overscroll-behavior-x:contain;}}
+
+/* Category headings above each quotation table. */
+#eventQuoteDialog .event-quote-category {min-width:0;margin-top:18px;}
+#eventQuoteDialog .event-quote-category h3 {margin:0 0 8px;color:#e8f1ff;font-size:15px;line-height:1.3;overflow-wrap:anywhere;}
