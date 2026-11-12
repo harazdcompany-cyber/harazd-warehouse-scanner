@@ -312,7 +312,7 @@
     }
     el('eventDialogTitle').textContent = record ? 'Редагувати івент' : 'Новий івент';
     el('eventFormNotice').textContent = '';
-    el('eventEditAddEquipment').hidden = !record || !canEdit();
+    el('eventManifestOpen').hidden = !record || !canEdit();
     const quoteButton = el('eventQuoteOpen');
     quoteButton.hidden = !record || !canEdit();
     window.harazdEventQuote?.unmount();
@@ -414,9 +414,14 @@
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
-  el('eventEditAddEquipment').addEventListener('click', () => {
-    if (editingId && canEdit()) window.harazdEventEquipment?.open(editingId);
+  el('eventManifestOpen').addEventListener('click', () => {
+    if (!editingId || !canEdit() || !window.harazdEventEquipment) return;
+    el('eventManifestName').textContent = el('eventForm').elements.name.value || '';
+    el('eventManifestDialog').showModal();
+    window.harazdEventEquipment.mountInline(editingId, el('eventManifestEditor'));
   });
+  el('eventManifestClose').addEventListener('click',()=>el('eventManifestDialog').close());
+  el('eventManifestDialog').addEventListener('close',()=>window.harazdEventEquipment?.unmountInline());
   el('eventQuoteClose').addEventListener('click',()=>{if (!window.harazdEventQuote?.isSaving()) el('eventQuoteDialog').close();});
   el('eventQuoteDialog').addEventListener('cancel',event=>{if(window.harazdEventQuote?.isSaving())event.preventDefault();});
   el('eventQuoteDialog').addEventListener('close',()=>window.harazdEventQuote?.unmount());
@@ -479,4 +484,5 @@
 
   window.harazdEvents = {load, openDetails};
 })();
+
 
