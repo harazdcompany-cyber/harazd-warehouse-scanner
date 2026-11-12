@@ -310,6 +310,7 @@
     }
     el('eventDialogTitle').textContent = record ? 'Редагувати івент' : 'Новий івент';
     el('eventFormNotice').textContent = '';
+    el('eventEditAddEquipment').hidden = !record || !canEdit();
     el('eventSave').disabled = false;
     el('eventDialog').showModal();
     loadEventStaff(record,++eventStaffRequestId);
@@ -402,6 +403,9 @@
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
+  el('eventEditAddEquipment').addEventListener('click', () => {
+    if (editingId && canEdit()) window.harazdEventEquipment?.open(editingId);
+  });
   el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventVehicles?.unmountEditor();window.harazdEventAccommodation?.unmountEditor();});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
