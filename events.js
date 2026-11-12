@@ -90,7 +90,7 @@
 
         <section class="event-view-section event-detail-accommodation">
           <h3>Проживання</h3>
-          <p class="event-accommodation-empty">Інформацію ще не додано.</p>
+          <div id="eventAccommodationDetails" class="event-accommodation-content" aria-live="polite">Завантаження…</div>
         </section>
 
         <section class="event-view-section event-load-section">
@@ -121,6 +121,8 @@
     loadDetailStaff(record.id, ++detailStaffRequestId);
     const vehiclesHost = el('eventDetailsVehicles');
     if (vehiclesHost) window.harazdEventVehicles?.mount(record.id, vehiclesHost, canEdit());
+    const accommodationHost = el('eventAccommodationDetails');
+    if (accommodationHost) window.harazdEventAccommodation?.mount(record.id, accommodationHost);
     const host = el('eventDetailsEquipment');
     if (host) window.harazdEventEquipment?.mountInline(record.id, host);
   }
@@ -188,6 +190,7 @@
     const dialog = el('eventDetailsDialog');
     window.harazdEventEquipment?.unmountInline();
     window.harazdEventVehicles?.unmount();
+    window.harazdEventAccommodation?.unmount();
     activeDetailId = null;
     detailStaffRequestId++;
     if (dialog?.open) dialog.close();
@@ -280,6 +283,12 @@
     } else {
       window.harazdEventVehicles?.unmountEditor();
     }
+    const accommodationEditor = el('eventAccommodationEditor');
+    if (accommodationEditor && window.matchMedia('(max-width:650px)').matches && window.harazdEventAccommodation) {
+      window.harazdEventAccommodation.mountEditor(record?.id || null, accommodationEditor);
+    } else {
+      window.harazdEventAccommodation?.unmountEditor();
+    }
   }
 
   async function save(evt) {
@@ -289,6 +298,8 @@
     const get = k => String(fd.get(k) || '').trim();
     const name = get('name'), date = get('event_date');
     if (!name || !date) return;
+    const accommodationError = window.harazdEventAccommodation?.validateEditor();
+    if (accommodationError) {el('eventFormNotice').textContent = accommodationError;return;}
     const validationPeriods = [
       {name:'Складські роботи',start:'warehouse_start_date',end:'warehouse_end_date'},
       {name:'Монтаж',start:'setup_date',end:'setup_end_date'},
@@ -333,6 +344,13 @@
         console.warn('Event vehicles save:',vehicleError);
         return;
       }
+      try {
+        await window.harazdEventAccommodation?.saveEditor(saved.id);
+      } catch (accommodationError) {
+        el('eventFormNotice').textContent = 'Подію збережено, але проживання не оновлено. Перевірте налаштування та повторіть збереження.';
+        console.warn('Event accommodation save:', accommodationError);
+        return;
+      }
       el('eventDialog').close();
       busy = false;
       await load();
@@ -348,7 +366,7 @@
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
-  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventVehicles?.unmountEditor();});
+  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventVehicles?.unmountEditor();window.harazdEventAccommodation?.unmountEditor();});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
 
