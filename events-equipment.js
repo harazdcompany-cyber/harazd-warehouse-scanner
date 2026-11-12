@@ -633,7 +633,7 @@ async function loadInventory() {
     state.host.innerHTML = `
       <div class="event-manifest-toolbar">
         <div class="event-loading-summary"><strong>${planned.length} позицій</strong><span>${total} од.</span></div>
-        ${canEdit() ? '<button type="button" class="primary" data-inline-open-picker>＋ Додати обладнання</button>' : ''}
+
       </div>
       <div class="event-manifest-scroll">
         <table class="event-manifest-table">
