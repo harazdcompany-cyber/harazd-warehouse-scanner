@@ -235,7 +235,7 @@
   const item = e => `
     <article class="event-card" data-event-card="${safe(e.id)}" tabindex="0" role="button" aria-label="Відкрити івент ${safe(e.name)}">
       <div class="event-card-head"><strong>${safe(e.name)}</strong><span class="event-state event-state-${safe(e.status)}">${safe(statusLabels[e.status] || e.status)}</span></div>
-      <div class="event-card-meta"><span>◷ ${periodText(e.event_date,e.event_end_date)}</span><span><span class="event-card-location-icon" aria-hidden="true">⌖</span><span class="event-card-location-label">Локація:</span> ${safe(e.location||'Місце не вказано')}</span></div>
+      <div class="event-card-meta"><span>${periodText(e.event_date,e.event_end_date)}</span><span><span class="event-card-location-label">Локація:</span> ${safe(e.location||'Місце не вказано')}</span></div>
       <div class="event-client">${safe(e.client||'Замовника не вказано')}</div>
       <div class="event-period-summary">${periods.filter(([,start]) => e[start]).map(([label,start,end]) => `<div><span>${label}</span><strong>${periodText(e[start],e[end])}</strong></div>`).join('')}</div>
       <div class="event-card-foot"><small aria-hidden="true"></small><div class="event-card-actions">${canEdit() ? `<button type="button" data-event-edit="${safe(e.id)}">Редагувати</button>` : ''}<button type="button" class="primary" data-event-open="${safe(e.id)}">Відкрити</button></div></div>
