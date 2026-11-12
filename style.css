@@ -1558,3 +1558,14 @@ body *::-webkit-scrollbar {
     overflow-wrap:anywhere;
   }
 }
+
+/* Phone: match the My Page panel's internal spacing. */
+@media (max-width:650px) {
+  #repairs > .panel {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    padding:14px;
+    box-sizing:border-box;
+  }
+}
