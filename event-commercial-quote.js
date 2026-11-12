@@ -13,7 +13,7 @@
   }
   let current = null, request = 0;
   function eventDays(state) {
-    const form = state.host.closest?.('form');
+    const form = state.form || state.host.closest?.('form');
     const start = form?.elements?.event_date?.value ?? state.record?.event_date ?? '';
     const end = form?.elements?.event_end_date?.value ?? state.record?.event_end_date ?? '';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || (end && !/^\d{4}-\d{2}-\d{2}$/.test(end))) return null;
@@ -103,12 +103,12 @@
     popup.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Комерційна пропозиція</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial,sans-serif;color:#111}h1{font-size:21px}h2{font-size:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #777;padding:6px;text-align:left;vertical-align:top}th{background:#eee}.total{text-align:right;font-size:15px;font-weight:bold;margin-top:14px}</style></head><body><h1>Комерційна пропозиція</h1><h2>${esc(state.record?.name||'Подія')}</h2><p>Замовник: ${esc(state.record?.client||'—')}</p><table><thead><tr><th>№</th><th>Найменування</th><th>Додаткова інформація</th><th>Кількість</th><th>Од.</th><th>Ціна за одиницю</th><th>Дні</th><th>Знижка</th><th>Без ПДВ</th><th>ПДВ</th><th>Сума з ПДВ</th></tr></thead><tbody>${rows.join('')}</tbody></table><p class="total">Всього з ПДВ: ${money(total)}</p></body></html>`);
     popup.document.close();popup.focus();popup.print();
   }
-  function mount(id,host,record) {
-    current={id,host,record,items:[],prices:[]}; const state=current;
+  function mount(id,host,record,form) {
+    current={id,host,record,form,items:[],prices:[]}; const state=current;
     host.innerHTML='<p data-quote-notice>Завантаження…</p>';
     host.addEventListener('click',e=>{if(e.target.closest('[data-quote-refresh]'))load(state);if(e.target.closest('[data-quote-print]'))printQuote(state);},{signal:(state.controller=new AbortController()).signal});
     host.addEventListener('change',e=>{const row=e.target.closest('[data-quote-row]');if(row&&e.target.matches('[data-quote-field]'))save(state,row);},{signal:state.controller.signal});
-    const form=host.closest?.('form');
+    form = form || host.closest?.('form');
     form?.addEventListener('change',e=>{
       if (!['event_date','event_end_date'].includes(e.target.name) || current!==state) return;
       if (!state.saving) render(state);
@@ -116,6 +116,7 @@
     load(state);
   }
   function unmount(){request++;if(current?.controller)current.controller.abort();current=null;}
-  window.harazdEventQuote={mount,unmount,calculate,refresh:()=>{if(current)load(current);}};
+  window.harazdEventQuote={mount,unmount,calculate,isSaving:()=>!!current?.saving,refresh:()=>{if(current)load(current);}};
 })();
+
 
