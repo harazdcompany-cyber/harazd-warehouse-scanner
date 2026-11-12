@@ -1194,3 +1194,11 @@ body *::-webkit-scrollbar {
   body > .sidebar #nav { max-width: 100%; min-width: 0; }
   body > main > .content { width: 100%; max-width: 100%; min-width: 0; margin: 0; }
 }
+
+/* Phone menu: use the Events text size for every navigation item. */
+@media (max-width:650px) {
+  #nav > button,
+  #nav > button.vehicle-nav-link {
+    font-size:11px;
+  }
+}
