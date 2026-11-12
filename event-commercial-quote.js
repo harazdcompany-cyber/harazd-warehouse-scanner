@@ -12,6 +12,38 @@
     return {net:Number(netKop)/100, vat:Number(vatKop)/100, total:Number(netKop+vatKop)/100};
   }
   let current = null, request = 0;
+  function commercialTerms(item, metadata) {
+    const eq=item.equipment || {}, p=metadata.get(String(item.equipment_id)) || {};
+    const raw=p.unit_price ?? eq.rental_price;
+    const price=raw == null || raw === '' ? null : Number(raw);
+    return {
+      description:String(p.description || eq.description || ''),
+      unit:String(p.unit || eq.unit || 'шт.'),
+      price:Number.isFinite(price) ? price : null,
+      discount:Number(p.discount_percent ?? 0),
+      vat:Number(p.vat_percent ?? 20)
+    };
+  }
+  function combineEquipment(items, metadata) {
+    const map=new Map();
+    for (const item of items) {
+      const eq=item.equipment || {}, terms=commercialTerms(item,metadata);
+      // Use the warehouse picker's identity, and keep differing commercial terms separate.
+      const identity=eq.name ? [
+        eq.name,eq.model || '',eq.manufacturer || '',eq.description || '',eq.photo_url || '',
+        eq.category?.id || '',eq.subcategory?.id || '',String(eq.accounting_type || '').toLowerCase()
+      ] : ['unavailable',item.equipment_id];
+      const key=JSON.stringify([identity,terms.description,terms.unit,terms.price,terms.discount,terms.vat]);
+      let group=map.get(key);
+      if (!group) {
+        group={...item,quantity:0,members:[],terms};
+        map.set(key,group);
+      }
+      group.quantity+=Number(item.quantity) || 0;
+      group.members.push(item);
+    }
+    return [...map.values()];
+  }
   function subcategoryOf(item) {
     const sub=item.equipment?.subcategory;
     const name=String(sub?.name || '').trim();
@@ -61,20 +93,22 @@
     let net=0,vat=0,total=0,missing=0;
     const eventDuration=eventDays(state);
     let itemIndex=0;
-    const groups = groupedItems(state.items).map(group => {
+    const combined=combineEquipment(state.items,metadata);
+    state.groupMembers=new Map(combined.map(item=>[String(item.equipment_id),item.members]));
+    const groups = groupedItems(combined).map(group => {
       let lastSubcategory=null;
       const rows = group.items.map(item => {
       const eq=item.equipment || {}, p=metadata.get(String(item.equipment_id)) || {};
       const sub=subcategoryOf(item);
       const heading=lastSubcategory !== sub.key ? `<tr class="event-quote-subcategory"><th colspan="12" scope="rowgroup">${esc(sub.name)}</th></tr>` : '';
       lastSubcategory=sub.key;
-      const price=Number(p.unit_price ?? 0), days=eventDuration, discount=Number(p.discount_percent ?? 0), tax=Number(p.vat_percent ?? 20);
-      if (p.unit_price == null) missing++;
+      const price=item.terms.price ?? 0, days=eventDuration, discount=item.terms.discount, tax=item.terms.vat;
+      if (item.terms.price == null) missing++;
       let sum;
       try {sum=calculate(Number(item.quantity)||0,price,days ?? 0,discount,tax);}
       catch (_) {sum={net:0,vat:0,total:0};missing++;}
       net=round(net+sum.net);vat=round(vat+sum.vat);total=round(total+sum.total);
-      return heading+`<tr data-quote-row="${esc(item.equipment_id)}"><td>${++itemIndex}</td><td><strong>${esc(eq.name || 'Обладнання')}</strong><small>${esc(eq.model || '')}</small></td><td><input data-quote-field="description" maxlength="500" value="${esc(p.description || eq.description || '')}" placeholder="Додаткова інформація" aria-label="Додаткова інформація"></td><td>${esc(item.quantity)}</td><td><input data-quote-field="unit" maxlength="30" value="${esc(p.unit || 'шт.')}" aria-label="Одиниця виміру"></td><td><input data-quote-field="unit_price" type="number" min="0" max="999999999" step="0.01" value="${p.unit_price == null ? '' : price}" aria-label="Ціна за одиницю"></td><td><input type="text" value="${days ?? '—'}" aria-label="Кількість днів події" readonly></td><td><input data-quote-field="discount_percent" type="number" min="0" max="100" step="0.01" value="${discount}" aria-label="Знижка, відсотків"></td><td>${days === null ? '—' : money(sum.net)}</td><td><input data-quote-field="vat_percent" type="number" min="0" max="100" step="0.01" value="${tax}" aria-label="ПДВ, відсотків"></td><td>${days === null ? '—' : money(sum.vat)}</td><td>${days === null ? '—' : money(sum.total)}</td></tr>`;
+      return heading+`<tr data-quote-row="${esc(item.equipment_id)}"><td>${++itemIndex}</td><td><strong>${esc(eq.name || 'Обладнання')}</strong><small>${esc(eq.model || '')}</small></td><td><input data-quote-field="description" maxlength="500" value="${esc(item.terms.description)}" placeholder="Додаткова інформація" aria-label="Додаткова інформація"></td><td>${esc(item.quantity)}</td><td><input data-quote-field="unit" maxlength="30" value="${esc(item.terms.unit)}" aria-label="Одиниця виміру"></td><td><input data-quote-field="unit_price" type="number" min="0" max="999999999" step="0.01" value="${item.terms.price == null ? '' : price}" aria-label="Ціна за одиницю"></td><td><input type="text" value="${days ?? '—'}" aria-label="Кількість днів події" readonly></td><td><input data-quote-field="discount_percent" type="number" min="0" max="100" step="0.01" value="${discount}" aria-label="Знижка, відсотків"></td><td>${days === null ? '—' : money(sum.net)}</td><td><input data-quote-field="vat_percent" type="number" min="0" max="100" step="0.01" value="${tax}" aria-label="ПДВ, відсотків"></td><td>${days === null ? '—' : money(sum.vat)}</td><td>${days === null ? '—' : money(sum.total)}</td></tr>`;
       }).join('');
       return `<section class="event-quote-category"><h3>${esc(group.name)}</h3><div class="event-quote-scroll"><table><thead><tr><th>№</th><th>Найменування</th><th>Опис</th><th>Кількість</th><th>Од.</th><th>Ціна, грн</th><th>Дні</th><th>Знижка, %</th><th>Сума без ПДВ</th><th>ПДВ, %</th><th>Сума ПДВ, грн</th><th>Підсумкова сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
     }).join('');
@@ -86,7 +120,7 @@
     let items,prices;
     try {
       [items,prices]=await Promise.all([
-        db.from('warehouse_event_equipment').select('equipment_id,quantity,equipment:equipment_id(name,model,description,category:category_id(id,name),subcategory:subcategory_id(id,name))').eq('event_id',state.id).order('created_at'),
+        db.from('warehouse_event_equipment').select('equipment_id,quantity,equipment:equipment_id(name,model,manufacturer,description,photo_url,accounting_type,unit,rental_price,category:category_id(id,name),subcategory:subcategory_id(id,name))').eq('event_id',state.id).order('created_at'),
         db.from('warehouse_event_quote_prices').select('*').eq('event_id',state.id)
       ]);
     } catch (_) {
@@ -112,10 +146,13 @@
     const values={event_id:state.id,equipment_id:row.dataset.quoteRow,description,unit:get('unit')||'шт.',unit_price:rawPrice === '' ? null : Number(rawPrice),days:eventDays(state) ?? 1,discount_percent:Number(get('discount_percent')),vat_percent:Number(get('vat_percent'))};
     if((values.unit_price!==null&&(!Number.isFinite(values.unit_price)||values.unit_price<0||values.unit_price>999999999))||!Number.isInteger(values.days)||values.days<1||values.days>9999||![values.discount_percent,values.vat_percent].every(x=>Number.isFinite(x)&&x>=0&&x<=100)){notice(state,'Перевірте ціну, кількість днів, знижку та ПДВ.',true);return;}
     state.saving=true;
+    const members=state.groupMembers?.get(String(row.dataset.quoteRow));
+    if (!members?.length) {state.saving=false;notice(state,'Список змінився. Оновіть пропозицію.',true);return;}
+    const updates=members.map(item=>({...values,equipment_id:item.equipment_id}));
     const controls=[...state.host.querySelectorAll('[data-quote-field], [data-quote-refresh], [data-quote-print]')];controls.forEach(el=>el.disabled=true);
     notice(state,'Збереження…');
     let error;
-    try { ({error}=await db.from('warehouse_event_quote_prices').upsert(values,{onConflict:'event_id,equipment_id'})); }
+    try { ({error}=await db.from('warehouse_event_quote_prices').upsert(updates,{onConflict:'event_id,equipment_id'})); }
     catch (err) {error=err;}
     if(current!==state)return;
     if(error){state.saving=false;controls.forEach(el=>el.disabled=false);notice(state,'Не вдалося зберегти: '+error.message,true);return;}
@@ -126,23 +163,24 @@
     const eventDuration=eventDays(state);
     if(eventDuration === null){notice(state,'Вкажіть коректні дати події перед друком.',true);return;}
     const metadata=new Map(state.prices.map(x=>[String(x.equipment_id),x]));
-    if(state.items.some(item=>metadata.get(String(item.equipment_id))?.unit_price == null)) {
+    const combined=combineEquipment(state.items,metadata);
+    if(combined.some(item=>item.terms.price == null)) {
       notice(state,'Перед друком вкажіть і збережіть ціни для всіх позицій.',true);return;
     }
     let total=0;
     let itemIndex=0, invalid=false;
-    const tables=groupedItems(state.items).map(group=>{
+    const tables=groupedItems(combined).map(group=>{
       let lastSubcategory=null;
       const rows=group.items.map(item=>{
-      const p=metadata.get(String(item.equipment_id)), eq=item.equipment||{};
+      const eq=item.equipment||{}, terms=item.terms;
       const sub=subcategoryOf(item);
       const heading=lastSubcategory !== sub.key ? `<tr class="subcategory"><th colspan="12" scope="rowgroup">${esc(sub.name)}</th></tr>` : '';
       lastSubcategory=sub.key;
       let sum;
-      try {sum=calculate(Number(item.quantity),Number(p.unit_price),eventDuration,Number(p.discount_percent),Number(p.vat_percent));}
+      try {sum=calculate(Number(item.quantity),terms.price,eventDuration,terms.discount,terms.vat);}
       catch (_) {invalid=true;return '';}
       total=round(total+sum.total);
-      return heading+`<tr><td>${++itemIndex}</td><td>${esc(eq.name||'Обладнання')}</td><td>${esc(p.description || eq.description || '')}</td><td>${esc(item.quantity)}</td><td>${esc(p.unit)}</td><td>${money(Number(p.unit_price))}</td><td>${eventDuration}</td><td>${esc(p.discount_percent)}%</td><td>${money(sum.net)}</td><td>${esc(p.vat_percent)}%</td><td>${money(sum.vat)}</td><td>${money(sum.total)}</td></tr>`;
+      return heading+`<tr><td>${++itemIndex}</td><td>${esc(eq.name||'Обладнання')}</td><td>${esc(terms.description)}</td><td>${esc(item.quantity)}</td><td>${esc(terms.unit)}</td><td>${money(terms.price)}</td><td>${eventDuration}</td><td>${esc(terms.discount)}%</td><td>${money(sum.net)}</td><td>${esc(terms.vat)}%</td><td>${money(sum.vat)}</td><td>${money(sum.total)}</td></tr>`;
       }).join('');
       return `<h3>${esc(group.name)}</h3><table><thead><tr><th>№</th><th>Найменування</th><th>Додаткова інформація</th><th>Кількість</th><th>Од.</th><th>Ціна за одиницю</th><th>Дні</th><th>Знижка</th><th>Сума без ПДВ</th><th>ПДВ, %</th><th>Сума ПДВ, грн</th><th>Підсумкова сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table>`;
     }).join('');
@@ -167,6 +205,7 @@
   function unmount(){request++;if(current?.controller)current.controller.abort();current=null;}
   window.harazdEventQuote={mount,unmount,calculate,isSaving:()=>!!current?.saving,refresh:()=>{if(current)load(current);}};
 })();
+
 
 
 
