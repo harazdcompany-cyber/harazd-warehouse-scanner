@@ -19,6 +19,22 @@ Deno.serve(async(req)=>{
  let body:any;
  try{body=await req.json()}catch{return response({error:'Invalid JSON'},400)}
  const {action,email,full_name,position,role,status,permissions,password}=body;
+ if(action==='delete'){
+  const targetId=String(body.user_id||'');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId))return response({error:'Некоректний ідентифікатор працівника'},400);
+  if(targetId===user.id)return response({error:'Неможливо видалити власний обліковий запис'},400);
+  const {data:target,error:lookupError}=await admin.from('warehouse_staff').select('user_id,role,status').eq('user_id',targetId).maybeSingle();
+  if(lookupError||!target)return response({error:'Працівника не знайдено'},404);
+  if(target.role==='admin' && target.status==='active'){
+   const {count,error:countError}=await admin.from('warehouse_staff').select('user_id',{count:'exact',head:true}).eq('role','admin').eq('status','active');
+   if(countError)return response({error:countError.message},500);
+   if((count||0)<=1)return response({error:'Неможливо видалити останнього активного адміністратора'},400);
+  }
+  const {error:deleteError}=await admin.auth.admin.deleteUser(targetId);
+  if(deleteError)return response({error:deleteError.message},400);
+  return response({ok:true});
+ }
+
  const mail=String(email||'').trim().toLowerCase();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)||!String(full_name||'').trim()||!['admin','manager','warehouse','viewer'].includes(role)||!['active','inactive'].includes(status)||!permissions||typeof permissions!=='object'||Array.isArray(permissions)||Object.values(permissions).some(v=>typeof v!=='boolean'))return response({error:'Invalid staff details'},400);
  if(password!==undefined&&(typeof password!=='string'||password.length<8))return response({error:'Password must be at least 8 characters'},400);
