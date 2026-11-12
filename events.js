@@ -269,6 +269,12 @@
     el('eventSave').disabled = false;
     el('eventDialog').showModal();
     loadEventStaff(record,++eventStaffRequestId);
+    const vehicleEditor = el('eventAssignedVehicles');
+    if (vehicleEditor && window.matchMedia('(max-width:650px)').matches && window.harazdEventVehicles) {
+      window.harazdEventVehicles.mountEditor(record?.id || null, vehicleEditor);
+    } else {
+      window.harazdEventVehicles?.unmountEditor();
+    }
   }
 
   async function save(evt) {
@@ -302,6 +308,10 @@
       const operation = editingId ? db.from('warehouse_events').update(payload).eq('id',editingId) : db.from('warehouse_events').insert({...payload, created_by:session.user.id});
       const {data:saved,error} = await operation.select('id').single();
       if (error) throw error;
+      if (!editingId) {
+        editingId = saved.id;
+        el('eventDialogTitle').textContent = 'Редагувати івент';
+      }
       if (eventStaffReady && canEdit()) {
         const selected = [...el('eventAssignedStaff').querySelectorAll('input[type="checkbox"]:checked')].map(input=>input.value);
         const {error:assignmentError} = await db.rpc('warehouse_set_event_staff',{p_event_id:saved.id,p_user_ids:selected});
@@ -311,6 +321,13 @@
           return;
         }
       }
+      try {
+        await window.harazdEventVehicles?.saveEditor(saved.id);
+      } catch (vehicleError) {
+        el('eventFormNotice').textContent = 'Подію збережено, але автомобілі не оновлено. Перевірте налаштування автомобілів і повторіть збереження.';
+        console.warn('Event vehicles save:',vehicleError);
+        return;
+      }
       el('eventDialog').close();
       busy = false;
       await load();
@@ -318,7 +335,7 @@
       el('eventFormNotice').textContent = 'Не вдалося зберегти: ' + (err?.message || String(err));
     } finally {
       busy = false;
-      el('eventSave').disabled = false;
+      el('eventSave').disabled = !!editingId && !canEdit();
     }
   }
 
@@ -326,7 +343,7 @@
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
-  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;});
+  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventVehicles?.unmountEditor();});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
 
