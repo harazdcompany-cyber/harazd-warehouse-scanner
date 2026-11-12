@@ -192,3 +192,82 @@
     overflow-wrap:anywhere;
   }
 }
+
+/* Phone: compact event details and keep all sections within the dialog. */
+@media (max-width:650px) {
+  #eventDetailsDialog {
+    width:calc(100% - 24px);
+    max-width:calc(100% - 24px);
+    min-width:0;
+    max-height:calc(100dvh - 24px);
+    margin:auto;
+    padding:0;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+  #eventDetailsDialog .event-details-shell {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    max-height:calc(100dvh - 26px);
+    padding:16px;
+    box-sizing:border-box;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #eventDetailsDialog .event-details-heading {
+    align-items:center;
+    gap:12px;
+    margin:0 0 16px;
+  }
+  #eventDetailsDialog .event-details-heading > div {flex:1 1 auto;min-width:0;}
+  #eventDetailsDialog .event-details-heading h2 {
+    margin:4px 0 0;
+    font-size:19px;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  #eventDetailsDialog #eventDetailsClose {
+    flex:0 0 40px;
+    width:40px;
+    height:40px;
+    min-height:40px;
+    padding:0;
+    border-radius:10px;
+    font-size:20px;
+  }
+  #eventDetailsDialog #eventDetailsBody,
+  #eventDetailsDialog .event-view,
+  #eventDetailsDialog .event-view-hero,
+  #eventDetailsDialog .event-view-section {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #eventDetailsDialog .event-view {gap:12px;}
+  #eventDetailsDialog .event-view-hero {gap:10px;padding-bottom:12px;}
+  #eventDetailsDialog .event-view-hero-main {width:100%;min-width:0;gap:6px;}
+  #eventDetailsDialog .event-view-hero h3 {font-size:21px;line-height:1.2;}
+  #eventDetailsDialog .event-view-meta {gap:6px 12px;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-view-section {padding:14px;}
+  #eventDetailsDialog .event-view-section h3 {margin:0 0 10px;font-size:16px;line-height:1.3;}
+  #eventDetailsDialog .event-period-cards {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  #eventDetailsDialog .event-period-card {
+    width:100%;
+    min-width:0;
+    min-height:70px;
+    padding:10px;
+    gap:5px;
+    box-sizing:border-box;
+  }
+  #eventDetailsDialog .event-period-card small,
+  #eventDetailsDialog .event-period-card strong {overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-load-heading,
+  #eventDetailsDialog .event-loading-list {min-width:0;max-width:100%;}
+}
