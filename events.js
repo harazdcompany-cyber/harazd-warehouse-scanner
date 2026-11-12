@@ -6,7 +6,7 @@
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
-  let records = [], editingId = null, busy = false, activeDetailId = null;
+  let records = [], editingId = null, busy = false, activeDetailId = null, activeDetailRecord = null;
   let eventStaffReady = false, eventStaffRequestId = 0, detailStaffRequestId = 0;
   const canCreate = () => typeof staffAllowed === 'function' && staffAllowed('events_create');
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
@@ -115,6 +115,7 @@
     const title = el('eventDetailsTitle');
     const body = el('eventDetailsBody');
     activeDetailId = record.id;
+    activeDetailRecord = record;
     title.textContent = record.name || 'Івент';
     body.innerHTML = detailMarkup(record);
     const locationCopy = body.querySelector('[data-event-location-copy]');
@@ -226,6 +227,7 @@
     window.harazdEventVehicles?.unmount();
     window.harazdEventAccommodation?.unmount();
     activeDetailId = null;
+    activeDetailRecord = null;
     detailStaffRequestId++;
     if (dialog?.open) dialog.close();
   }
@@ -444,10 +446,11 @@
   el('eventDetailsBody').addEventListener('click', event => {
     const edit = event.target.closest('[data-event-detail-edit]');
     if (!edit) return;
-    const record = records.find(x => x.id === edit.dataset.eventDetailEdit);
+    const record = records.find(x => String(x.id) === edit.dataset.eventDetailEdit) ||
+      (String(activeDetailRecord?.id) === edit.dataset.eventDetailEdit ? activeDetailRecord : null);
     closeDetails();
     if (record) open(record);
   });
 
-  window.harazdEvents = {load};
+  window.harazdEvents = {load, openDetails};
 })();
