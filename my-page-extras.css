@@ -844,3 +844,129 @@
   }
   #myPageContactDialog .my-page-dialog-actions button {min-width:0;width:100%;min-height:42px;padding:10px 8px;}
 }
+
+/* Mobile only: align the personal information editor and constrain the iOS date field. */
+@media (max-width:650px) {
+  #myPageContactDialog {
+    width:calc(100vw - 24px);
+    width:calc(100dvw - 24px);
+    max-width:calc(100dvw - 24px);
+    min-width:0;
+    max-height:calc(100dvh - 24px);
+    margin:auto;
+    padding:16px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    box-sizing:border-box;
+  }
+  #myPageContactDialog,
+  #myPageContactDialog * {
+    box-sizing:border-box;
+  }
+  #myPageContactDialog #myPageContactForm {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+  #myPageContactDialog .my-page-dialog-head {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 40px;
+    align-items:start;
+    gap:12px;
+    width:100%;
+  }
+  #myPageContactDialog .my-page-dialog-head h2 {
+    min-width:0;
+    max-width:100%;
+    margin:0;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  #myPageContactDialog #myPageContactCancel {
+    width:40px;
+    min-width:40px;
+    height:40px;
+    min-height:40px;
+    padding:0;
+    justify-self:end;
+  }
+  #myPageContactDialog .my-page-photo-editor {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    grid-template-columns:52px minmax(0,1fr);
+  }
+  #myPageContactDialog .my-page-photo-editor-content,
+  #myPageContactDialog .my-page-photo-editor-actions {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+  #myPageContactDialog .my-page-photo-editor-actions button {
+    max-width:100%;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  #myPageContactDialog .my-page-form-grid {
+    display:grid;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    grid-template-columns:minmax(0,1fr);
+    gap:14px;
+  }
+  #myPageContactDialog .my-page-form-grid label {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+  }
+  #myPageContactDialog .my-page-form-grid input,
+  #myPageContactDialog .my-page-form-grid textarea {
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    font-size:16px;
+    box-sizing:border-box;
+  }
+  #myPageContactDialog input[name="birth_date"] {
+    display:block;
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-inline-size:0!important;
+    max-inline-size:100%!important;
+    height:45px;
+    padding:10px 12px;
+    line-height:1.3;
+    text-align:left;
+    text-align-last:left;
+    overflow:hidden;
+  }
+  #myPageContactDialog input[name="birth_date"]::-webkit-date-and-time-value {
+    width:100%;
+    min-width:0;
+    text-align:left;
+  }
+  #myPageContactDialog input[name="birth_date"]::-webkit-datetime-edit {
+    min-width:0;
+    max-width:100%;
+    padding:0;
+    text-align:left;
+  }
+  #myPageContactDialog .my-page-dialog-actions {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #myPageContactDialog .my-page-dialog-actions button {
+    min-width:0;
+    max-width:100%;
+  }
+}
