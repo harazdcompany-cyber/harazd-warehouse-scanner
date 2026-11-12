@@ -637,3 +637,163 @@
     max-width:100%;
   }
 }
+
+/* My Page: phone-only responsive layout for profile, calendar, events, tasks and repairs.
+   Desktop styles and all application behavior remain unchanged. */
+@media (max-width:650px) {
+  #my-page,
+  #my-page .my-page-layout,
+  #my-page .my-page-work {
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #my-page .my-page-layout > .panel,
+  #my-page .my-page-work > .panel {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    margin:0 0 14px;
+    padding:14px;
+    box-sizing:border-box;
+  }
+  #my-page .my-page-work > .panel:last-child { margin-bottom:0; }
+  #my-page .my-page-profile,
+  #my-page .my-page-identity,
+  #my-page .my-page-fields,
+  #my-page .my-page-field,
+  #my-page .my-page-about,
+  #my-page .my-page-entries,
+  #my-page .my-page-entry,
+  #my-page .my-page-entry-main,
+  #my-page .my-page-task-list,
+  #my-page .my-page-task,
+  #my-page .my-page-section-head,
+  #my-page .my-page-extra-head,
+  #my-page .my-calendar-toolbar,
+  #my-page .my-calendar-agenda {
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #my-page .my-page-heading {gap:10px;align-items:center;}
+  #my-page .my-page-heading h1 {font-size:clamp(21px,6vw,27px);}
+  #my-page .my-page-notifications-wrap {flex:0 0 auto;}
+  #my-page .my-page-identity {gap:12px;align-items:center;}
+  #my-page .my-page-avatar-wrap {flex:0 0 66px;min-width:66px;}
+  #my-page .my-page-avatar-wrap .my-page-avatar {
+    width:60px;height:60px;flex-basis:60px;
+  }
+  #my-page .my-page-identity > div:last-child {flex:1;min-width:0;}
+  #my-page .my-page-identity strong {font-size:16px;line-height:1.35;}
+  #my-page .my-page-account-actions {display:grid;grid-template-columns:minmax(0,1fr);gap:8px;}
+  #my-page .my-page-account-actions button {width:100%;max-width:100%;margin:0;min-width:0;}
+  #my-page .my-page-fields {grid-template-columns:minmax(0,1fr);}
+  #my-page .my-page-layout h2 {font-size:19px;line-height:1.3;margin-bottom:12px;}
+  #my-page .my-page-section-head {gap:9px;flex-wrap:wrap;}
+  #my-page .my-page-section-head h2 {margin:0;}
+  #my-page .my-page-count {flex:0 0 auto;}
+
+  /* Calendar: seven equal columns always fit the visible phone width. */
+  #my-page [aria-labelledby="myCalendarHeading"] .my-page-extra-head {
+    display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-toolbar {
+    display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch {
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;min-width:0;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-view-switch button {
+    width:100%;min-width:0;padding:8px 4px;font-size:12px;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-controls {
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:nowrap;gap:4px;width:100%;min-width:0;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-controls button {
+    flex:0 0 auto;min-width:30px;padding:7px 6px;font-size:12px;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] #myCalendarTitle {
+    flex:1 1 auto;min-width:0;max-width:none;
+    font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;
+  }
+  #my-page .my-calendar-grid {
+    display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+    gap:3px;width:100%;min-width:0;max-width:100%;
+  }
+  #my-page .my-calendar-grid.is-list {grid-template-columns:minmax(0,1fr);gap:7px;}
+  #my-page .my-calendar-weekday {
+    min-width:0;max-width:100%;padding:5px 0;font-size:10px;
+  }
+  #my-page .my-calendar-day,
+  #my-page .my-calendar-grid.is-week .my-calendar-day {
+    width:100%;max-width:100%;min-width:0;min-height:47px;
+    padding:6px 3px;font-size:12px;border-radius:7px;overflow:hidden;
+  }
+  #my-page .my-calendar-day-count {top:4px;right:3px;font-size:9px;}
+  #my-page .my-calendar-indicators {bottom:5px;left:3px;right:2px;gap:3px;}
+  #my-page .my-calendar-day .my-calendar-indicators i {
+    flex:0 0 5px;width:5px;height:5px;min-width:5px;min-height:5px;
+  }
+  #my-page .my-calendar-list-item {
+    width:100%;min-width:0;grid-template-columns:76px minmax(0,1fr);
+    gap:5px 8px;padding:10px;
+  }
+  #my-page .my-calendar-list-kind {grid-column:2;}
+  #my-page .my-calendar-list-title,
+  #my-page .my-calendar-list-stage {grid-column:1/-1;}
+  #my-page .my-calendar-legend {
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;width:100%;min-width:0;margin-top:12px;
+  }
+  #my-page [aria-labelledby="myCalendarHeading"] .my-calendar-type-filter {
+    display:flex;justify-content:center;gap:5px;width:100%;min-width:0;
+    padding:8px 4px;font-size:11px;white-space:nowrap;
+  }
+  #my-page .my-calendar-agenda-item {width:100%;min-width:0;padding:10px;}
+  #my-page .my-calendar-agenda-count {white-space:normal;}
+
+  /* Task filters: two columns, full-width assignment button below them. */
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head {
+    display:flex;flex-direction:column;align-items:stretch;gap:11px;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-extra-head-actions {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:stretch;gap:8px;width:100%;min-width:0;max-width:100%;
+    overflow:visible;padding:0;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskFilter,
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskSort {
+    flex:none;width:100%;max-width:100%;min-width:0;height:42px;
+    padding:0 9px;font-size:12px;text-overflow:ellipsis;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskNew {
+    display:block;grid-column:1/-1;justify-self:stretch;
+    width:100%;max-width:100%;min-width:0;min-height:42px;
+    margin:0;text-align:center;white-space:normal;font-size:13px;
+  }
+  #my-page [aria-labelledby="myTasksHeading"] #myTaskNew[hidden] {display:none!important;}
+  #my-page .my-page-task {width:100%;min-width:0;padding:12px;}
+  #my-page .my-page-task-line {gap:7px;align-items:flex-start;}
+  #my-page .my-page-task-line strong {min-width:0;overflow-wrap:anywhere;}
+  #my-page .my-page-task-controls {gap:9px;align-items:center;}
+  #my-page .my-page-task-controls label {min-width:0;flex-wrap:wrap;}
+  #my-page .my-page-task-controls select {min-width:0;max-width:100%;}
+  #my-page .my-page-task-actions {max-width:100%;flex-wrap:wrap;}
+  #my-page .my-task-checklist {min-width:0;}
+  #my-page .my-task-checklist-item {min-width:0;}
+
+  /* Event and repair cards: no long titles, labels or controls can widen the screen. */
+  #my-page .my-page-entry {width:100%;min-width:0;}
+  #my-page .my-page-entry summary {min-width:0;flex-wrap:wrap;gap:10px;padding:12px;}
+  #my-page .my-page-entry-detail {grid-template-columns:minmax(0,1fr);gap:8px;}
+  #my-page .my-page-entry-detail > * {min-width:0;overflow-wrap:anywhere;}
+  #my-page .my-page-repair-identity {min-width:0;max-width:100%;}
+  #my-page .my-page-entry-main strong,
+  #my-page .my-page-entry-main small {overflow-wrap:anywhere;}
+  #my-page .my-page-state {max-width:100%;white-space:normal;text-align:center;}
+  #my-page #myPageRepairs .my-page-repair-action-row {flex-wrap:wrap;}
+}
