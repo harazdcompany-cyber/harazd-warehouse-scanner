@@ -132,9 +132,38 @@
       }
       const people = (staff.data || []).filter(person => assignedIds.has(String(person.user_id)));
       const missing = Math.max(0, assignedIds.size - new Set(people.map(person => String(person.user_id))).size);
-      host.innerHTML = people.map(person =>
-        `<div class="event-detail-staff-person">${safe(person.full_name || 'Працівник')}${person.position ? ` <span>· ${safe(person.position)}</span>` : ''}</div>`
-      ).join('') + (missing ? '<div class="event-detail-staff-unavailable">Деякі призначені працівники недоступні.</div>' : '');
+      host.innerHTML = people.map(person => {
+        const name = String(person.full_name || 'Працівник').trim();
+        const initials = name.split(/\s+/).slice(0,2).map(part => part[0] || '').join('').toUpperCase() || '?';
+        return `<div class="event-detail-staff-person"><span class="event-detail-staff-avatar" data-event-staff-avatar="${safe(person.user_id)}">${safe(initials)}</span><div class="event-detail-staff-text"><strong>${safe(name)}</strong><small>${safe(person.position || 'Посаду не вказано')}</small></div></div>`;
+      }).join('') + (missing ? '<div class="event-detail-staff-unavailable">Деякі призначені працівники недоступні.</div>' : '');
+      if (!people.length) return;
+      try {
+        const avatarRows = await db.from('warehouse_staff_avatar')
+          .select('user_id,photo_path').in('user_id', people.map(person => person.user_id));
+        if (avatarRows.error) throw avatarRows.error;
+        const signed = await Promise.all((avatarRows.data || []).filter(row => row.photo_path).map(async row => {
+          try {
+            const response = await db.storage.from('warehouse-avatars').createSignedUrl(row.photo_path, 3600);
+            return response.error || !response.data?.signedUrl ? null : {id:String(row.user_id), url:response.data.signedUrl};
+          } catch (_) { return null; }
+        }));
+        if (requestId !== detailStaffRequestId || activeDetailId !== eventId ||
+            !el('eventDetailsDialog')?.open || el('eventDetailsStaff') !== host) return;
+        const urls = new Map(signed.filter(Boolean).map(row => [row.id,row.url]));
+        host.querySelectorAll('[data-event-staff-avatar]').forEach(avatar => {
+          const url = urls.get(avatar.dataset.eventStaffAvatar);
+          if (!url) return;
+          const image = document.createElement('img');
+          image.alt = '';
+          image.loading = 'lazy';
+          image.onerror = () => image.remove();
+          image.src = url;
+          avatar.appendChild(image);
+        });
+      } catch (avatarError) {
+        console.warn('Event staff avatars:', avatarError);
+      }
     } catch (error) {
       if (requestId !== detailStaffRequestId || activeDetailId !== eventId ||
           !el('eventDetailsDialog')?.open || el('eventDetailsStaff') !== host) return;
