@@ -313,6 +313,10 @@
     el('eventDialogTitle').textContent = record ? 'Редагувати івент' : 'Новий івент';
     el('eventFormNotice').textContent = '';
     el('eventEditAddEquipment').hidden = !record || !canEdit();
+    const quoteHost = el('eventQuoteEditor');
+    quoteHost.hidden = !record || !canEdit();
+    window.harazdEventQuote?.unmount();
+    if (record && canEdit()) window.harazdEventQuote?.mount(record.id, quoteHost, record);
     el('eventSave').disabled = false;
     el('eventDialog').showModal();
     loadEventStaff(record,++eventStaffRequestId);
@@ -408,7 +412,7 @@
   el('eventEditAddEquipment').addEventListener('click', () => {
     if (editingId && canEdit()) window.harazdEventEquipment?.open(editingId);
   });
-  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventVehicles?.unmountEditor();window.harazdEventAccommodation?.unmountEditor();});
+  el('eventDialog').addEventListener('close',()=>{eventStaffRequestId++;eventStaffReady=false;window.harazdEventQuote?.unmount();window.harazdEventVehicles?.unmountEditor();window.harazdEventAccommodation?.unmountEditor();});
   el('eventForm').addEventListener('submit', save);
   ['eventSearch','eventStatusFilter','eventSort'].forEach(id => el(id).addEventListener(id === 'eventSearch' ? 'input' : 'change', render));
 
