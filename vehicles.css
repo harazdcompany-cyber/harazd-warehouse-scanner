@@ -144,3 +144,27 @@ body *::-webkit-scrollbar {
   .vehicle-content .grid{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.vehicle-content .vehicle{transition:none}}
+
+/* Phone only: vehicle add action matches the Packaging heading action. */
+@media (max-width:650px) {
+  .vehicle-content .heading:has(#addVehicle) {
+    flex-wrap:nowrap;
+    align-items:center;
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .vehicle-content .heading #addVehicle {
+    flex:0 0 auto;
+    width:auto;
+    margin:0;
+    padding:11px 16px;
+    border-radius:13px;
+    border-color:#baff19;
+    background:#baff19;
+    color:#0a1020;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 6px 23px rgba(186,255,25,.12);
+    white-space:nowrap;
+  }
+}
