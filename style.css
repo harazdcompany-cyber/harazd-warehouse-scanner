@@ -1569,3 +1569,7 @@ body *::-webkit-scrollbar {
     box-sizing:border-box;
   }
 }
+
+/* Delete action on personnel cards. */
+#personnel .staff-card button[data-staff-delete] {border:1px solid #a83f52;background:#1b2b39;color:#ffb3c1;font-weight:700;}
+#personnel .staff-card button[data-staff-delete]:hover {border-color:#d35d70;background:#243445;}
