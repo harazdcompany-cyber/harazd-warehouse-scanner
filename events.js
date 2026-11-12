@@ -83,6 +83,11 @@
           <div id="eventDetailsStaff" aria-live="polite">Завантаження…</div>
         </section>
 
+        <section class="event-view-section event-detail-vehicles">
+          <h3>Автомобілі</h3>
+          <div id="eventDetailsVehicles" aria-live="polite">Завантаження…</div>
+        </section>
+
         <section class="event-view-section event-load-section">
           <div class="event-load-heading">
             <div>
@@ -109,6 +114,8 @@
     body.innerHTML = detailMarkup(record);
     if (!dialog.open) dialog.showModal();
     loadDetailStaff(record.id, ++detailStaffRequestId);
+    const vehiclesHost = el('eventDetailsVehicles');
+    if (vehiclesHost) window.harazdEventVehicles?.mount(record.id, vehiclesHost, canEdit());
     const host = el('eventDetailsEquipment');
     if (host) window.harazdEventEquipment?.mountInline(record.id, host);
   }
@@ -175,6 +182,7 @@
   function closeDetails() {
     const dialog = el('eventDetailsDialog');
     window.harazdEventEquipment?.unmountInline();
+    window.harazdEventVehicles?.unmount();
     activeDetailId = null;
     detailStaffRequestId++;
     if (dialog?.open) dialog.close();
