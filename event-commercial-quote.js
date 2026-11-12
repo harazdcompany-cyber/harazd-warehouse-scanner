@@ -61,7 +61,8 @@
       }).join('');
       return `<section class="event-quote-category"><h3>${esc(group.name)}</h3><div class="event-quote-scroll"><table><thead><tr><th>№</th><th>Найменування та інформація</th><th>Кількість</th><th>Од.</th><th>Ціна, грн</th><th>Дні</th><th>Знижка, %</th><th>ПДВ, %</th><th>Сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
     }).join('');
-    state.host.innerHTML = `<div class="event-quote-head"><strong>Комерційна пропозиція</strong><div class="event-quote-actions"><button type="button" data-quote-refresh>Оновити список</button><button type="button" data-quote-print>Друк / PDF</button></div></div><p class="event-quote-hint">Обладнання спільне з листом погрузки. Кількість днів розраховується за датами події включно. Вкажіть ціну, знижку та ПДВ для кожної позиції. Зміни зберігаються автоматично.</p>${groups || '<p class="event-quote-hint">Додайте обладнання до події.</p>'}<div class="event-quote-totals"><span>Без ПДВ: <strong>${eventDuration === null ? '—' : money(net)}</strong></span><span>ПДВ: <strong>${eventDuration === null ? '—' : money(vat)}</strong></span><span>Разом: <strong>${eventDuration === null ? '—' : money(total)}</strong></span></div>${eventDuration === null ? '<p class="event-quote-hint">Вкажіть коректні дати події для розрахунку.</p>' : ''}${missing ? '<p class="event-quote-hint">Є позиції без збереженої ціни. Підсумок може бути неповним.</p>' : ''}<p data-quote-notice role="status" aria-live="polite"></p>`;
+    state.host.innerHTML = `<div class="event-quote-head"><strong>Комерційна пропозиція</strong><div class="event-quote-actions"><button type="button" data-quote-refresh>Оновити список</button><button type="button" data-quote-print>Друк / PDF</button></div></div><p class="event-quote-hint">Обладнання спільне з листом погрузки. Кількість днів розраховується за датами події включно. ${state.readOnly ? 'Режим перегляду.' : 'Вкажіть ціну, знижку та ПДВ для кожної позиції. Зміни зберігаються автоматично.'}</p>${groups || '<p class="event-quote-hint">Додайте обладнання до події.</p>'}<div class="event-quote-totals"><span>Без ПДВ: <strong>${eventDuration === null ? '—' : money(net)}</strong></span><span>ПДВ: <strong>${eventDuration === null ? '—' : money(vat)}</strong></span><span>Разом: <strong>${eventDuration === null ? '—' : money(total)}</strong></span></div>${eventDuration === null ? '<p class="event-quote-hint">Вкажіть коректні дати події для розрахунку.</p>' : ''}${missing ? '<p class="event-quote-hint">Є позиції без збереженої ціни. Підсумок може бути неповним.</p>' : ''}<p data-quote-notice role="status" aria-live="polite"></p>`;
+    if (state.readOnly) state.host.querySelectorAll('[data-quote-field]').forEach(field=>field.readOnly=true);
   }
   async function load(state) {
     const token=++request; notice(state,'Завантаження…');
@@ -85,6 +86,7 @@
     state.items=items.data||[]; state.prices=prices.data||[]; render(state);
   }
   async function save(state,row) {
+    if (state.readOnly) return;
     const get=key=>row.querySelector('[data-quote-field="'+key+'"]').value.trim();
     const rawPrice=get('unit_price');
     const sourceDescription=String(state.items.find(item=>String(item.equipment_id)===String(row.dataset.quoteRow))?.equipment?.description || '').trim();
@@ -129,11 +131,11 @@
     popup.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Комерційна пропозиція</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial,sans-serif;color:#111}h1{font-size:21px}h2{font-size:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #777;padding:6px;text-align:left;vertical-align:top}th{background:#eee}.total{text-align:right;font-size:15px;font-weight:bold;margin-top:14px}</style></head><body><h1>Комерційна пропозиція</h1><h2>${esc(state.record?.name||'Подія')}</h2><p>Замовник: ${esc(state.record?.client||'—')}</p>${tables}<p class="total">Всього з ПДВ: ${money(total)}</p></body></html>`);
     popup.document.close();popup.focus();popup.print();
   }
-  function mount(id,host,record,form) {
-    current={id,host,record,form,items:[],prices:[]}; const state=current;
+  function mount(id,host,record,form,options = {}) {
+    current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[]}; const state=current;
     host.innerHTML='<p data-quote-notice>Завантаження…</p>';
     host.addEventListener('click',e=>{if(e.target.closest('[data-quote-refresh]'))load(state);if(e.target.closest('[data-quote-print]'))printQuote(state);},{signal:(state.controller=new AbortController()).signal});
-    host.addEventListener('change',e=>{const row=e.target.closest('[data-quote-row]');if(row&&e.target.matches('[data-quote-field]'))save(state,row);},{signal:state.controller.signal});
+    host.addEventListener('change',e=>{const row=e.target.closest('[data-quote-row]');if(!state.readOnly&&row&&e.target.matches('[data-quote-field]'))save(state,row);},{signal:state.controller.signal});
     form = form || host.closest?.('form');
     form?.addEventListener('change',e=>{
       if (!['event_date','event_end_date'].includes(e.target.name) || current!==state) return;
