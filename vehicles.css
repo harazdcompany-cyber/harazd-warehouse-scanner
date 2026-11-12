@@ -145,26 +145,40 @@ body *::-webkit-scrollbar {
 }
 @media(prefers-reduced-motion:reduce){.vehicle-content .vehicle{transition:none}}
 
-/* Phone only: vehicle add action matches the Packaging heading action. */
+/* Phone only: vehicle add action matches Packaging and fits the available width. */
 @media (max-width:650px) {
   .vehicle-content .heading:has(#addVehicle) {
-    flex-wrap:nowrap;
+    display:grid;
+    grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
     align-items:center;
-    gap:16px;
+    gap:10px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
     margin-bottom:22px;
   }
-  .vehicle-content .heading #addVehicle {
-    flex:0 0 auto;
-    width:auto;
+  .vehicle-content .heading:has(#addVehicle) h1 {
+    min-width:0;
     margin:0;
-    padding:11px 16px;
+    font-size:clamp(20px,7vw,28px);
+    overflow-wrap:anywhere;
+  }
+  .vehicle-content .heading #addVehicle {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:42px;
+    margin:0;
+    padding:10px 8px;
     border-radius:13px;
     border-color:#baff19;
     background:#baff19;
     color:#0a1020;
-    font-size:14px;
+    font-size:clamp(11px,3.2vw,13px);
+    line-height:1.3;
     font-weight:800;
     box-shadow:0 6px 23px rgba(186,255,25,.12);
-    white-space:nowrap;
+    white-space:normal;
+    overflow-wrap:anywhere;
   }
 }
