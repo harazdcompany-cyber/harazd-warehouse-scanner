@@ -76,7 +76,11 @@
             <div><small>Місто / локація</small><strong>${safe(e.location || '—')}</strong></div>
           </div>
           <div class="event-detail-notes${notes ? '' : ' is-empty'}"><small>Примітки</small><p>${notes ? safe(notes) : '—'}</p></div>
-          <div class="event-detail-staff"><small>Призначені працівники</small><div id="eventDetailsStaff" aria-live="polite">Завантаження…</div></div>
+        </section>
+
+        <section class="event-view-section event-detail-staff">
+          <h3>Персонал</h3>
+          <div id="eventDetailsStaff" aria-live="polite">Завантаження…</div>
         </section>
 
         <section class="event-view-section event-load-section">
