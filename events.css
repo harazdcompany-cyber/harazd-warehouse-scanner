@@ -948,3 +948,18 @@
 /* Category headings above each quotation table. */
 #eventQuoteDialog .event-quote-category {min-width:0;margin-top:18px;}
 #eventQuoteDialog .event-quote-category h3 {margin:0 0 8px;color:#e8f1ff;font-size:15px;line-height:1.3;overflow-wrap:anywhere;}
+
+
+/* Event editor links and full-screen loading list. */
+#eventDialog .event-editor-documents {display:flex;gap:10px;flex-wrap:wrap;min-width:0;}
+#eventDialog .event-editor-documents button[hidden] {display:none;}
+#eventManifestDialog {position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#111c2f;color:#eef4ff;box-sizing:border-box;overflow:auto;}
+#eventManifestDialog::backdrop {background:rgba(3,8,14,.85);backdrop-filter:blur(4px);}
+#eventManifestDialog .event-quote-shell {width:100%;max-width:1600px;min-height:100%;margin:0 auto;padding:24px;box-sizing:border-box;}
+#eventManifestDialog .event-quote-window-head {display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;}
+#eventManifestDialog .event-quote-window-head h2 {margin:0;font-size:22px;line-height:1.25;}
+#eventManifestDialog #eventManifestName {margin:7px 0 0;color:#a9bfd4;overflow-wrap:anywhere;}
+#eventManifestDialog #eventManifestClose {display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:1px solid #40556e;border-radius:12px;background:#101b29;color:#eff5ff;font-size:21px;}
+#eventManifestDialog #eventManifestEditor {padding:14px;border:1px solid #304456;border-radius:12px;background:#111b27;}
+@media (hover:hover) {#eventManifestDialog #eventManifestClose:hover {border-color:#baff19;background:#2a3c35;color:#d5ff72;}}
+@media(max-width:650px) {#eventDialog .event-editor-documents {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));} #eventDialog .event-editor-documents button {min-width:0;width:100%;padding:10px 6px;} #eventManifestDialog .event-quote-shell {padding:16px;} #eventManifestDialog #eventManifestEditor {min-width:0;overflow-x:auto;}}
