@@ -1139,7 +1139,8 @@
     max-width:100%;
     margin:0;
   }
-  #my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions > button {
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions > [data-my-task-edit],
+  #my-page [aria-labelledby="myTasksHeading"] .my-page-task-actions > [data-my-task-delete] {
     flex:1 1 0;
     width:0;
     min-width:0;
