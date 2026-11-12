@@ -687,3 +687,16 @@
     z-index:2100;
   }
 }
+
+/* Phone: accommodation follows vehicles in the event details. */
+#eventDetailsDialog .event-detail-accommodation {display:none;}
+@media (max-width:650px) {
+  #eventDetailsDialog .event-view > .event-detail-accommodation {display:block;order:5;}
+  #eventDetailsDialog .event-view > .event-load-section {order:6;}
+  #eventDetailsDialog .event-accommodation-empty {
+    margin:0;
+    color:#9fb6cc;
+    font-size:13px;
+    line-height:1.4;
+  }
+}
