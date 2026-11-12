@@ -1411,3 +1411,115 @@ body *::-webkit-scrollbar {
   #repairs .repair-row-info > p {grid-row:3;}
   #repairs .repair-row-info > small {grid-row:4;font-size:12px;line-height:1.35;}
 }
+
+/* Repair editor: keep every control inside the phone viewport. */
+@media (max-width:650px) {
+  #repairDialog {
+    width:calc(100% - 20px);
+    max-width:calc(100% - 20px);
+    min-width:0;
+    max-height:calc(100dvh - 20px);
+    margin:auto;
+    padding:16px;
+    box-sizing:border-box;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #repairDialog #repairForm,
+  #repairDialog .repair-form-grid,
+  #repairDialog .repair-form-grid > *,
+  #repairDialog .repair-equipment-input,
+  #repairDialog .repair-photos-field,
+  #repairDialog .repair-edit-extras {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #repairDialog .detail-eyebrow {font-size:11px;}
+  #repairDialog #repairDialogTitle {
+    margin:10px 0 16px;
+    font-size:20px;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  #repairDialog .repair-form-grid {
+    grid-template-columns:minmax(0,1fr);
+    gap:12px;
+  }
+  #repairDialog .repair-form-grid label {
+    min-width:0;
+    max-width:100%;
+    gap:6px;
+  }
+  #repairDialog .repair-form-grid input:not([type="hidden"]):not([type="file"]),
+  #repairDialog .repair-form-grid select,
+  #repairDialog .repair-form-grid textarea {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    margin:0;
+    padding:10px 12px;
+    font-size:16px;
+    line-height:1.3;
+    box-sizing:border-box;
+  }
+  #repairDialog .repair-form-grid input[type="date"] {
+    -webkit-appearance:none;
+    appearance:none;
+    min-inline-size:0;
+    max-inline-size:100%;
+    height:44px;
+    text-align:left;
+    overflow:hidden;
+  }
+  #repairDialog input[type="date"]::-webkit-date-and-time-value {text-align:left;min-width:0;}
+  #repairDialog input[type="date"]::-webkit-datetime-edit {min-width:0;max-width:100%;padding:0;}
+  #repairDialog .repair-form-grid textarea {min-height:84px;resize:vertical;}
+  #repairDialog .repair-equipment-input {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(74px,auto);
+    align-items:stretch;
+    gap:8px;
+  }
+  #repairDialog #repairEquipmentSearch {min-width:0;width:100%;}
+  #repairDialog #repairCameraButton {
+    min-width:0;
+    max-width:112px;
+    min-height:44px;
+    padding:6px 8px;
+    font-size:12px;
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  #repairDialog .repair-equipment-selected {overflow-wrap:anywhere;}
+  #repairDialog .repair-equipment-results {max-width:100%;box-sizing:border-box;}
+  #repairDialog .repair-camera-area,
+  #repairDialog #repairCameraReader {min-width:0;width:100%;max-width:100%;box-sizing:border-box;}
+  #repairDialog #repairCameraReader video {max-width:100%;}
+  #repairDialog .repair-photo-label {gap:8px;flex-wrap:wrap;}
+  #repairDialog .repair-photo-drop {width:100%;min-width:0;min-height:120px;padding:12px;box-sizing:border-box;}
+  #repairDialog .repair-photo-drop small {overflow-wrap:anywhere;}
+  #repairDialog #repairForm > .actions {
+    display:flex;
+    flex-wrap:nowrap;
+    gap:8px;
+    width:100%;
+    min-width:0;
+  }
+  #repairDialog #repairForm > .actions > button {
+    flex:1 1 0;
+    min-width:0;
+    min-height:44px;
+    margin:0;
+    padding:8px 5px;
+    font-size:clamp(11px,3.2vw,14px);
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
