@@ -1262,3 +1262,20 @@
     overflow-wrap:anywhere;
   }
 }
+
+/* Task editor: align controls and highlight available actions. */
+@media (min-width:651px) {
+  #myTaskDialog .my-page-form-grid > label {min-width:0;align-self:start;}
+  #myTaskDialog .my-page-form-grid > label > input,
+  #myTaskDialog .my-page-form-grid > label > select,
+  #myTaskDialog .my-page-form-grid > label > .hd-select {width:100%;min-width:0;max-width:100%;box-sizing:border-box;}
+  #myTaskDialog .my-page-form-grid > label > input,
+  #myTaskDialog .my-page-form-grid > label > select {height:44px;min-height:44px;}
+  #myTaskDialog .my-page-dialog-head {align-items:center;gap:16px;}
+  #myTaskDialog .my-task-checklist-editor-head {align-items:center;}
+}
+@media (hover:hover) {
+  #myTaskDialog button:not(:disabled):hover {border-color:#baff19;background:#2a3c35;color:#d5ff72;}
+  #myTaskDialog button.primary:not(:disabled):hover {border-color:#d6ff72;background:#d6ff38;color:#101b10;}
+}
+#myTaskDialog button:focus-visible {outline:2px solid #baff19;outline-offset:2px;}
