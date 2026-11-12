@@ -909,3 +909,24 @@
 #eventDetailsDialog #eventDetailsClose:focus-visible {
   outline:2px solid #baff19;outline-offset:2px;
 }
+
+/* Commercial prices for equipment in the event editor. */
+#eventDialog .event-quote-editor {min-width:0;max-width:100%;padding:14px;border:1px solid #304456;border-radius:12px;background:#111b27;box-sizing:border-box;}
+#eventDialog .event-quote-editor[hidden] {display:none;}
+#eventDialog .event-quote-head {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+#eventDialog .event-quote-hint {margin:10px 0;color:#a9bfd4;font-size:12px;line-height:1.5;}
+#eventDialog .event-quote-scroll {max-width:100%;overflow-x:auto;}
+#eventDialog .event-quote-scroll table {width:100%;min-width:900px;border-collapse:collapse;font-size:12px;}
+#eventDialog .event-quote-scroll th,#eventDialog .event-quote-scroll td {padding:8px;border-bottom:1px solid #304456;text-align:left;vertical-align:middle;}
+#eventDialog .event-quote-scroll th {color:#a9bfd4;font-weight:600;}
+#eventDialog .event-quote-scroll td small {display:block;color:#a9bfd4;}
+#eventDialog .event-quote-scroll input {width:90px;min-width:0;min-height:38px;padding:7px;background:#0b1521;border:1px solid #40566f;border-radius:8px;color:#f5f8ff;box-sizing:border-box;}
+#eventDialog .event-quote-scroll td:nth-child(2) input {display:block;width:200px;margin-top:6px;}
+#eventDialog .event-quote-scroll td:nth-child(4) input {width:65px;}
+#eventDialog .event-quote-totals {display:flex;justify-content:flex-end;gap:16px;flex-wrap:wrap;padding-top:14px;color:#c7d8e9;}
+#eventDialog .event-quote-totals strong {color:#f5f8ff;}
+#eventDialog .event-quote-editor [data-quote-notice] {margin:8px 0 0;font-size:12px;color:#a9bfd4;}
+#eventDialog .event-quote-editor [data-quote-notice]:empty {display:none;}
+#eventDialog .event-quote-editor [data-quote-notice].is-error {color:#ffb6bf;}
+
+#eventDialog .event-quote-actions {display:flex;gap:8px;flex-wrap:wrap;}
