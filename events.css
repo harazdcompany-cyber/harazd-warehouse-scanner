@@ -814,12 +814,6 @@
   #eventDetailsDialog .event-view > .event-detail-vehicles {display:block;order:4;}
   #eventDetailsDialog .event-view > .event-detail-accommodation {display:block;order:5;}
   #eventDetailsDialog .event-view > .event-load-section {order:6;}
-  #eventDetailsDialog .event-period-cards {grid-template-columns:minmax(0,1fr);gap:8px;width:100%;}
-  #eventDetailsDialog .event-period-card {
-    display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
-    gap:8px 12px;width:100%;min-width:0;min-height:44px;padding:10px 12px;
-  }
-  #eventDetailsDialog .event-period-card strong {text-align:right;}
   #eventDetailsDialog #eventDetailsStaff,
   #eventDetailsDialog .event-vehicles-list {display:grid;gap:10px;min-width:0;}
   #eventDetailsDialog .event-detail-staff-person,
