@@ -14,7 +14,7 @@
    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('uk-UA');
  };
  const info = (label,value) => `<div class="my-page-field"><small>${safe(label)}</small><strong>${safe(value ?? '—')}</strong></div>`;
- let requestId = 0;
+ let requestId = 0, assignedEvents = [];
  let currentUser = null, currentProfile = null, currentContact = null, contactsReady = false;
  function displayProfile(user, profile, contact = {}, ready = false) {
    const name = profile?.full_name || user?.user_metadata?.full_name || 'Працівник';
@@ -103,14 +103,16 @@
    }).join('') : '<p class="my-page-empty">Наразі вам не призначено ремонтів.</p>';
  }
  function eventView(data) {
+   assignedEvents = data;
    el('myEventsCount').textContent = String(data.length);
    el('myPageEvents').innerHTML = data.length ? data.map(event => {
      const label = eventStatuses[event.status] || event.status || '—';
-     return `<details class="my-page-entry" data-my-event-id="${safe(event.id || '')}"><summary><span class="my-page-entry-main"><strong>${safe(event.name)}</strong><small>${safe(prettyDate(event.event_date))}${event.event_end_date && event.event_end_date !== event.event_date ? ' – '+safe(prettyDate(event.event_end_date)) : ''} · ${safe(event.location || 'Без локації')}</small></span><span class="my-page-state ${event.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Монтаж',prettyDate(event.setup_date))}${info('Подія',prettyDate(event.event_date))}${info('Демонтаж',prettyDate(event.teardown_date))}${info('Локація',event.location || '—')}${info('Замовник',event.client || '—')}</div></details>`;
+     return `<details class="my-page-entry" data-my-event-id="${safe(event.id || '')}"><summary><span class="my-page-entry-main"><strong>${safe(event.name)}</strong><small>${safe(prettyDate(event.event_date))}${event.event_end_date && event.event_end_date !== event.event_date ? ' – '+safe(prettyDate(event.event_end_date)) : ''} · ${safe(event.location || 'Без локації')}</small></span><span class="my-page-state ${event.status==='done'?'my-page-state-done':''}">${safe(label)}</span></summary><div class="my-page-entry-detail">${info('Монтаж',prettyDate(event.setup_date))}${info('Подія',prettyDate(event.event_date))}${info('Демонтаж',prettyDate(event.teardown_date))}${info('Локація',event.location || '—')}${info('Замовник',event.client || '—')}</div><div class="my-page-event-action-row"><button type="button" class="primary" data-my-event-open="${safe(event.id || '')}">Вся інформація</button></div></details>`;
    }).join('') : '<p class="my-page-empty">Вам ще не призначено подій. Адміністратор може призначити вас під час редагування івенту.</p>';
  }
  async function load() {
    const key = ++requestId;
+   assignedEvents = [];
    if (!el('myPageProfile')) return;
    window.harazdMyPageRepairs?.reset();
    currentUser=null;currentProfile=null;currentContact=null;contactsReady=false;
@@ -195,6 +197,14 @@
      el('myPageProfile').innerHTML = '<p class="my-page-empty">Дані профілю недоступні.</p>';
    }
  }
+ el('myPageEvents')?.addEventListener('click', event => {
+   const button = event.target.closest('[data-my-event-open]');
+   if (!button) return;
+   const record = assignedEvents.find(item => String(item.id) === button.dataset.myEventOpen);
+   if (!record) return;
+   if (typeof window.harazdEvents?.openDetails === 'function') window.harazdEvents.openDetails(record);
+   else if (typeof toast === 'function') toast('Не вдалося відкрити інформацію про подію. Оновіть сторінку.',true);
+ });
  // Hide a broken equipment image without leaving an empty thumbnail.
  el('myPageRepairs')?.addEventListener('error',event=>{
    if (event.target instanceof HTMLImageElement && event.target.closest('.my-page-repair-photo')) {
