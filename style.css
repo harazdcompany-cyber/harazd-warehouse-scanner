@@ -1296,3 +1296,11 @@ body *::-webkit-scrollbar {
     background:transparent;
   }
 }
+
+/* Mobile: let the vehicles module grow with its content so only the main page scrolls. */
+@media (max-width:650px) {
+  body:not(.vehicle-dialog-visible) #vehiclesFrame {
+    height:var(--vehicle-content-height, calc(100dvh - 76px));
+    min-height:0;
+  }
+}
