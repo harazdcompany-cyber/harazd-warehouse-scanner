@@ -154,3 +154,12 @@
   #myPageRepairDialog .my-page-dialog-actions button{flex:1 1 140px}
   #myPageRepairDialog .my-page-repair-photo-thumb{width:64px;height:64px}
 }
+
+/* Event details action on the personal page. */
+#my-page #myPageEvents .my-page-event-action-row {
+  display:flex;justify-content:flex-end;padding:10px 13px;border-top:1px solid #304456;
+}
+#my-page #myPageEvents .my-page-event-action-row button {min-height:40px;}
+@media (max-width:650px) {
+  #my-page #myPageEvents .my-page-event-action-row button {width:100%;}
+}
