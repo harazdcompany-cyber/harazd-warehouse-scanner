@@ -73,7 +73,7 @@
             <div><small>Назва заходу</small><strong>${safe(e.name)}</strong></div>
             <div><small>Статус</small><strong>${eventStatus}</strong></div>
             <div><small>Замовник</small><strong>${safe(e.client || '—')}</strong></div>
-            <div><small>Місто / локація</small><strong>${safe(e.location || '—')}</strong></div>
+            <div><small>Місто / локація</small><div class="event-detail-location-value"><strong>${safe(e.location || '—')}</strong>${e.location ? '<button type="button" class="event-accommodation-copy event-detail-location-copy" data-event-location-copy aria-label="Скопіювати локацію" title="Скопіювати локацію"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></button>' : ''}</div><span class="event-accommodation-copy-status" data-event-location-status role="status" aria-live="polite"></span></div>
           </div>
           <div class="event-detail-notes${notes ? '' : ' is-empty'}"><small>Примітки</small><p>${notes ? safe(notes) : '—'}</p></div>
         </section>
@@ -117,6 +117,40 @@
     activeDetailId = record.id;
     title.textContent = record.name || 'Івент';
     body.innerHTML = detailMarkup(record);
+    const locationCopy = body.querySelector('[data-event-location-copy]');
+    if (locationCopy) locationCopy.addEventListener('click', async () => {
+      const location = String(record.location);
+      let copied = false;
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(location);
+          copied = true;
+        }
+      } catch (_) { /* Try selection-based copy below. */ }
+      if (!copied) {
+        const field = document.createElement('textarea');
+        field.value = location;
+        field.readOnly = true;
+        field.tabIndex = -1;
+        field.setAttribute('aria-hidden', 'true');
+        Object.assign(field.style, {position:'fixed',top:'0',left:'0',width:'1px',height:'1px',opacity:'0'});
+        dialog.appendChild(field);
+        try {
+          field.focus({preventScroll:true});
+          field.select();
+          field.setSelectionRange(0, field.value.length);
+          copied = document.execCommand('copy');
+        } catch (_) {
+          copied = false;
+        } finally {
+          field.remove();
+        }
+      }
+      if (dialog.open && activeDetailId === record.id && body.contains(locationCopy)) {
+        const status = body.querySelector('[data-event-location-status]');
+        if (status) status.textContent = copied ? 'Локацію скопійовано' : 'Не вдалося скопіювати локацію';
+      }
+    });
     if (!dialog.open) dialog.showModal();
     loadDetailStaff(record.id, ++detailStaffRequestId);
     const vehiclesHost = el('eventDetailsVehicles');
