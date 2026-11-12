@@ -597,3 +597,43 @@
   #myTaskDialog .my-page-dialog-actions{bottom:-17px}
   #myTaskDialog .my-page-form-grid{gap:12px}
 }
+
+/* Phone-only notification positioning: anchor popover to the whole page heading,
+   not the bell; this prevents the panel from extending off the right edge. */
+@media (max-width: 650px) {
+  #my-page { width:100%; max-width:100%; min-width:0; }
+  #my-page .my-page-heading {
+    position:relative;
+    z-index:20;
+    width:100%;
+    min-width:0;
+  }
+  #my-page .my-page-notifications-wrap {
+    position:static;
+    min-width:0;
+    margin-left:auto;
+  }
+  #my-page #myPageNotificationToggle {
+    max-width:100%;
+    padding-inline:10px;
+    font-size:12px;
+  }
+  #my-page #myPageNotificationPanel {
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    right:0;
+    width:100%;
+    max-width:100%;
+    max-height:min(60dvh,480px);
+    box-sizing:border-box;
+    z-index:40;
+  }
+  #my-page .my-page-layout,
+  #my-page .my-page-work,
+  #my-page .my-page-layout > .panel {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+}
