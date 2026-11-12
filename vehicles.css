@@ -182,3 +182,20 @@ body *::-webkit-scrollbar {
     overflow-wrap:anywhere;
   }
 }
+
+/* Phone only: hide scrollbar tracks while preserving all scrolling. */
+@media (max-width:650px) {
+  *, *::before, *::after {
+    scrollbar-width:none!important;
+  }
+  *::-webkit-scrollbar {
+    display:none!important;
+    width:0!important;
+    height:0!important;
+  }
+}
+
+/* Phone only: omit the three vehicle overview counters. */
+@media (max-width:650px) {
+  #vehicleStats {display:none!important;}
+}
