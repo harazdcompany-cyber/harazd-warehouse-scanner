@@ -816,6 +816,7 @@
   #eventDetailsDialog .event-view > .event-load-section {order:6;}
   #eventDetailsDialog #eventDetailsStaff,
   #eventDetailsDialog .event-vehicles-list {display:grid;gap:10px;min-width:0;}
+  #eventDetailsDialog #eventDetailsStaff {grid-template-columns:repeat(2,minmax(0,1fr));}
   #eventDetailsDialog .event-detail-staff-person,
   #eventDetailsDialog .event-vehicle-row {display:flex;align-items:center;gap:10px;min-width:0;}
   #eventDetailsDialog .event-detail-staff-avatar,
