@@ -88,6 +88,11 @@
           <div id="eventDetailsVehicles" aria-live="polite">Завантаження…</div>
         </section>
 
+        <section class="event-view-section event-detail-accommodation">
+          <h3>Проживання</h3>
+          <p class="event-accommodation-empty">Інформацію ще не додано.</p>
+        </section>
+
         <section class="event-view-section event-load-section">
           <div class="event-load-heading">
             <div>
