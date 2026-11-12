@@ -674,3 +674,16 @@
     font-size:13px;
   }
 }
+
+/* Phone: allow the driver menu to extend beyond the vehicle list. */
+@media (max-width:650px) {
+  #eventDialog .event-vehicle-editor-list {
+    max-height:none;
+    overflow:visible;
+    overscroll-behavior:auto;
+  }
+  #eventDialog .event-edit-vehicle:has(.hd-select.hd-open) {
+    position:relative;
+    z-index:2100;
+  }
+}
