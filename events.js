@@ -33,6 +33,7 @@
             <div class="event-view-eyebrow">ІВЕНТ / ДЕТАЛІ</div>
             <h2 id="eventDetailsTitle">Івент</h2>
           </div>
+          <button type="button" id="eventDetailsEdit" hidden>✎ Редагувати</button>
           <button type="button" id="eventDetailsClose" aria-label="Закрити">✕</button>
         </div>
         <div id="eventDetailsBody"></div>
@@ -117,6 +118,7 @@
     activeDetailId = record.id;
     activeDetailRecord = record;
     title.textContent = record.name || 'Івент';
+    el('eventDetailsEdit').hidden = !canEdit();
     body.innerHTML = detailMarkup(record);
     const locationCopy = body.querySelector('[data-event-location-copy]');
     if (locationCopy) locationCopy.addEventListener('click', async () => {
@@ -442,6 +444,12 @@
     }
   });
 
+  el('eventDetailsEdit').addEventListener('click', () => {
+    if (!canEdit() || !activeDetailRecord) return;
+    const record = activeDetailRecord;
+    closeDetails();
+    open(record);
+  });
   el('eventDetailsClose').addEventListener('click', closeDetails);
   el('eventDetailsDialog').addEventListener('close', () => {
     window.harazdEventEquipment?.unmountInline();
