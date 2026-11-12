@@ -358,6 +358,7 @@ async function loadInventory() {
       if (capturedEvent !== eventId) return true;
       await loadPlan();
       render();
+      window.harazdEventQuote?.refresh();
       if (inlineState && inlineState.id === capturedEvent && inlineState.host?.isConnected) {
         inlineState.plan = [...plan];
         renderInline();
@@ -416,6 +417,7 @@ async function loadInventory() {
       if (capturedEvent !== eventId) return true;
       await loadPlan();
       render();
+      window.harazdEventQuote?.refresh();
       if (inlineState && inlineState.id === capturedEvent && inlineState.host?.isConnected) {
         inlineState.plan = [...plan];
         renderInline();
@@ -583,6 +585,7 @@ async function loadInventory() {
   $('eventEquipmentClose').addEventListener('click', close);
   $('eventEquipmentDone').addEventListener('click', close);
   dialog.addEventListener('close', async () => {
+    window.harazdEventQuote?.refresh();
     requestKey++;
     const closedId = eventId;
     const state = inlineState;
