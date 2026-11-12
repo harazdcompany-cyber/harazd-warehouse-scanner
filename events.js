@@ -94,18 +94,7 @@
           <div id="eventAccommodationDetails" class="event-accommodation-content" aria-live="polite">Завантаження…</div>
         </section>
 
-        <section class="event-view-section event-load-section">
-          <div class="event-load-heading">
-            <div>
-              <h3>Лист погрузки</h3>
-              <span class="event-load-caption">План обладнання для цього івенту</span>
-            </div>
-            <div class="event-view-actions">
-              ${canEdit() ? `<button type="button" class="primary" data-event-detail-edit="${safe(e.id)}">Редагувати</button>` : ''}
-            </div>
-          </div>
-          <div class="event-loading-list" id="eventDetailsEquipment" aria-live="polite">Завантаження обладнання…</div>
-        </section>
+        <div class="event-details-documents"><button type="button" data-event-view-quote>Комерційна пропозиція</button><button type="button" data-event-view-manifest>Лист погрузки</button></div>
       </div>`;
   }
 
@@ -160,8 +149,6 @@
     if (vehiclesHost) window.harazdEventVehicles?.mount(record.id, vehiclesHost, canEdit());
     const accommodationHost = el('eventAccommodationDetails');
     if (accommodationHost) window.harazdEventAccommodation?.mount(record.id, accommodationHost);
-    const host = el('eventDetailsEquipment');
-    if (host) window.harazdEventEquipment?.mountInline(record.id, host);
   }
 
   async function loadDetailStaff(eventId, requestId) {
@@ -318,6 +305,7 @@
     window.harazdEventQuote?.unmount();
     quoteButton.onclick = () => {
       if (!editingId || !canEdit() || !window.harazdEventQuote) return;
+      el('eventQuoteAddEquipment').hidden = false;
       el('eventQuoteEventName').textContent = form.elements.name.value || record?.name || '';
       el('eventQuoteDialog').showModal();
       window.harazdEventQuote.mount(editingId, el('eventQuoteEditor'), record, form);
@@ -474,6 +462,24 @@
     activeDetailId = null;
   });
   el('eventDetailsBody').addEventListener('click', event => {
+    if (event.target.closest('[data-event-view-quote]')) {
+      const record=activeDetailRecord;
+      if (!record || !window.harazdEventQuote) return;
+      el('eventQuoteAddEquipment').hidden=true;
+      el('eventQuoteEventName').textContent=record.name || '';
+      el('eventQuoteDialog').showModal();
+      if (!(canEdit() || canCreate())) el('eventQuoteEditor').textContent='У вас немає доступу до комерційної пропозиції.';
+      else window.harazdEventQuote.mount(record.id,el('eventQuoteEditor'),record,null,{readOnly:true});
+      return;
+    }
+    if (event.target.closest('[data-event-view-manifest]')) {
+      const record=activeDetailRecord;
+      if (!record || !window.harazdEventEquipment) return;
+      el('eventManifestName').textContent=record.name || '';
+      el('eventManifestDialog').showModal();
+      window.harazdEventEquipment.mountInline(record.id,el('eventManifestEditor'),{readOnly:true});
+      return;
+    }
     const edit = event.target.closest('[data-event-detail-edit]');
     if (!edit) return;
     const record = records.find(x => String(x.id) === edit.dataset.eventDetailEdit) ||
