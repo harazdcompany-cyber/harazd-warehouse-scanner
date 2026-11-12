@@ -789,3 +789,74 @@
   #eventDetailsDialog .event-detail-location-value strong {min-width:0;overflow-wrap:anywhere;}
   #eventDetailsDialog .event-detail-location-copy {display:grid;}
 }
+
+
+/* Desktop event details: match the mobile card's sections and order. */
+@media (min-width:651px) {
+  #eventDetailsDialog .event-details-shell {position:relative;}
+  #eventDetailsDialog .event-details-heading {height:0;min-height:0;margin:0;}
+  #eventDetailsDialog .event-details-heading > div {
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;
+  }
+  #eventDetailsDialog #eventDetailsClose {position:absolute;top:28px;right:32px;z-index:2;}
+  #eventDetailsDialog .event-view-hero-main {padding-right:80px;box-sizing:border-box;}
+  #eventDetailsDialog .event-view-hero .event-view-meta,
+  #eventDetailsDialog .event-view-hero .event-view-client,
+  #eventDetailsDialog .event-view-hero .event-view-status,
+  #eventDetailsDialog .event-load-section .event-load-caption,
+  #eventDetailsDialog .event-load-section .event-view-actions,
+  #eventDetailsDialog .event-load-section .event-loading-summary {display:none;}
+  #eventDetailsDialog .event-view > .event-view-hero {order:0;}
+  #eventDetailsDialog .event-view > .event-view-section:has(.event-detail-grid-modal) {order:1;}
+  #eventDetailsDialog .event-view > .event-view-section:has(.event-period-cards) {order:2;}
+  #eventDetailsDialog .event-view > .event-detail-staff {display:block;order:3;}
+  #eventDetailsDialog .event-view > .event-detail-vehicles {display:block;order:4;}
+  #eventDetailsDialog .event-view > .event-detail-accommodation {display:block;order:5;}
+  #eventDetailsDialog .event-view > .event-load-section {order:6;}
+  #eventDetailsDialog .event-period-cards {grid-template-columns:minmax(0,1fr);gap:8px;width:100%;}
+  #eventDetailsDialog .event-period-card {
+    display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+    gap:8px 12px;width:100%;min-width:0;min-height:44px;padding:10px 12px;
+  }
+  #eventDetailsDialog .event-period-card strong {text-align:right;}
+  #eventDetailsDialog #eventDetailsStaff,
+  #eventDetailsDialog .event-vehicles-list {display:grid;gap:10px;min-width:0;}
+  #eventDetailsDialog .event-detail-staff-person,
+  #eventDetailsDialog .event-vehicle-row {display:flex;align-items:center;gap:10px;min-width:0;}
+  #eventDetailsDialog .event-detail-staff-avatar,
+  #eventDetailsDialog .event-vehicle-photo {
+    position:relative;display:flex;flex:0 0 48px;align-items:center;justify-content:center;
+    width:48px;height:48px;overflow:hidden;border:1px solid #40556e;border-radius:11px;
+    background:#203148;color:#eaf3ff;font-size:15px;font-weight:700;
+  }
+  #eventDetailsDialog .event-detail-staff-avatar img,
+  #eventDetailsDialog .event-vehicle-photo img {width:100%;height:100%;object-fit:cover;}
+  #eventDetailsDialog .event-detail-staff-text,
+  #eventDetailsDialog .event-vehicle-info {display:flex;flex:1 1 auto;flex-direction:column;min-width:0;gap:3px;}
+  #eventDetailsDialog .event-detail-staff-text strong,
+  #eventDetailsDialog .event-vehicle-info strong {font-size:14px;line-height:1.3;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-detail-staff-text small,
+  #eventDetailsDialog .event-vehicle-info small,
+  #eventDetailsDialog .event-vehicles-message,
+  #eventDetailsDialog .event-accommodation-empty {color:#9fb6cc;font-size:12px;line-height:1.4;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-accommodation-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:10px;}
+  #eventDetailsDialog .event-accommodation-grid > div {display:flex;flex-direction:column;gap:4px;min-width:0;}
+  #eventDetailsDialog .event-accommodation-grid small {color:#9fb6cc;font-size:12px;}
+  #eventDetailsDialog .event-accommodation-grid strong {color:#eff5ff;font-size:14px;line-height:1.3;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-accommodation-address,
+  #eventDetailsDialog .event-detail-location-value {
+    display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:center;gap:10px;min-width:0;
+  }
+  #eventDetailsDialog .event-accommodation-copy {
+    display:grid;place-items:center;width:40px;height:40px;min-width:40px;min-height:40px;
+    margin:0;padding:9px;border:1px solid #40566f;border-radius:10px;
+    background:#1b2b3c;color:#eaf2ff;cursor:pointer;
+  }
+  #eventDetailsDialog .event-accommodation-copy svg {
+    display:block;width:20px;height:20px;fill:none;stroke:currentColor;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  }
+  #eventDetailsDialog .event-accommodation-copy-status {font-size:12px;line-height:1.3;color:#b8cae0;}
+  #eventDetailsDialog .event-accommodation-copy-status:empty {display:none;}
+}
