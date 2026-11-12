@@ -604,3 +604,73 @@
   }
   #eventDialog .event-edit-vehicle > span {min-width:0;overflow-wrap:anywhere;}
 }
+
+/* Phone: vehicle rows match personnel; drivers are edited in the event form. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-vehicle-row {
+    gap:10px;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+  }
+  #eventDetailsDialog .event-vehicle-photo {
+    flex:0 0 48px;
+    width:48px;
+    height:48px;
+    border-color:#40556e;
+    border-radius:11px;
+    background:#203148;
+    color:#eaf3ff;
+    font-size:15px;
+  }
+  #eventDetailsDialog .event-vehicle-photo img {object-fit:cover;}
+  #eventDetailsDialog .event-vehicle-info {gap:3px;}
+  #eventDetailsDialog .event-vehicle-info > strong {font-size:14px;line-height:1.3;}
+  #eventDetailsDialog .event-vehicle-info > small {
+    color:#9fb6cc;
+    font-size:12px;
+    font-weight:400;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  #eventDialog .event-edit-vehicle {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    align-items:start;
+  }
+  #eventDialog .event-edit-vehicle-choice {
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+  }
+  #eventDialog .event-edit-vehicle-choice > span {min-width:0;overflow-wrap:anywhere;}
+  #eventDialog .event-edit-vehicle-driver {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    color:#a9bfd4;
+    font-size:12px;
+  }
+  #eventDialog .event-edit-vehicle-driver select {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:40px;
+    min-height:40px;
+    margin:0;
+    padding:7px 10px;
+    box-sizing:border-box;
+    font-size:13px;
+  }
+}
