@@ -481,3 +481,60 @@
   #eventDetailsDialog .event-view > .event-load-section {order:4;}
   #eventDetailsDialog .event-detail-staff > h3 {margin:0 0 5px;}
 }
+
+/* Phone: personnel follows work periods; avatar sits beside name and position. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-view > .event-view-section:has(.event-period-cards) {order:2;}
+  #eventDetailsDialog .event-view > .event-detail-staff {order:3;}
+  #eventDetailsDialog #eventDetailsStaff {gap:10px;}
+  #eventDetailsDialog .event-detail-staff-person {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    width:100%;
+  }
+  #eventDetailsDialog .event-detail-staff-person > .event-detail-staff-avatar {
+    position:relative;
+    display:flex;
+    flex:0 0 48px;
+    align-items:center;
+    justify-content:center;
+    width:48px;
+    height:48px;
+    overflow:hidden;
+    border:1px solid #40556e;
+    border-radius:11px;
+    background:#203148;
+    color:#eaf3ff;
+    font-size:15px;
+    font-weight:700;
+  }
+  #eventDetailsDialog .event-detail-staff-avatar img {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  #eventDetailsDialog .event-detail-staff-text {
+    display:flex;
+    flex:1 1 auto;
+    flex-direction:column;
+    min-width:0;
+    gap:3px;
+  }
+  #eventDetailsDialog .event-detail-staff-text strong {
+    color:#eff5ff;
+    font-size:14px;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  #eventDetailsDialog .event-detail-staff-text small {
+    color:#9fb6cc;
+    font-size:12px;
+    font-weight:400;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+}
