@@ -456,3 +456,20 @@
     white-space:normal;
   }
 }
+
+/* Assigned staff in the mobile event details. */
+#eventDetailsDialog .event-detail-staff {display:none;}
+@media (max-width:650px) {
+  #eventDetailsDialog .event-detail-staff {
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    min-width:0;
+    margin-top:14px;
+  }
+  #eventDetailsDialog .event-detail-staff > small {color:#9fb6cc;font-size:12px;}
+  #eventDetailsDialog #eventDetailsStaff {display:grid;gap:5px;min-width:0;font-size:14px;line-height:1.4;}
+  #eventDetailsDialog .event-detail-staff-person {font-weight:600;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-detail-staff-person > span {color:#9fb6cc;font-weight:400;}
+  #eventDetailsDialog .event-detail-staff-unavailable {color:#9fb6cc;font-size:12px;}
+}
