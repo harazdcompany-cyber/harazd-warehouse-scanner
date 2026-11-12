@@ -10,4 +10,25 @@
     window.parent.postMessage({type:'harazd:vehicle-dialog', open:opened}, location.origin);
   };
   new MutationObserver(sync).observe(dialog, {attributes:true, attributeFilter:['open']});
+})();</script><script>
+(() => {
+  if (window.parent === window || !document.documentElement.classList.contains('harazd-embedded')) return;
+  const content = document.querySelector('.vehicle-content');
+  if (!content) return;
+  let queued = false;
+  const report = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      const height = Math.ceil(content.getBoundingClientRect().height);
+      if (height > 0) window.parent.postMessage({type:'harazd:vehicle-content-height',height:height+2}, location.origin);
+    });
+  };
+  if (window.ResizeObserver) new ResizeObserver(report).observe(content);
+  else new MutationObserver(report).observe(content, {childList:true, subtree:true, attributes:true, characterData:true});
+  window.addEventListener('resize', report);
+  window.addEventListener('load', report);
+  content.addEventListener('load', report, true);
+  report();
 })();</script></body></html>
