@@ -775,3 +775,17 @@
   #eventDetailsDialog .event-accommodation-copy-status:empty {display:none;}
 }
 
+
+/* Phone: copy the event location. */
+#eventDetailsDialog .event-detail-location-copy {display:none;}
+@media (max-width:650px) {
+  #eventDetailsDialog .event-detail-location-value {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 40px;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  #eventDetailsDialog .event-detail-location-value strong {min-width:0;overflow-wrap:anywhere;}
+  #eventDetailsDialog .event-detail-location-copy {display:grid;}
+}
