@@ -1181,5 +1181,7 @@ body *::-webkit-scrollbar {
 #scanner .scanner-hardware-controls button:focus-visible{outline:2px solid #deff00;outline-offset:3px}
 #scanner .scanner-hardware-controls span{color:#a8bbd1;font-size:13px}
 
-/* Hide email and sign-out control in the website top bar, on all screen sizes. */
-main > header #userPanel { display: none !important; }
+/* On phones only: hide account email and sign-out in the top bar. Keep desktop unchanged. */
+@media (max-width: 650px) {
+  main > header #userPanel { display: none !important; }
+}
