@@ -238,7 +238,7 @@
       <div class="event-card-meta"><span>◷ ${periodText(e.event_date,e.event_end_date)}</span><span><span class="event-card-location-icon" aria-hidden="true">⌖</span><span class="event-card-location-label">Локація:</span> ${safe(e.location||'Місце не вказано')}</span></div>
       <div class="event-client">${safe(e.client||'Замовника не вказано')}</div>
       <div class="event-period-summary">${periods.filter(([,start]) => e[start]).map(([label,start,end]) => `<div><span>${label}</span><strong>${periodText(e[start],e[end])}</strong></div>`).join('')}</div>
-      <div class="event-card-foot"><small>${safe(e.location || '')}</small><div class="event-card-actions">${canEdit() ? `<button type="button" data-event-edit="${safe(e.id)}">Редагувати</button>` : ''}<button type="button" class="primary" data-event-open="${safe(e.id)}">Відкрити</button></div></div>
+      <div class="event-card-foot"><small aria-hidden="true"></small><div class="event-card-actions">${canEdit() ? `<button type="button" data-event-edit="${safe(e.id)}">Редагувати</button>` : ''}<button type="button" class="primary" data-event-open="${safe(e.id)}">Відкрити</button></div></div>
     </article>`;
 
   function render() {
