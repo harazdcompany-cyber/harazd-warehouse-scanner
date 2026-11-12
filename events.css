@@ -911,22 +911,36 @@
 }
 
 /* Commercial prices for equipment in the event editor. */
-#eventDialog .event-quote-editor {min-width:0;max-width:100%;padding:14px;border:1px solid #304456;border-radius:12px;background:#111b27;box-sizing:border-box;}
-#eventDialog .event-quote-editor[hidden] {display:none;}
-#eventDialog .event-quote-head {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-#eventDialog .event-quote-hint {margin:10px 0;color:#a9bfd4;font-size:12px;line-height:1.5;}
-#eventDialog .event-quote-scroll {max-width:100%;overflow-x:auto;}
-#eventDialog .event-quote-scroll table {width:100%;min-width:900px;border-collapse:collapse;font-size:12px;}
-#eventDialog .event-quote-scroll th,#eventDialog .event-quote-scroll td {padding:8px;border-bottom:1px solid #304456;text-align:left;vertical-align:middle;}
-#eventDialog .event-quote-scroll th {color:#a9bfd4;font-weight:600;}
-#eventDialog .event-quote-scroll td small {display:block;color:#a9bfd4;}
-#eventDialog .event-quote-scroll input {width:90px;min-width:0;min-height:38px;padding:7px;background:#0b1521;border:1px solid #40566f;border-radius:8px;color:#f5f8ff;box-sizing:border-box;}
-#eventDialog .event-quote-scroll td:nth-child(2) input {display:block;width:200px;margin-top:6px;}
-#eventDialog .event-quote-scroll td:nth-child(4) input {width:65px;}
-#eventDialog .event-quote-totals {display:flex;justify-content:flex-end;gap:16px;flex-wrap:wrap;padding-top:14px;color:#c7d8e9;}
-#eventDialog .event-quote-totals strong {color:#f5f8ff;}
-#eventDialog .event-quote-editor [data-quote-notice] {margin:8px 0 0;font-size:12px;color:#a9bfd4;}
-#eventDialog .event-quote-editor [data-quote-notice]:empty {display:none;}
-#eventDialog .event-quote-editor [data-quote-notice].is-error {color:#ffb6bf;}
+#eventQuoteDialog .event-quote-editor {min-width:0;max-width:100%;padding:14px;border:1px solid #304456;border-radius:12px;background:#111b27;box-sizing:border-box;}
+#eventQuoteDialog .event-quote-editor[hidden] {display:none;}
+#eventQuoteDialog .event-quote-head {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+#eventQuoteDialog .event-quote-hint {margin:10px 0;color:#a9bfd4;font-size:12px;line-height:1.5;}
+#eventQuoteDialog .event-quote-scroll {max-width:100%;overflow-x:auto;}
+#eventQuoteDialog .event-quote-scroll table {width:100%;min-width:900px;border-collapse:collapse;font-size:12px;}
+#eventQuoteDialog .event-quote-scroll th,#eventQuoteDialog .event-quote-scroll td {padding:8px;border-bottom:1px solid #304456;text-align:left;vertical-align:middle;}
+#eventQuoteDialog .event-quote-scroll th {color:#a9bfd4;font-weight:600;}
+#eventQuoteDialog .event-quote-scroll td small {display:block;color:#a9bfd4;}
+#eventQuoteDialog .event-quote-scroll input {width:90px;min-width:0;min-height:38px;padding:7px;background:#0b1521;border:1px solid #40566f;border-radius:8px;color:#f5f8ff;box-sizing:border-box;}
+#eventQuoteDialog .event-quote-scroll td:nth-child(2) input {display:block;width:200px;margin-top:6px;}
+#eventQuoteDialog .event-quote-scroll td:nth-child(4) input {width:65px;}
+#eventQuoteDialog .event-quote-totals {display:flex;justify-content:flex-end;gap:16px;flex-wrap:wrap;padding-top:14px;color:#c7d8e9;}
+#eventQuoteDialog .event-quote-totals strong {color:#f5f8ff;}
+#eventQuoteDialog .event-quote-editor [data-quote-notice] {margin:8px 0 0;font-size:12px;color:#a9bfd4;}
+#eventQuoteDialog .event-quote-editor [data-quote-notice]:empty {display:none;}
+#eventQuoteDialog .event-quote-editor [data-quote-notice].is-error {color:#ffb6bf;}
 
-#eventDialog .event-quote-actions {display:flex;gap:8px;flex-wrap:wrap;}
+#eventQuoteDialog .event-quote-actions {display:flex;gap:8px;flex-wrap:wrap;}
+
+
+/* Full-screen commercial proposal editor. */
+#eventQuoteDialog {position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#111c2f;color:#eef4ff;box-sizing:border-box;overflow:auto;}
+#eventQuoteDialog::backdrop {background:rgba(3,8,14,.85);backdrop-filter:blur(4px);}
+#eventQuoteDialog .event-quote-shell {width:100%;max-width:1600px;min-height:100%;margin:0 auto;padding:24px;box-sizing:border-box;}
+#eventQuoteDialog .event-quote-window-head {display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px;}
+#eventQuoteDialog .event-quote-window-head h2 {margin:0;font-size:22px;line-height:1.25;}
+#eventQuoteDialog #eventQuoteEventName {margin:7px 0 0;color:#a9bfd4;overflow-wrap:anywhere;}
+#eventQuoteDialog .event-quote-window-actions {display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#eventQuoteDialog #eventQuoteClose {display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:1px solid #40556e;border-radius:12px;background:#101b29;color:#eff5ff;font-size:21px;}
+#eventQuoteDialog .event-quote-editor {width:100%;}
+@media (hover:hover) {#eventQuoteDialog button:not(:disabled):hover {border-color:#baff19;}}
+@media (max-width:650px) {#eventQuoteDialog .event-quote-shell {padding:16px;} #eventQuoteDialog .event-quote-window-head {flex-wrap:wrap;gap:12px;} #eventQuoteDialog .event-quote-window-actions {width:100%;} #eventQuoteDialog #eventQuoteAddEquipment {flex:1;min-width:0;} #eventQuoteDialog .event-quote-scroll {overscroll-behavior-x:contain;}}
