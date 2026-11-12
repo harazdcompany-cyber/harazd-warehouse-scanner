@@ -1304,3 +1304,52 @@ body *::-webkit-scrollbar {
     min-height:0;
   }
 }
+
+/* Phone: repair ownership filter and refresh action share one row. */
+@media (max-width:650px) {
+  #repairs .repair-toolbar {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+  }
+  #repairs .repair-toolbar > #repairSearch,
+  #repairs .repair-toolbar > #repairFilter,
+  #repairs .repair-toolbar > .hd-select {
+    flex:0 0 100%;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #repairs .repair-toolbar > .repair-mine-filter {
+    display:flex;
+    flex:1 1 0;
+    align-items:center;
+    justify-content:flex-start;
+    gap:8px;
+    width:auto;
+    min-width:0;
+    margin:0;
+    padding:0;
+  }
+  #repairs .repair-mine-filter input[type="checkbox"] {
+    flex:0 0 19px;
+    width:19px;
+    min-width:19px;
+    height:19px;
+    margin:0;
+  }
+  #repairs .repair-mine-filter span {
+    min-width:0;
+    white-space:normal;
+    line-height:1.2;
+  }
+  #repairs #repairRefresh {
+    flex:0 0 auto;
+    min-height:40px;
+    margin:0;
+    padding:8px 12px;
+    white-space:nowrap;
+  }
+}
