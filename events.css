@@ -271,3 +271,34 @@
   #eventDetailsDialog .event-load-heading,
   #eventDetailsDialog .event-loading-list {min-width:0;max-width:100%;}
 }
+
+/* Phone: display work periods as full-width rows. */
+@media (max-width:650px) {
+  #eventDetailsDialog .event-period-cards {
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    width:100%;
+  }
+  #eventDetailsDialog .event-period-card {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:8px 12px;
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    padding:10px 12px;
+  }
+  #eventDetailsDialog .event-period-card small {
+    min-width:0;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  #eventDetailsDialog .event-period-card strong {
+    min-width:0;
+    max-width:160px;
+    text-align:right;
+    line-height:1.3;
+    overflow-wrap:normal;
+  }
+}
