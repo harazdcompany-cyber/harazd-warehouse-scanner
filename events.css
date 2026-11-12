@@ -963,3 +963,10 @@
 #eventManifestDialog #eventManifestEditor {padding:14px;border:1px solid #304456;border-radius:12px;background:#111b27;}
 @media (hover:hover) {#eventManifestDialog #eventManifestClose:hover {border-color:#baff19;background:#2a3c35;color:#d5ff72;}}
 @media(max-width:650px) {#eventDialog .event-editor-documents {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));} #eventDialog .event-editor-documents button {min-width:0;width:100%;padding:10px 6px;} #eventManifestDialog .event-quote-shell {padding:16px;} #eventManifestDialog #eventManifestEditor {min-width:0;overflow-x:auto;}}
+
+/* Read-only document actions in the event details. */
+#eventDetailsDialog .event-view > .event-details-documents {order:6;display:flex;gap:10px;flex-wrap:wrap;}
+#eventDetailsDialog .event-details-documents button {min-height:42px;}
+#eventQuoteDialog #eventQuoteAddEquipment[hidden] {display:none!important;}
+#eventQuoteDialog .event-quote-scroll input[readonly] {border-color:transparent;background:transparent;color:#eaf2ff;cursor:text;}
+@media(max-width:650px) {#eventDetailsDialog .event-details-documents {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));} #eventDetailsDialog .event-details-documents button {min-width:0;width:100%;padding:10px 6px;}}
