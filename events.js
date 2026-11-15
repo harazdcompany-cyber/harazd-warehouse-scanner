@@ -6,9 +6,11 @@
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
+  const eventTimeKey = dateField => dateField.replace(/_date$/,
+    ['setup_date','event_date','teardown_date'].includes(dateField) ? '_start_time' : '_time');
   const phaseTimeText = (record,start,end) => {
-    const from = String(record[start.replace(/_date$/,'_time')]||'').slice(0,5);
-    const to = String(record[end.replace(/_date$/,'_time')]||'').slice(0,5);
+    const from = String(record[eventTimeKey(start)]||'').slice(0,5);
+    const to = String(record[eventTimeKey(end)]||'').slice(0,5);
     return from && to ? ' · '+from+'–'+to : '';
   };
   let records = [], editingId = null, busy = false, activeDetailId = null, activeDetailRecord = null;
@@ -425,7 +427,7 @@
     for (const period of validationPeriods) {
       const start = get(period.start);
       let end = get(period.end);
-      const startKey=period.start.replace(/_date$/,'_time'), endKey=period.end.replace(/_date$/,'_time');
+      const startKey=eventTimeKey(period.start), endKey=eventTimeKey(period.end);
       const startTime=get(startKey), endTime=get(endKey);
       if (end && !start) { el('eventFormNotice').textContent = `Для періоду «${period.name}» спочатку вкажіть початкову дату.`; return; }
       if ((startTime || endTime) && (!start || !startTime || !endTime)) {
