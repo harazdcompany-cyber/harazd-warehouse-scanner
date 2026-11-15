@@ -309,6 +309,7 @@
     el('eventActiveCount').textContent = records.filter(e => activeStatuses.has(e.status)).length;
     el('eventDoneCount').textContent = records.filter(e => e.status === 'done').length;
     el('eventCards').innerHTML = filtered.length ? filtered.map(item).join('') : '<div class="panel event-empty">Івентів не знайдено. Створіть перший захід або змініть фільтри.</div>';
+    window.harazdEventsCalendar?.render(filtered);
     if (activeDetailId) {
       const record = records.find(x => x.id === activeDetailId);
       if (record && el('eventDetailsDialog')?.open) openDetails(record);
@@ -570,6 +571,7 @@
     if (record) open(record);
   });
 
+  window.harazdEventsCalendar?.mount({onOpen:openDetails});
   window.harazdEvents = {load, openDetails};
 })();
 
