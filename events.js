@@ -6,6 +6,11 @@
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
+  const phaseTimeText = (record,start,end) => {
+    const from = String(record[start.replace(/_date$/,'_time')]||'').slice(0,5);
+    const to = String(record[end.replace(/_date$/,'_time')]||'').slice(0,5);
+    return from && to ? ' · '+from+'–'+to : '';
+  };
   let records = [], editingId = null, busy = false, activeDetailId = null, activeDetailRecord = null;
   let pendingEventDelete = null, deletingEvent = false;
   let eventStaffReady = false, eventStaffRequestId = 0, detailStaffRequestId = 0;
@@ -85,7 +90,7 @@
             ${periods.map(([label,start,end]) => `
               <div class="event-period-card">
                 <small>${label}</small>
-                <strong>${periodText(e[start], e[end])}</strong>
+                <strong>${periodText(e[start], e[end])}${phaseTimeText(e,start,end)}</strong>
               </div>`).join('')}
           </div>
         </section>
@@ -363,8 +368,11 @@
     editingId = record?.id || null;
     const form = el('eventForm');
     form.reset();
-    for (const name of ['name','client','location','warehouse_start_date','warehouse_end_date','setup_date','setup_end_date','event_date','event_end_date','teardown_date','teardown_end_date','post_warehouse_start_date','post_warehouse_end_date','status','notes']) {
-      if (record && form.elements[name]) form.elements[name].value = record[name] || (name === 'status' ? 'planned' : '');
+    for (const name of ['name','client','location','warehouse_start_date','warehouse_end_date','warehouse_start_time','warehouse_end_time','setup_date','setup_end_date','setup_start_time','setup_end_time','event_date','event_end_date','event_start_time','event_end_time','teardown_date','teardown_end_date','teardown_start_time','teardown_end_time','post_warehouse_start_date','post_warehouse_end_date','post_warehouse_start_time','post_warehouse_end_time','status','notes']) {
+      if (record && form.elements[name]) {
+        const value = record[name] || (name === 'status' ? 'planned' : '');
+        form.elements[name].value = name.endsWith('_time') ? String(value).slice(0,5) : value;
+      }
     }
     el('eventDialogTitle').textContent = record ? 'Редагувати івент' : 'Новий івент';
     el('eventFormNotice').textContent = '';
@@ -412,18 +420,38 @@
       {name:'Демонтаж',start:'teardown_date',end:'teardown_end_date'},
       {name:'Складські роботи після події',start:'post_warehouse_start_date',end:'post_warehouse_end_date'}
     ];
-    const dates = {};
-    let previousEnd = null;
+    const dates = {}, times = {};
+    let previousEnd = null, previousEndTime = null;
     for (const period of validationPeriods) {
-      const start = get(period.start), end = get(period.end);
+      const start = get(period.start);
+      let end = get(period.end);
+      const startKey=period.start.replace(/_date$/,'_time'), endKey=period.end.replace(/_date$/,'_time');
+      const startTime=get(startKey), endTime=get(endKey);
       if (end && !start) { el('eventFormNotice').textContent = `Для періоду «${period.name}» спочатку вкажіть початкову дату.`; return; }
+      if ((startTime || endTime) && (!start || !startTime || !endTime)) {
+        el('eventFormNotice').textContent = `Для періоду «${period.name}» вкажіть обидва значення часу та дату початку або залиште обидва поля часу порожніми («Весь день»).`; return;
+      }
+      // Ending before the starting time on the same date means an overnight shift.
+      if (start && startTime && endTime && (!end || end===start) && endTime<=startTime) {
+        const next=new Date(start+'T12:00:00Z');
+        next.setUTCDate(next.getUTCDate()+1);
+        end=next.toISOString().slice(0,10);
+        if (form.elements[period.end]) form.elements[period.end].value=end;
+      }
       if (start && end && end < start) { el('eventFormNotice').textContent = `Для періоду «${period.name}» дата завершення раніше початку.`; return; }
-      if (start && previousEnd && start < previousEnd) { el('eventFormNotice').textContent = `Період «${period.name}» починається раніше завершення попереднього етапу.`; return; }
-      if (start) previousEnd = end || start;
+      if (start && previousEnd && (start < previousEnd || (start===previousEnd && startTime && previousEndTime && startTime<previousEndTime))) {
+        el('eventFormNotice').textContent = `Період «${period.name}» починається раніше завершення попереднього етапу.`; return;
+      }
+      if (start) {
+        previousEnd = end || start;
+        previousEndTime = endTime || null;
+      }
       dates[period.start] = start || null;
       dates[period.end] = end || null;
+      times[startKey] = startTime || null;
+      times[endKey] = endTime || null;
     }
-    const payload = {name, client:get('client'), location:get('location'), ...dates, status:get('status'), notes:get('notes')};
+    const payload = {name, client:get('client'), location:get('location'), ...dates, ...times, status:get('status'), notes:get('notes')};
     busy = true; el('eventSave').disabled = true; el('eventFormNotice').textContent = 'Збереження…';
     try {
       const operation = editingId ? db.from('warehouse_events').update(payload).eq('id',editingId) : db.from('warehouse_events').insert({...payload, created_by:session.user.id});
@@ -460,7 +488,9 @@
       busy = false;
       await load();
     } catch(err) {
-      el('eventFormNotice').textContent = 'Не вдалося зберегти: ' + (err?.message || String(err));
+      const schemaHint = ['PGRST204','42703'].includes(err?.code) || /column.*_time|schema cache/i.test(String(err?.message||''))
+        ? ' Спочатку виконайте SETUP_EVENT_PERIOD_TIMES.sql у Supabase SQL Editor.' : '';
+      el('eventFormNotice').textContent = 'Не вдалося зберегти: ' + (err?.message || String(err)) + schemaHint;
     } finally {
       busy = false;
       el('eventSave').disabled = !!editingId && !canEdit();
