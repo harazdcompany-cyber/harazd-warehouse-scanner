@@ -275,10 +275,11 @@
     const dateIssued=new Date().toLocaleDateString('uk-UA');
     const logoUrl=new URL('harazd-logo-white.png',document.baseURI).href;
     const styles=`
-      @page {size:A4 portrait;margin:12mm 9mm}
+      /* Zero page margin suppresses Chrome's automatic print date/title/URL headers. */
+      @page {size:A4 portrait;margin:0}
       * {box-sizing:border-box}
       html,body {margin:0;padding:0}
-      body {font-family:Arial,Helvetica,sans-serif;font-size:8px;line-height:1.35;color:#111;background:white}
+      body {font-family:Arial,Helvetica,sans-serif;font-size:8px;line-height:1.35;color:#111;background:white;padding:12mm 9mm;-webkit-box-decoration-break:clone;box-decoration-break:clone}
       .quote-cover {margin-bottom:18px}
       .quote-top {display:grid;grid-template-columns:minmax(0,1fr) 34%;gap:22px;align-items:start}
       .quote-logo {display:flex;align-items:center;justify-content:center;width:66px;height:55px;background:#091016;
