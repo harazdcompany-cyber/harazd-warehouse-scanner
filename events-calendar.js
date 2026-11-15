@@ -8,11 +8,11 @@
     live:'Проведення',dismantling:'Демонтаж',done:'Завершено',cancelled:'Скасовано'
   };
   const stages = [
-    {key:'warehouse-before',label:'Складські роботи до події',short:'Склад до',start:'warehouse_start_date',end:'warehouse_end_date'},
-    {key:'setup',label:'Монтаж',short:'Монтаж',start:'setup_date',end:'setup_end_date'},
-    {key:'event',label:'Подія',short:'Подія',start:'event_date',end:'event_end_date'},
-    {key:'teardown',label:'Демонтаж',short:'Демонтаж',start:'teardown_date',end:'teardown_end_date'},
-    {key:'warehouse-after',label:'Складські роботи після події',short:'Склад після',start:'post_warehouse_start_date',end:'post_warehouse_end_date'}
+    {key:'warehouse-before',label:'Складські роботи до події',short:'Склад до',start:'warehouse_start_date',end:'warehouse_end_date',startTime:'warehouse_start_time',endTime:'warehouse_end_time'},
+    {key:'setup',label:'Монтаж',short:'Монтаж',start:'setup_date',end:'setup_end_date',startTime:'setup_start_time',endTime:'setup_end_time'},
+    {key:'event',label:'Подія',short:'Подія',start:'event_date',end:'event_end_date',startTime:'event_start_time',endTime:'event_end_time'},
+    {key:'teardown',label:'Демонтаж',short:'Демонтаж',start:'teardown_date',end:'teardown_end_date',startTime:'teardown_start_time',endTime:'teardown_end_time'},
+    {key:'warehouse-after',label:'Складські роботи після події',short:'Склад після',start:'post_warehouse_start_date',end:'post_warehouse_end_date',startTime:'post_warehouse_start_time',endTime:'post_warehouse_end_time'}
   ];
   const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
   const dateISO = value => [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
@@ -37,11 +37,8 @@
   function dailyStages(record,day) {
     const result=[];
     for (const stage of stages) {
-      const first=String(record[stage.start]||'');
-      if (!makeDate(first)) continue;
-      const last=String(record[stage.end]||first);
-      if (!makeDate(last) || last<first) continue;
-      if(day>=first && day<=last) result.push(stage);
+      const bounds=stageBounds(record,stage);
+      if(bounds && day>=bounds.first && day<=bounds.last) result.push(stage);
     }
     return result;
   }
@@ -64,6 +61,119 @@
         <span class="events-cal-phase">${safe(stage.short)}</span>
         <span class="events-cal-entry-name">${safe(record.name||'Івент')}</span>
       </button>`;
+  }
+
+  // Supabase time fields may be HH:mm or HH:mm:ss. Ignore incomplete pairs: full day.
+  const HOUR_HEIGHT=64;
+  const WEEK_HEIGHT=HOUR_HEIGHT*24;
+  function clockMinutes(value) {
+    const match=/^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d(?:\.\d+)?)?$/.exec(String(value||''));
+    return match ? Number(match[1])*60+Number(match[2]) : null;
+  }
+  const clockLabel=minutes => {
+    const h=Math.floor(minutes/60),m=minutes%60;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  };
+  function stageBounds(record,stage) {
+    const first=String(record[stage.start]||'');
+    if(!makeDate(first))return null;
+    let last=String(record[stage.end]||first);
+    if(!makeDate(last)||last<first)return null;
+    const from=clockMinutes(record[stage.startTime]),to=clockMinutes(record[stage.endTime]);
+    const timed=from!==null&&to!==null;
+    // Protect older entries: when the end time precedes the start time,
+    // the visual segment ends the next day, even if the editor has not re-saved it.
+    if(timed && last===first && to<=from) last=dateISO(addDays(makeDate(first),1));
+    return {first,last,from,to,timed};
+  }
+  function weekParts(day) {
+    const timed=[],allDay=[];
+    for(const record of currentRecords) {
+      for(const stage of stages) {
+        const bounds=stageBounds(record,stage);
+        if(!bounds||day<bounds.first||day>bounds.last)continue;
+        const part={record,stage,bounds};
+        if(!bounds.timed){allDay.push(part);continue;}
+        const from=day===bounds.first?bounds.from:0;
+        const to=day===bounds.last?bounds.to:1440;
+        if(to>from)timed.push({...part,from,to});
+      }
+    }
+    timed.sort((a,b)=>a.from-b.from||b.to-a.to||String(a.record.name||'').localeCompare(String(b.record.name||''),'uk'));
+    allDay.sort((a,b)=>stages.indexOf(a.stage)-stages.indexOf(b.stage)||
+      String(a.record.name||'').localeCompare(String(b.record.name||''),'uk'));
+    return {timed,allDay};
+  }
+  function assignColumns(items) {
+    // Use the same width for all simultaneous blocks in a connected overlap cluster.
+    let group=[],ends=[],furthest=0;
+    const finish=()=>{
+      for(const item of group)item.columnCount=ends.length;
+      group=[];ends=[];furthest=0;
+    };
+    for(const item of items){
+      if(group.length && item.from>=furthest)finish();
+      let col=ends.findIndex(end=>end<=item.from);
+      if(col<0){col=ends.length;ends.push(item.to);}
+      else ends[col]=item.to;
+      item.column=col;
+      group.push(item);
+      furthest=Math.max(furthest,item.to);
+    }
+    if(group.length)finish();
+    return items;
+  }
+  function timedCard(item) {
+    const status=stateOf(item.record);
+    const spanMinutes=item.to-item.from;
+    const top=(item.from*HOUR_HEIGHT/60).toFixed(2);
+    const height=Math.max(16,spanMinutes*HOUR_HEIGHT/60-2).toFixed(2);
+    const width=(100/item.columnCount).toFixed(6);
+    const left=(100*item.column/item.columnCount).toFixed(6);
+    const fullTimes=clockLabel(item.from)+'–'+clockLabel(item.to);
+    const compact=spanMinutes<48;
+    return `<button type="button" class="events-week-block stage-${item.stage.key} status-${status}${compact?' is-short':''}"
+      data-events-cal-open="${safe(item.record.id)}"
+      style="top:${top}px;height:${height}px;left:calc(${left}% + 2px);width:calc(${width}% - 4px)"
+      title="${safe(item.record.name+' · '+item.stage.label+' · '+fullTimes+' · '+statuses[status])}">
+      <span class="events-week-block-stage">${safe(item.stage.short)}</span>
+      <strong>${safe(item.record.name||'Івент')}</strong>
+      <span class="events-week-block-time">${safe(fullTimes)}</span>
+    </button>`;
+  }
+  function renderWeek(start) {
+    const days=Array.from({length:7},(_,i)=>addDays(start,i));
+    const today=dateISO(new Date());
+    const dayHeaders=days.map((date,i)=>{
+      const iso=dateISO(date);
+      return `<button type="button" class="events-week-day-head${iso===selectedDay?' is-selected':''}${iso===today?' is-today':''}"
+        data-events-cal-date="${iso}" aria-pressed="${iso===selectedDay}">
+        <span>${safe(weekdays[i])}</span><strong>${date.getDate()}</strong>
+      </button>`;
+    }).join('');
+    const parts=days.map(date=>weekParts(dateISO(date)));
+    const allDay=parts.map(({allDay})=>{
+      if(!allDay.length)return '<div class="events-week-all-day-lane"></div>';
+      const items=allDay.slice(0,4).map(({record,stage})=>entryChip({record,stage})).join('');
+      const rest=allDay.length>4
+        ? `<span class="events-week-all-day-more">+${allDay.length-4} ще</span>` : '';
+      return `<div class="events-week-all-day-lane">${items}${rest}</div>`;
+    }).join('');
+    const hourLines=Array.from({length:25},(_,hour)=>
+      `<span class="events-week-hour-label" style="top:${hour*HOUR_HEIGHT}px">${clockLabel(hour*60)}</span>`).join('');
+    const lanes=parts.map(({timed},i)=>{
+      const blocks=assignColumns(timed).map(timedCard).join('');
+      return `<div class="events-week-lane" data-date="${dateISO(days[i])}">${blocks}</div>`;
+    }).join('');
+    return `<div class="events-week-scroll" role="region" tabindex="0" aria-label="Тижнева розкладка з годинами">
+      <div class="events-week-table">
+        <div class="events-week-days"><div class="events-week-corner">Час</div>${dayHeaders}</div>
+        <div class="events-week-all-day"><div class="events-week-all-day-label">Весь день</div>${allDay}</div>
+        <div class="events-week-time-grid" style="--events-week-height:${WEEK_HEIGHT}px;--events-week-hour-height:${HOUR_HEIGHT}px">
+          <div class="events-week-hours">${hourLines}</div>${lanes}
+        </div>
+      </div>
+    </div>`;
   }
   function dayCell(date,visibleMonth) {
     const day=dateISO(date),items=entriesOn(day);
@@ -145,8 +255,21 @@
       title.textContent=new Intl.DateTimeFormat('uk-UA',{month:'long',year:'numeric'}).format(month);
     }
     grid.classList.toggle('is-week',calendarScale==='week');
-    grid.innerHTML=weekdays.map(day=>`<span class="events-cal-weekday">${day}</span>`).join('')+
-      Array.from({length:count},(_,i)=>dayCell(addDays(start,i),month.getMonth())).join('');
+    grid.classList.toggle('is-timegrid',calendarScale==='week');
+    if(calendarScale==='week') {
+      const previousScroll=grid.querySelector('.events-week-scroll');
+      const previousTop=previousScroll?.scrollTop;
+      const previousLeft=previousScroll?.scrollLeft;
+      grid.innerHTML=renderWeek(start);
+      const scroll=grid.querySelector('.events-week-scroll');
+      if(scroll) {
+        scroll.scrollTop=previousTop ?? 7*HOUR_HEIGHT;
+        scroll.scrollLeft=previousLeft ?? 0;
+      }
+    } else {
+      grid.innerHTML=weekdays.map(day=>`<span class="events-cal-weekday">${day}</span>`).join('')+
+        Array.from({length:count},(_,i)=>dayCell(addDays(start,i),month.getMonth())).join('');
+    }
     agenda();
   }
   function changeMode(mode) {
