@@ -1039,3 +1039,88 @@
 @media (max-width:650px) {
   .event-delete-dialog {padding:18px;}
 }
+
+
+/* Compact aligned event header actions (ergonomics) */
+#eventDetailsDialog .event-details-heading .event-details-actions {
+  position:absolute;
+  top:28px;
+  right:32px;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  max-width:calc(100% - 64px);
+}
+#eventDetailsDialog .event-details-heading .event-details-actions > button {
+  position:static;
+  inset:auto;
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:auto;
+  height:40px;
+  min-height:40px;
+  margin:0;
+  padding:0 12px;
+  border-radius:10px;
+  font-size:13px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+#eventDetailsDialog .event-details-heading .event-details-actions #eventDetailsClose {
+  flex:0 0 40px;
+  width:40px;
+  padding:0;
+  font-size:20px;
+}
+#eventDetailsDialog .event-details-heading .event-details-actions #eventDetailsDelete[hidden],
+#eventDetailsDialog .event-details-heading .event-details-actions #eventDetailsEdit[hidden] {
+  display:none;
+}
+@media (min-width:951px) {
+  #eventDetailsDialog .event-view-hero-main,
+  #eventDetailsDialog:has(#eventDetailsDelete:not([hidden])) .event-view-hero-main {
+    padding-right:305px;
+  }
+  #eventDetailsDialog:not(:has(#eventDetailsEdit:not([hidden]))) .event-view-hero-main {
+    padding-right:68px;
+  }
+}
+@media (max-width:950px) {
+  #eventDetailsDialog .event-details-heading {
+    display:flex;
+    height:auto;
+    min-height:40px;
+    margin:0 0 12px;
+    justify-content:flex-end;
+    align-items:center;
+  }
+  #eventDetailsDialog .event-details-heading .event-details-actions {
+    position:static;
+    inset:auto;
+    max-width:100%;
+    margin-left:auto;
+  }
+  #eventDetailsDialog .event-view-hero-main,
+  #eventDetailsDialog:has(#eventDetailsDelete:not([hidden])) .event-view-hero-main {
+    padding-right:0;
+  }
+}
+@media (max-width:650px) {
+  #eventDetailsDialog .event-details-heading .event-details-actions {
+    width:100%;
+    gap:8px;
+  }
+}
+@media (max-width:350px) {
+  #eventDetailsDialog .event-details-heading .event-details-actions > button:not(#eventDetailsClose) {
+    flex:1 1 auto;
+    min-width:0;
+    padding:0 7px;
+    font-size:11px;
+  }
+}
