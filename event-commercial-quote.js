@@ -89,22 +89,23 @@
   }
 
   // This record is written only once. Read-only viewing must never claim authorship.
-  async function fetchQuoteAuthor(state) {
+  async function fetchQuoteAuthor(state, hasOldPrices=false) {
     try {
       const result=await db.from('warehouse_event_quote_authors')
         .select('created_by,author_name,author_phone,author_email,created_at')
         .eq('event_id',state.id).maybeSingle();
       if(result.error) throw result.error;
       let author=result.data;
-      if(!author && !state.readOnly) {
+      if(!author && hasOldPrices) return {author:null,error:'',legacy:true};
+      if(!author && !state.readOnly && current===state && state.host.isConnected) {
         const claimed=await db.rpc('warehouse_quote_claim_author',{p_event_id:state.id});
         if(claimed.error) throw claimed.error;
         author=Array.isArray(claimed.data) ? claimed.data[0] : claimed.data;
         if(!author) throw new Error('Не вдалося зафіксувати автора пропозиції.');
       }
-      return {author:author||null,error:''};
+      return {author:author||null,error:'',legacy:false};
     } catch (error) {
-      return {author:null,error:String(error?.message||error||'Невідома помилка')};
+      return {author:null,error:String(error?.message||error||'Невідома помилка'),legacy:false};
     }
   }
   function render(state) {
@@ -132,7 +133,9 @@
       }).join('');
       return `<section class="event-quote-category"><h3>${esc(group.name)}</h3><div class="event-quote-scroll"><table><thead><tr><th>№</th><th>Найменування</th><th>Опис</th><th>Кількість</th><th>Од.</th><th>Ціна, грн</th><th>Дні</th><th>Знижка, %</th><th>Сума без ПДВ</th><th>ПДВ, %</th><th>Сума ПДВ, грн</th><th>Підсумкова сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
     }).join('');
-    const authorMessage=state.authorError
+    const authorMessage=state.authorLegacy
+      ? '<p class="event-quote-hint">Ця КП створена раніше, а її автора не було збережено. Неможливо достовірно визначити початкового автора автоматично.</p>'
+      : state.authorError
       ? `<p class="event-quote-hint">Не вдалося завантажити автора КП. Перевірте SQL-оновлення SETUP_EVENT_QUOTE_AUTHOR.sql. ${esc(state.authorError)}</p>`
       : !state.author
         ? '<p class="event-quote-hint">Автор цієї КП ще не зафіксований. Відкрийте її для редагування, щоб зберегти дані автора.</p>'
@@ -144,10 +147,9 @@
     const token=++request; notice(state,'Завантаження…');
     let items,prices,authorResult;
     try {
-      [items,prices,authorResult]=await Promise.all([
+      [items,prices]=await Promise.all([
         db.from('warehouse_event_equipment').select('equipment_id,quantity,equipment:equipment_id(name,model,manufacturer,description,photo_url,accounting_type,unit,rental_price,category:category_id(id,name),subcategory:subcategory_id(id,name))').eq('event_id',state.id).order('created_at'),
-        db.from('warehouse_event_quote_prices').select('*').eq('event_id',state.id),
-        fetchQuoteAuthor(state)
+        db.from('warehouse_event_quote_prices').select('*').eq('event_id',state.id)
       ]);
     } catch (_) {
       if(current===state && token===request && state.host.isConnected) state.host.textContent='Не вдалося завантажити пропозицію. Перевірте з’єднання.';
@@ -160,8 +162,11 @@
         : 'Не вдалося завантажити комерційну пропозицію. ' + ((items.error || prices.error)?.message || '');
       return;
     }
+    authorResult=await fetchQuoteAuthor(state,(prices.data||[]).length>0);
+    if(current!==state || token!==request || !state.host.isConnected)return;
     state.items=items.data||[]; state.prices=prices.data||[];
     state.author=authorResult?.author||null; state.authorError=authorResult?.error||'';
+    state.authorLegacy=!!authorResult?.legacy;
     render(state);
   }
   async function save(state,row) {
@@ -189,7 +194,9 @@
 
   function printQuote(state) {
     if (!state.author?.author_name) {
-      notice(state,'Автор КП ще не зафіксований. Відкрийте пропозицію для редагування та перевірте SQL-оновлення.',true);
+      notice(state,state.authorLegacy
+        ? 'Автор цієї старої КП не зберігався. Автоматично встановити, хто її створив, неможливо.'
+        : 'Автор КП ще не зафіксований. Відкрийте пропозицію для редагування та перевірте SQL-оновлення.',true);
       return;
     }
     if (!state.items.length) {notice(state,'Спочатку додайте обладнання.',true);return;}
@@ -369,7 +376,7 @@
     } else showPrint();
   }
   function mount(id,host,record,form,options = {}) {
-    current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[],author:null,authorError:''}; const state=current;
+    current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[],author:null,authorError:'',authorLegacy:false}; const state=current;
     host.innerHTML='<p data-quote-notice>Завантаження…</p>';
     host.addEventListener('click',e=>{if(e.target.closest('[data-quote-refresh]'))load(state);if(e.target.closest('[data-quote-print]'))printQuote(state);},{signal:(state.controller=new AbortController()).signal});
     host.addEventListener('change',e=>{const row=e.target.closest('[data-quote-row]');if(!state.readOnly&&row&&e.target.matches('[data-quote-field]'))save(state,row);},{signal:state.controller.signal});
