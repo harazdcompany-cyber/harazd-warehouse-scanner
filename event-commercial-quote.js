@@ -87,6 +87,26 @@
     const el = state.host.querySelector('[data-quote-notice]');
     if (el) { el.textContent = message; el.classList.toggle('is-error', error); }
   }
+
+  // This record is written only once. Read-only viewing must never claim authorship.
+  async function fetchQuoteAuthor(state) {
+    try {
+      const result=await db.from('warehouse_event_quote_authors')
+        .select('created_by,author_name,author_phone,author_email,created_at')
+        .eq('event_id',state.id).maybeSingle();
+      if(result.error) throw result.error;
+      let author=result.data;
+      if(!author && !state.readOnly) {
+        const claimed=await db.rpc('warehouse_quote_claim_author',{p_event_id:state.id});
+        if(claimed.error) throw claimed.error;
+        author=Array.isArray(claimed.data) ? claimed.data[0] : claimed.data;
+        if(!author) throw new Error('Не вдалося зафіксувати автора пропозиції.');
+      }
+      return {author:author||null,error:''};
+    } catch (error) {
+      return {author:null,error:String(error?.message||error||'Невідома помилка')};
+    }
+  }
   function render(state) {
     if (current !== state || !state.host.isConnected) return;
     const metadata = new Map(state.prices.map(x => [String(x.equipment_id),x]));
@@ -112,16 +132,22 @@
       }).join('');
       return `<section class="event-quote-category"><h3>${esc(group.name)}</h3><div class="event-quote-scroll"><table><thead><tr><th>№</th><th>Найменування</th><th>Опис</th><th>Кількість</th><th>Од.</th><th>Ціна, грн</th><th>Дні</th><th>Знижка, %</th><th>Сума без ПДВ</th><th>ПДВ, %</th><th>Сума ПДВ, грн</th><th>Підсумкова сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
     }).join('');
-    state.host.innerHTML = `<div class="event-quote-head"><strong>Комерційна пропозиція</strong><div class="event-quote-actions"><button type="button" data-quote-refresh>Оновити список</button><button type="button" data-quote-print>Друк / PDF</button></div></div><p class="event-quote-hint">Обладнання спільне з листом погрузки. Кількість днів розраховується за датами події включно. ${state.readOnly ? 'Режим перегляду.' : 'Вкажіть ціну, знижку та ПДВ для кожної позиції. Зміни зберігаються автоматично.'}</p>${groups || '<p class="event-quote-hint">Додайте обладнання до події.</p>'}<div class="event-quote-totals"><span>Без ПДВ: <strong>${eventDuration === null ? '—' : money(net)}</strong></span><span>ПДВ: <strong>${eventDuration === null ? '—' : money(vat)}</strong></span><span>Разом: <strong>${eventDuration === null ? '—' : money(total)}</strong></span></div>${eventDuration === null ? '<p class="event-quote-hint">Вкажіть коректні дати події для розрахунку.</p>' : ''}${missing ? '<p class="event-quote-hint">Є позиції без збереженої ціни. Підсумок може бути неповним.</p>' : ''}<p data-quote-notice role="status" aria-live="polite"></p>`;
+    const authorMessage=state.authorError
+      ? `<p class="event-quote-hint">Не вдалося завантажити автора КП. Перевірте SQL-оновлення SETUP_EVENT_QUOTE_AUTHOR.sql. ${esc(state.authorError)}</p>`
+      : !state.author
+        ? '<p class="event-quote-hint">Автор цієї КП ще не зафіксований. Відкрийте її для редагування, щоб зберегти дані автора.</p>'
+        : '';
+    state.host.innerHTML = `<div class="event-quote-head"><strong>Комерційна пропозиція</strong><div class="event-quote-actions"><button type="button" data-quote-refresh>Оновити список</button><button type="button" data-quote-print>Друк / PDF</button></div></div><p class="event-quote-hint">Обладнання спільне з листом погрузки. Кількість днів розраховується за датами події включно. ${state.readOnly ? 'Режим перегляду.' : 'Вкажіть ціну, знижку та ПДВ для кожної позиції. Зміни зберігаються автоматично.'}</p>${groups || '<p class="event-quote-hint">Додайте обладнання до події.</p>'}<div class="event-quote-totals"><span>Без ПДВ: <strong>${eventDuration === null ? '—' : money(net)}</strong></span><span>ПДВ: <strong>${eventDuration === null ? '—' : money(vat)}</strong></span><span>Разом: <strong>${eventDuration === null ? '—' : money(total)}</strong></span></div>${eventDuration === null ? '<p class="event-quote-hint">Вкажіть коректні дати події для розрахунку.</p>' : ''}${missing ? '<p class="event-quote-hint">Є позиції без збереженої ціни. Підсумок може бути неповним.</p>' : ''}${authorMessage}<p data-quote-notice role="status" aria-live="polite"></p>`;
     if (state.readOnly) state.host.querySelectorAll('[data-quote-field]').forEach(field=>field.readOnly=true);
   }
   async function load(state) {
     const token=++request; notice(state,'Завантаження…');
-    let items,prices;
+    let items,prices,authorResult;
     try {
-      [items,prices]=await Promise.all([
+      [items,prices,authorResult]=await Promise.all([
         db.from('warehouse_event_equipment').select('equipment_id,quantity,equipment:equipment_id(name,model,manufacturer,description,photo_url,accounting_type,unit,rental_price,category:category_id(id,name),subcategory:subcategory_id(id,name))').eq('event_id',state.id).order('created_at'),
-        db.from('warehouse_event_quote_prices').select('*').eq('event_id',state.id)
+        db.from('warehouse_event_quote_prices').select('*').eq('event_id',state.id),
+        fetchQuoteAuthor(state)
       ]);
     } catch (_) {
       if(current===state && token===request && state.host.isConnected) state.host.textContent='Не вдалося завантажити пропозицію. Перевірте з’єднання.';
@@ -134,7 +160,9 @@
         : 'Не вдалося завантажити комерційну пропозицію. ' + ((items.error || prices.error)?.message || '');
       return;
     }
-    state.items=items.data||[]; state.prices=prices.data||[]; render(state);
+    state.items=items.data||[]; state.prices=prices.data||[];
+    state.author=authorResult?.author||null; state.authorError=authorResult?.error||'';
+    render(state);
   }
   async function save(state,row) {
     if (state.readOnly) return;
@@ -160,6 +188,10 @@
   }
 
   function printQuote(state) {
+    if (!state.author?.author_name) {
+      notice(state,'Автор КП ще не зафіксований. Відкрийте пропозицію для редагування та перевірте SQL-оновлення.',true);
+      return;
+    }
     if (!state.items.length) {notice(state,'Спочатку додайте обладнання.',true);return;}
     const eventDuration=eventDays(state);
     if (eventDuration === null){notice(state,'Вкажіть коректні дати події перед друком.',true);return;}
@@ -230,6 +262,7 @@
     if(invalid){notice(state,'Сума однієї з позицій перевищує допустиме значення.',true);return;}
 
     const record=state.record||{};
+    const author=state.author;
     const formatDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))
       ? String(value).slice(8,10)+'.'+String(value).slice(5,7)+'.'+String(value).slice(0,4) : '—';
     const eventStart=state.form?.elements?.event_date?.value || record.event_date || '';
@@ -303,11 +336,11 @@
         <div class="quote-meta">
           <div>
             <p class="quote-meta-label">Пропозицію склав:</p>
-            <p>Марусяк Владислав Олегович</p>
+            <p>${esc(author.author_name)}</p>
             <div class="quote-contact">
               <p class="quote-meta-label">Контактні дані:</p>
-              <p>моб. +380500542024</p>
-              <p>harazd.company@gmail.com</p>
+              <p>моб. ${esc(author.author_phone||'—')}</p>
+              <p>${esc(author.author_email||'—')}</p>
             </div>
           </div>
           <div>
@@ -336,7 +369,7 @@
     } else showPrint();
   }
   function mount(id,host,record,form,options = {}) {
-    current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[]}; const state=current;
+    current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[],author:null,authorError:''}; const state=current;
     host.innerHTML='<p data-quote-notice>Завантаження…</p>';
     host.addEventListener('click',e=>{if(e.target.closest('[data-quote-refresh]'))load(state);if(e.target.closest('[data-quote-print]'))printQuote(state);},{signal:(state.controller=new AbortController()).signal});
     host.addEventListener('change',e=>{const row=e.target.closest('[data-quote-row]');if(!state.readOnly&&row&&e.target.matches('[data-quote-field]'))save(state,row);},{signal:state.controller.signal});
