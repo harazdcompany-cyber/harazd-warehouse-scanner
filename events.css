@@ -1053,7 +1053,9 @@
   gap:8px;
   max-width:calc(100% - 64px);
 }
-#eventDetailsDialog .event-details-heading .event-details-actions > button {
+#eventDetailsDialog .event-details-actions #eventDetailsDelete,
+#eventDetailsDialog .event-details-actions #eventDetailsEdit,
+#eventDetailsDialog .event-details-actions #eventDetailsClose {
   position:static;
   inset:auto;
   display:inline-flex;
