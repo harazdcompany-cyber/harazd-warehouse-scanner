@@ -77,6 +77,7 @@
         <span>${date.getDate()}</span>${distinct ? `<small>${distinct}</small>` : ''}
       </button>
       <div class="events-cal-day-list">
+        <span class="events-cal-mobile-pips" aria-hidden="true">${items.slice(0,4).map(({record,stage})=>`<i class="events-cal-pip stage-${stage.key} status-${stateOf(record)}"></i>`).join('')}</span>
         ${items.slice(0,3).map(entryChip).join('')}
         ${items.length>3 ? `<button type="button" class="events-cal-more" data-events-cal-date="${day}">+${items.length-3} ще</button>` : ''}
       </div>
