@@ -975,3 +975,67 @@
   padding:10px 8px;color:#eaf2ff;font-size:13px;font-weight:400;font-style:italic;
   background:#1c2b3d;border-bottom:1px solid #40566f;text-align:left;
 }
+
+
+/* Event deletion action and confirmation dialog — scoped to events only. */
+#eventDetailsDialog #eventDetailsDelete[hidden] {display:none!important;}
+#eventDetailsDialog #eventDetailsDelete {
+  position:absolute;top:28px;right:224px;z-index:2;
+  display:flex;align-items:center;justify-content:center;
+  width:auto;height:44px;min-height:44px;padding:0 14px;
+  border:1px solid #984b57;border-radius:12px;
+  background:#39232c;color:#ffb9c2;font-size:13px;font-weight:700;
+  white-space:nowrap;cursor:pointer;
+}
+@media (min-width:651px) {
+  #eventDetailsDialog:has(#eventDetailsDelete:not([hidden])) .event-view-hero-main {
+    padding-right:320px;
+  }
+}
+@media (hover:hover) {
+  #eventDetailsDialog #eventDetailsDelete:hover {
+    border-color:#f08796;background:#56303a;color:#fff;
+  }
+}
+#eventDetailsDialog #eventDetailsDelete:focus-visible {
+  outline:2px solid #ff91a0;outline-offset:2px;
+}
+@media (max-width:650px) {
+  #eventDetailsDialog .event-details-heading {
+    height:auto;min-height:0;margin:0 0 14px;
+    display:flex;justify-content:flex-end;align-items:center;
+    gap:8px;flex-wrap:wrap;
+  }
+  #eventDetailsDialog #eventDetailsDelete,
+  #eventDetailsDialog #eventDetailsEdit,
+  #eventDetailsDialog #eventDetailsClose {
+    position:static;top:auto;right:auto;
+    height:40px;min-height:40px;font-size:12px;
+  }
+  #eventDetailsDialog #eventDetailsDelete,
+  #eventDetailsDialog #eventDetailsEdit {padding:0 12px;}
+  #eventDetailsDialog #eventDetailsClose {flex:0 0 40px;width:40px;font-size:20px;}
+  #eventDetailsDialog .event-view-hero-main {padding-right:0;}
+}
+.event-delete-dialog {
+  box-sizing:border-box;width:min(460px,calc(100vw - 28px));max-height:calc(100dvh - 32px);
+  padding:24px;border:1px solid #3b5067;border-radius:18px;
+  background:#17212e;color:#f0f6ff;box-shadow:0 18px 65px rgba(0,0,0,.42);
+}
+.event-delete-dialog::backdrop {background:rgba(3,8,14,.8);backdrop-filter:blur(4px);}
+.event-delete-dialog h2 {margin:0 0 14px;font-size:20px;}
+.event-delete-dialog p {margin:0 0 14px;line-height:1.5;overflow-wrap:anywhere;}
+.event-delete-dialog .event-delete-warning {font-size:13px;color:#b9cce0;}
+.event-delete-dialog #eventDeleteNotice {font-size:13px;color:#ffb8c0;}
+.event-delete-dialog #eventDeleteNotice:empty {display:none;}
+.event-delete-dialog .event-delete-actions {display:flex;gap:10px;justify-content:stretch;}
+.event-delete-dialog .event-delete-actions button {
+  box-sizing:border-box;flex:1 1 50%;min-width:0;min-height:44px;
+  padding:8px 10px;border-radius:10px;border:1px solid #52677e;
+  background:#26364b;color:#f3f7ff;font-weight:700;cursor:pointer;
+}
+.event-delete-dialog #eventDeleteConfirm {background:#a33647;border-color:#b54556;color:white;}
+.event-delete-dialog .event-delete-actions button:disabled {opacity:.55;cursor:wait;}
+@media (max-width:650px) {
+  .event-delete-dialog {padding:18px;}
+}
