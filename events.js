@@ -7,6 +7,7 @@
   const dateText = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('uk-UA') : '—';
   const periodText = (start,end) => start ? dateText(start)+(end && end!==start?' – '+dateText(end):'') : '—';
   let records = [], editingId = null, busy = false, activeDetailId = null, activeDetailRecord = null;
+  let pendingEventDelete = null, deletingEvent = false;
   let eventStaffReady = false, eventStaffRequestId = 0, detailStaffRequestId = 0;
   const canCreate = () => typeof staffAllowed === 'function' && staffAllowed('events_create');
   const canEdit = () => typeof staffAllowed === 'function' && staffAllowed('events_edit');
@@ -33,10 +34,29 @@
             <div class="event-view-eyebrow">ІВЕНТ / ДЕТАЛІ</div>
             <h2 id="eventDetailsTitle">Івент</h2>
           </div>
+          <button type="button" id="eventDetailsDelete" hidden>Видалити</button>
           <button type="button" id="eventDetailsEdit" hidden>✎ Редагувати</button>
           <button type="button" id="eventDetailsClose" aria-label="Закрити">✕</button>
         </div>
         <div id="eventDetailsBody"></div>
+      </div>`;
+    document.body.appendChild(dialog);
+  }
+
+  function ensureEventDeleteDialog() {
+    if (el('eventDeleteDialog')) return;
+    const dialog = document.createElement('dialog');
+    dialog.id = 'eventDeleteDialog';
+    dialog.className = 'event-delete-dialog';
+    dialog.setAttribute('aria-labelledby','eventDeleteTitle');
+    dialog.innerHTML = `
+      <h2 id="eventDeleteTitle">Видалити івент?</h2>
+      <p id="eventDeleteText"></p>
+      <p class="event-delete-warning">Разом з івентом буде видалено його список обладнання, комерційну пропозицію, призначення персоналу, автомобілів та проживання. Обладнання на складі залишиться.</p>
+      <p id="eventDeleteNotice" role="status" aria-live="polite"></p>
+      <div class="event-delete-actions">
+        <button type="button" id="eventDeleteCancel">Скасувати</button>
+        <button type="button" id="eventDeleteConfirm">Так, видалити</button>
       </div>`;
     document.body.appendChild(dialog);
   }
@@ -108,6 +128,7 @@
     activeDetailRecord = record;
     title.textContent = record.name || 'Івент';
     el('eventDetailsEdit').hidden = !canEdit();
+    el('eventDetailsDelete').hidden = !canEdit();
     body.innerHTML = detailMarkup(record);
     const locationCopy = body.querySelector('[data-event-location-copy]');
     if (locationCopy) locationCopy.addEventListener('click', async () => {
@@ -219,6 +240,51 @@
     activeDetailRecord = null;
     detailStaffRequestId++;
     if (dialog?.open) dialog.close();
+  }
+
+  function requestEventDeletion(record) {
+    if (!record || deletingEvent || !authorized() || !canEdit()) return;
+    ensureEventDeleteDialog();
+    pendingEventDelete = {id:record.id,name:record.name};
+    el('eventDeleteText').textContent = 'Ви справді хочете назавжди видалити івент «' + record.name + '»?';
+    el('eventDeleteNotice').textContent = '';
+    const confirm = el('eventDeleteConfirm');
+    const cancel = el('eventDeleteCancel');
+    confirm.disabled = false;
+    cancel.disabled = false;
+    el('eventDeleteDialog').showModal();
+  }
+
+  async function confirmEventDeletion() {
+    if (!pendingEventDelete || deletingEvent || !authorized() || !canEdit()) return;
+    const record = {...pendingEventDelete};
+    deletingEvent = true;
+    const confirm = el('eventDeleteConfirm');
+    const cancel = el('eventDeleteCancel');
+    confirm.disabled = cancel.disabled = true;
+    el('eventDeleteNotice').textContent = 'Видалення івенту…';
+    try {
+      const {data,error} = await db.from('warehouse_events')
+        .delete().eq('id',record.id).select('id');
+      if (error) throw error;
+      if (!data?.some(row => row.id === record.id)) {
+        throw new Error('Івент не видалено. Перевірте право редагування івентів та SQL-дозвіл на видалення.');
+      }
+      el('eventDeleteDialog').close();
+      if (activeDetailId === record.id) closeDetails();
+      if (editingId === record.id && el('eventDialog')?.open) el('eventDialog').close();
+      pendingEventDelete = null;
+      await load();
+      notice('Івент «' + record.name + '» видалено.');
+    } catch (error) {
+      const message = error?.code === '23503'
+        ? 'Івент має пов’язані записи, які блокують видалення. Перевірте зв’язки таблиць у Supabase.'
+        : 'Не вдалося видалити івент: ' + (error?.message || String(error));
+      el('eventDeleteNotice').textContent = message;
+    } finally {
+      deletingEvent = false;
+      confirm.disabled = cancel.disabled = false;
+    }
   }
 
   const item = e => `
@@ -399,6 +465,7 @@
   }
 
   ensureDetailsDialog();
+  ensureEventDeleteDialog();
   el('eventAdd').addEventListener('click', () => open());
   el('eventClose').addEventListener('click', () => el('eventDialog').close());
   el('eventCancel').addEventListener('click', () => el('eventDialog').close());
@@ -450,6 +517,19 @@
     }
   });
 
+  el('eventDetailsDelete').addEventListener('click', () => {
+    if (activeDetailRecord) requestEventDeletion(activeDetailRecord);
+  });
+  el('eventDeleteCancel').addEventListener('click', () => {
+    if (!deletingEvent) el('eventDeleteDialog').close();
+  });
+  el('eventDeleteConfirm').addEventListener('click', confirmEventDeletion);
+  el('eventDeleteDialog').addEventListener('cancel', event => {
+    if (deletingEvent) event.preventDefault();
+  });
+  el('eventDeleteDialog').addEventListener('close', () => {
+    if (!deletingEvent) pendingEventDelete = null;
+  });
   el('eventDetailsEdit').addEventListener('click', () => {
     if (!canEdit() || !activeDetailRecord) return;
     const record = activeDetailRecord;
