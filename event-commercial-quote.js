@@ -171,7 +171,13 @@
 
     // One printed estimate section per warehouse category; never modify the loading list.
     let total=0, invalid=false;
-    const tables=groupedItems(combined).map(group=>{
+    // Keep the same major-section sequence as the HARAZD estimate example.
+    const printOrder=['КОНСТРУКТИВИ','СПЕЦЕЛЕМЕНТИ','ЗВУК','LED SCREEN','СВІТЛО',
+      'ДОСТАВКА ОБЛАДНАННЯ','ВИТРАТИ НА ПЕРСОНАЛ','ДОДАТКОВІ ВИТРАТИ'];
+    const rank=name=>{const i=printOrder.indexOf(String(name||'').trim().toLocaleUpperCase('uk'));
+      return i===-1 ? printOrder.length : i;};
+    const orderedGroups=groupedItems(combined).sort((a,b)=>rank(a.name)-rank(b.name)||a.name.localeCompare(b.name,'uk'));
+    const tables=orderedGroups.map(group=>{
       let categoryTotal=0, lastSubcategory=null, itemIndex=0;
       const rows=group.items.map(item=>{
         const eq=item.equipment||{}, terms=item.terms, sub=subcategoryOf(item);
