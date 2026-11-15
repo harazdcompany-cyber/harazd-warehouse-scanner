@@ -193,12 +193,7 @@
   }
 
   function printQuote(state) {
-    if (!state.author?.author_name) {
-      notice(state,state.authorLegacy
-        ? 'Автор цієї старої КП не зберігався. Автоматично встановити, хто її створив, неможливо.'
-        : 'Автор КП ще не зафіксований. Відкрийте пропозицію для редагування та перевірте SQL-оновлення.',true);
-      return;
-    }
+    // Legacy quotations remain printable, but never impersonate an unknown author.
     if (!state.items.length) {notice(state,'Спочатку додайте обладнання.',true);return;}
     const eventDuration=eventDays(state);
     if (eventDuration === null){notice(state,'Вкажіть коректні дати події перед друком.',true);return;}
@@ -269,7 +264,7 @@
     if(invalid){notice(state,'Сума однієї з позицій перевищує допустиме значення.',true);return;}
 
     const record=state.record||{};
-    const author=state.author;
+    const author=state.author||{};
     const formatDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))
       ? String(value).slice(8,10)+'.'+String(value).slice(5,7)+'.'+String(value).slice(0,4) : '—';
     const eventStart=state.form?.elements?.event_date?.value || record.event_date || '';
@@ -343,7 +338,7 @@
         <div class="quote-meta">
           <div>
             <p class="quote-meta-label">Пропозицію склав:</p>
-            <p>${esc(author.author_name)}</p>
+            <p>${esc(author.author_name||'—')}</p>
             <div class="quote-contact">
               <p class="quote-meta-label">Контактні дані:</p>
               <p>моб. ${esc(author.author_phone||'—')}</p>
