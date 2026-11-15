@@ -356,7 +356,6 @@
           </div>
         </div>
         <h1 class="event-name">${esc(record.name||'Подія')}</h1>
-        ${record.client ? `<p class="event-client">Замовник: ${esc(record.client)}</p>` : ''}
       </header>
       ${tables}
       <div class="quote-grand-total"><span>Загальна сума з ПДВ:</span><strong>${money(total)}</strong></div>
