@@ -34,9 +34,11 @@
             <div class="event-view-eyebrow">ІВЕНТ / ДЕТАЛІ</div>
             <h2 id="eventDetailsTitle">Івент</h2>
           </div>
-          <button type="button" id="eventDetailsDelete" hidden>Видалити</button>
-          <button type="button" id="eventDetailsEdit" hidden>✎ Редагувати</button>
-          <button type="button" id="eventDetailsClose" aria-label="Закрити">✕</button>
+          <span class="event-details-actions" role="group" aria-label="Дії з івентом">
+            <button type="button" id="eventDetailsDelete" hidden>Видалити</button>
+            <button type="button" id="eventDetailsEdit" hidden>✎ Редагувати</button>
+            <button type="button" id="eventDetailsClose" aria-label="Закрити">✕</button>
+          </span>
         </div>
         <div id="eventDetailsBody"></div>
       </div>`;
