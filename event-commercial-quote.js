@@ -158,37 +158,176 @@
     if(error){state.saving=false;controls.forEach(el=>el.disabled=false);notice(state,'Не вдалося зберегти: '+error.message,true);return;}
     await load(state);state.saving=false;notice(state,'Збережено');
   }
+
   function printQuote(state) {
     if (!state.items.length) {notice(state,'Спочатку додайте обладнання.',true);return;}
     const eventDuration=eventDays(state);
-    if(eventDuration === null){notice(state,'Вкажіть коректні дати події перед друком.',true);return;}
+    if (eventDuration === null){notice(state,'Вкажіть коректні дати події перед друком.',true);return;}
     const metadata=new Map(state.prices.map(x=>[String(x.equipment_id),x]));
     const combined=combineEquipment(state.items,metadata);
     if(combined.some(item=>item.terms.price == null)) {
       notice(state,'Перед друком вкажіть і збережіть ціни для всіх позицій.',true);return;
     }
-    let total=0;
-    let itemIndex=0, invalid=false;
+
+    // One printed estimate section per warehouse category; never modify the loading list.
+    let total=0, invalid=false;
     const tables=groupedItems(combined).map(group=>{
-      let lastSubcategory=null;
+      let categoryTotal=0, lastSubcategory=null, itemIndex=0;
       const rows=group.items.map(item=>{
-      const eq=item.equipment||{}, terms=item.terms;
-      const sub=subcategoryOf(item);
-      const heading=lastSubcategory !== sub.key ? `<tr class="subcategory"><th colspan="12" scope="rowgroup">${esc(sub.name)}</th></tr>` : '';
-      lastSubcategory=sub.key;
-      let sum;
-      try {sum=calculate(Number(item.quantity),terms.price,eventDuration,terms.discount,terms.vat);}
-      catch (_) {invalid=true;return '';}
-      total=round(total+sum.total);
-      return heading+`<tr><td>${++itemIndex}</td><td>${esc(eq.name||'Обладнання')}</td><td>${esc(terms.description)}</td><td>${esc(item.quantity)}</td><td>${esc(terms.unit)}</td><td>${money(terms.price)}</td><td>${eventDuration}</td><td>${esc(terms.discount)}%</td><td>${money(sum.net)}</td><td>${esc(terms.vat)}%</td><td>${money(sum.vat)}</td><td>${money(sum.total)}</td></tr>`;
+        const eq=item.equipment||{}, terms=item.terms, sub=subcategoryOf(item);
+        let heading='';
+        if(lastSubcategory !== sub.key) {
+          lastSubcategory=sub.key;
+          itemIndex=0;
+          if(sub.key) heading=`<tr class="subcategory"><th colspan="12" scope="rowgroup">${esc(sub.name)}</th></tr>`;
+        }
+        let sum;
+        try {sum=calculate(Number(item.quantity),terms.price,eventDuration,terms.discount,terms.vat);}
+        catch (_) {invalid=true;return '';}
+        categoryTotal=round(categoryTotal+sum.total);
+        const pct=value=>esc(String(value).replace('.',',')+'%');
+        return heading+`<tr class="item-row">
+          <td class="number">${++itemIndex}</td>
+          <td class="item-name">${esc(eq.name||'Обладнання')}</td>
+          <td class="item-description">${esc(terms.description)}</td>
+          <td>${esc(item.quantity)}</td>
+          <td>${esc(terms.unit)}</td>
+          <td class="currency">${money(terms.price)}</td>
+          <td>${eventDuration}</td>
+          <td>${pct(terms.discount)}</td>
+          <td class="currency">${money(sum.net)}</td>
+          <td>${pct(terms.vat)}</td>
+          <td class="currency">${money(sum.vat)}</td>
+          <td class="currency">${money(sum.total)}</td>
+        </tr>`;
       }).join('');
-      return `<h3>${esc(group.name)}</h3><table><thead><tr><th>№</th><th>Найменування</th><th>Додаткова інформація</th><th>Кількість</th><th>Од.</th><th>Ціна за одиницю</th><th>Дні</th><th>Знижка</th><th>Сума без ПДВ</th><th>ПДВ, %</th><th>Сума ПДВ, грн</th><th>Підсумкова сума з ПДВ</th></tr></thead><tbody>${rows}</tbody></table>`;
+      total=round(total+categoryTotal);
+      return `<section class="quote-section">
+        <h2>${esc(group.name)}</h2>
+        <table>
+          <colgroup>
+            <col style="width:4%"><col style="width:18%"><col style="width:15%">
+            <col style="width:5%"><col style="width:6%"><col style="width:8%">
+            <col style="width:5%"><col style="width:6%"><col style="width:10%">
+            <col style="width:5%"><col style="width:9%"><col style="width:9%">
+          </colgroup>
+          <thead><tr>
+            <th>№ п/п</th><th>Найменування</th><th>Додаткова інформація</th>
+            <th>Кількість</th><th>Одиниця виміру</th><th>Ціна за одиницю</th>
+            <th>Кількість днів</th><th>Партнерська знижка</th><th>Загальна вартість без ПДВ</th>
+            <th>ПДВ, %</th><th>ПДВ, грн</th><th>Сума з ПДВ</th>
+          </tr></thead><tbody>${rows}</tbody>
+        </table>
+        <p class="section-total"><strong>ВСЬОГО:</strong> <span>${money(categoryTotal)}</span></p>
+      </section>`;
     }).join('');
     if(invalid){notice(state,'Сума однієї з позицій перевищує допустиме значення.',true);return;}
+
+    const record=state.record||{};
+    const formatDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))
+      ? String(value).slice(8,10)+'.'+String(value).slice(5,7)+'.'+String(value).slice(0,4) : '—';
+    const eventStart=state.form?.elements?.event_date?.value || record.event_date || '';
+    const eventEnd=state.form?.elements?.event_end_date?.value || record.event_end_date || eventStart;
+    const eventPeriod=eventStart && eventEnd && eventStart!==eventEnd
+      ? formatDate(eventStart)+' – '+formatDate(eventEnd) : formatDate(eventStart);
+    const quoteNumber=String(record.quote_number||'').trim() || String(state.id||'').slice(0,8).toUpperCase() || '—';
+    const dateIssued=new Date().toLocaleDateString('uk-UA');
+    const logoUrl=new URL('harazd-logo-white.png',document.baseURI).href;
+    const styles=`
+      @page {size:A4 portrait;margin:12mm 9mm}
+      * {box-sizing:border-box}
+      html,body {margin:0;padding:0}
+      body {font-family:Arial,Helvetica,sans-serif;font-size:8px;line-height:1.35;color:#111;background:white}
+      .quote-cover {margin-bottom:18px}
+      .quote-top {display:grid;grid-template-columns:minmax(0,1fr) 34%;gap:22px;align-items:start}
+      .quote-logo {display:flex;align-items:center;justify-content:center;width:66px;height:55px;background:#091016;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .quote-logo img {display:block;width:50px;max-height:48px;object-fit:contain}
+      .quote-title {font-size:11px;font-weight:700;margin:0 0 8px}
+      .quote-number {margin:0 0 2px}
+      .quote-meta {display:grid;grid-template-columns:minmax(0,1fr) 34%;gap:22px;margin-top:17px;align-items:start}
+      .quote-meta p {margin:0 0 5px}
+      .quote-meta-label {font-weight:700;margin:0 0 4px}
+      .quote-contact {margin-top:12px}
+      .quote-date {margin:0 0 14px}
+      .quote-top-total-label {max-width:150px;font-weight:700;margin:0 0 7px}
+      .quote-top-total-value {display:inline-block;padding:5px 9px;background:#101010;color:#fff;font-weight:700;font-size:10px;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .event-name {font-size:12px;font-weight:700;margin:20px 0 3px;text-transform:uppercase;overflow-wrap:anywhere}
+      .event-client {margin:0 0 12px;color:#333}
+      .quote-section {margin:18px 0 0;break-inside:auto}
+      .quote-section h2 {font-size:10px;font-weight:700;margin:0 0 14px;text-transform:uppercase;break-after:avoid}
+      table {width:100%;border-collapse:collapse;table-layout:fixed}
+      thead {display:table-header-group}
+      thead th {padding:4px 2px 6px;text-align:center;vertical-align:bottom;border-bottom:1px solid #222;
+        font-size:6.65px;line-height:1.18;overflow-wrap:anywhere;font-weight:700}
+      tbody td {padding:5px 2px;text-align:center;vertical-align:middle;border-bottom:1px dotted #6f6f6f;
+        font-size:6.8px;overflow-wrap:anywhere}
+      tbody tr {break-inside:avoid;page-break-inside:avoid}
+      td.number {text-align:center}
+      td.item-name,td.item-description {text-align:left}
+      td.currency {font-size:6.25px;white-space:nowrap;letter-spacing:-0.15px}
+      tr.subcategory th {padding:8px 3px 5px;text-align:left;border-bottom:1px dotted #666;
+        font-weight:400;font-style:italic;font-size:8px;break-after:avoid}
+      .section-total {display:flex;justify-content:flex-end;gap:6px;align-items:center;
+        margin:7px 0 0;font-size:8px;break-inside:avoid;page-break-inside:avoid}
+      .section-total span {display:inline-block;padding:4px 7px;background:#4a86e8;color:white;font-weight:700;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .quote-grand-total {display:flex;justify-content:flex-end;gap:10px;align-items:center;
+        margin:25px 0 10px;font-size:12px;font-weight:700;break-inside:avoid}
+      .quote-grand-total strong {font-size:14px}
+      @media screen {
+        body {max-width:1100px;margin:auto;padding:15px}
+      }
+    `;
     const popup=window.open('','_blank');
     if(!popup){notice(state,'Дозвольте відкриття нового вікна для друку.',true);return;}
-    popup.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Комерційна пропозиція</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial,sans-serif;color:#111}h1{font-size:21px}h2{font-size:16px}h3{font-size:12px;text-transform:uppercase;margin:24px 0 16px;break-after:avoid}table{width:100%;border-collapse:collapse;table-layout:auto}thead{display:table-header-group}thead th{border-bottom:2px solid #111;padding:7px 5px;text-align:center;vertical-align:bottom;font-size:10px}td{border-bottom:1px dotted #333;padding:8px 5px;text-align:center;vertical-align:middle}td:nth-child(2),td:nth-child(3){text-align:left}tr{break-inside:avoid}.subcategory th{border-bottom:1px dotted #333;padding:7px 5px;font-weight:normal;font-style:italic;text-align:left}.total{text-align:right;font-size:13px;font-weight:bold;margin-top:16px}.total span{display:inline-block;background:#4a86e8;color:#fff;padding:6px 10px;print-color-adjust:exact;-webkit-print-color-adjust:exact}</style></head><body><h1>Комерційна пропозиція</h1><h2>${esc(state.record?.name||'Подія')}</h2><p>Замовник: ${esc(state.record?.client||'—')}</p>${tables}<p class="total">Всього з ПДВ: <span>${money(total)}</span></p></body></html>`);
-    popup.document.close();popup.focus();popup.print();
+    popup.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8">
+      <title>Комерційна пропозиція – ${esc(record.name||'Подія')}</title>
+      <style>${styles}</style></head><body>
+      <header class="quote-cover">
+        <div class="quote-top">
+          <div class="quote-logo"><img src="${esc(logoUrl)}" alt="HARAZD"></div>
+          <div>
+            <p class="quote-title">Комерційна пропозиція</p>
+            <p class="quote-number">Номер: ${esc(quoteNumber)}</p>
+            <p>Дата: ${esc(dateIssued)}</p>
+          </div>
+        </div>
+        <div class="quote-meta">
+          <div>
+            <p class="quote-meta-label">Пропозицію склав:</p>
+            <p>Марусяк Владислав Олегович</p>
+            <div class="quote-contact">
+              <p class="quote-meta-label">Контактні дані:</p>
+              <p>моб. +380500542024</p>
+              <p>harazd.company@gmail.com</p>
+            </div>
+          </div>
+          <div>
+            <div class="quote-date">
+              <p class="quote-meta-label">Дата виконання робіт:</p>
+              <p>${esc(eventPeriod)}</p>
+            </div>
+            <p class="quote-top-total-label">Вартість виконання робіт з ПДВ:</p>
+            <span class="quote-top-total-value">${money(total)}</span>
+          </div>
+        </div>
+        <h1 class="event-name">${esc(record.name||'Подія')}</h1>
+        ${record.client ? `<p class="event-client">Замовник: ${esc(record.client)}</p>` : ''}
+      </header>
+      ${tables}
+      <div class="quote-grand-total"><span>Загальна сума з ПДВ:</span><strong>${money(total)}</strong></div>
+      </body></html>`);
+    popup.document.close();
+    let didPrint=false;
+    const showPrint=()=>{if(didPrint)return;didPrint=true;popup.focus();popup.print();};
+    const logo=popup.document.querySelector('.quote-logo img');
+    if(logo && !logo.complete){
+      logo.addEventListener('load',showPrint,{once:true});
+      logo.addEventListener('error',showPrint,{once:true});
+      setTimeout(showPrint,1500);
+    } else showPrint();
   }
   function mount(id,host,record,form,options = {}) {
     current={id,host,record,form,readOnly:!!options.readOnly,items:[],prices:[]}; const state=current;
